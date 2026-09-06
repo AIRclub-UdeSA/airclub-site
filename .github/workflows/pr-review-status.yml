@@ -1,0 +1,19 @@
+# Caller del workflow compartido en AIRclub-UdeSA/.github
+# Checklist de setup: https://github.com/AIRclub-UdeSA/.github/blob/main/CONTRIBUTING.md#setting-up-a-new-repository
+name: Sync PR review status
+
+on:
+  # pull_request_target (no pull_request): los PRs que vienen de un fork no
+  # reciben los secrets del repo con pull_request, asi que el paso que
+  # genera el token de la App falla en toda contribucion externa. Es seguro
+  # aca porque este workflow nunca hace checkout del codigo del fork: solo
+  # llama a la API GraphQL de Projects.
+  pull_request_target:
+    types: [review_requested, review_request_removed]
+
+jobs:
+  set-in-review:
+    uses: AIRclub-UdeSA/.github/.github/workflows/pr-review-status.yml@main
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

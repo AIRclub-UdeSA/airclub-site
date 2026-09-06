@@ -1,0 +1,26 @@
+# Configuracion del deploy en Netlify.
+# El sitio es HTML estatico sin build: Netlify publica la raiz del repo tal cual.
+# Cada merge a main actualiza el sitio y cada PR genera un deploy preview propio.
+
+[build]
+  publish = "."
+
+# Cabeceras de seguridad basicas. No hay CSP porque el sitio tiene todo el CSS
+# y el JS inline en index.html: una CSP util exigiria sacarlos a archivos aparte.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

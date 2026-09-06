@@ -1,0 +1,10 @@
+# Artefactos de Netlify
+.netlify/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
