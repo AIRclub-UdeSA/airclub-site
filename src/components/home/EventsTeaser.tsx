@@ -3,7 +3,6 @@ import { getUpcomingEvents } from "@/lib/events";
 import { EventCard } from "@/components/shared/EventCard";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { TiltCard } from "@/components/shared/TiltCard";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 
 export async function EventsTeaser() {
   const upcoming = await getUpcomingEvents({ take: 2 });
@@ -11,7 +10,6 @@ export async function EventsTeaser() {
   return (
     <section className="px-15 py-22.5 max-md:px-5.5 max-md:py-15">
       <RevealOnScroll>
-        <SectionLabel>Actividades</SectionLabel>
         <h2 className="mb-4 font-display text-[clamp(1.8rem,3vw,2.8rem)] font-extrabold leading-[1.05] tracking-tight text-text">
           Próximos eventos
         </h2>

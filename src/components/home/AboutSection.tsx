@@ -1,5 +1,4 @@
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 
 const CARDS = [
   {
@@ -25,7 +24,6 @@ export function AboutSection() {
   return (
     <section id="nosotros" className="px-15 py-22.5 max-md:px-5.5 max-md:py-15">
       <RevealOnScroll>
-        <SectionLabel>Quiénes somos</SectionLabel>
         <h2 className="mb-4 font-display text-[clamp(1.8rem,3vw,2.8rem)] font-extrabold leading-[1.05] tracking-tight text-text">
           El Club
         </h2>

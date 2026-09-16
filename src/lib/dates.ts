@@ -30,6 +30,20 @@ export function isUpcoming(startsAt: Date, endsAt?: Date | null) {
   return reference.getTime() >= Date.now();
 }
 
+/** Cuenta días de calendario, no horas exactas: "mañana" a las 23:59 sigue siendo "mañana". */
+export function formatDaysUntil(startsAt: Date): string | null {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfTarget = new Date(startsAt);
+  startOfTarget.setHours(0, 0, 0, 0);
+
+  const days = Math.round((startOfTarget.getTime() - startOfToday.getTime()) / 86400000);
+  if (days < 0) return null;
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${days} días`;
+}
+
 function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

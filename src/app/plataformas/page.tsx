@@ -23,10 +23,10 @@ export default async function PlataformasPage() {
       />
       <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent" />
       <section className="px-15 py-22.5 max-md:px-5.5 max-md:py-15">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
           {robots.map((robot) => (
             <RevealOnScroll key={robot.slug}>
-              <RobotCard robot={robot} />
+              <RobotCard robot={robot} compact />
             </RevealOnScroll>
           ))}
         </div>

@@ -5,7 +5,6 @@ import { PageHero } from "@/components/shared/PageHero";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { TiltCard } from "@/components/shared/TiltCard";
 import { Button } from "@/components/shared/Button";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -28,7 +27,6 @@ export default async function EquipoPage() {
 
       <section className="px-15 py-22.5 max-md:px-5.5 max-md:py-15">
         <RevealOnScroll>
-          <SectionLabel>El equipo</SectionLabel>
           <h2 className="mb-8 font-display text-[clamp(1.8rem,3vw,2.8rem)] font-extrabold tracking-tight text-text">
             Colaboradores y fundadores
           </h2>
@@ -67,7 +65,6 @@ export default async function EquipoPage() {
 
       <section className="px-15 py-22.5 max-md:px-5.5 max-md:py-15">
         <RevealOnScroll>
-          <SectionLabel>Sumate</SectionLabel>
           <h2 className="mb-4 font-display text-[clamp(1.8rem,3vw,2.8rem)] font-extrabold tracking-tight text-text">
             Cómo sumarte
           </h2>
