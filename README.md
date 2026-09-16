@@ -2,56 +2,60 @@
 
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
-Es un sitio estatico sin build. Todo el contenido vive en `index.html`, con el CSS y el JavaScript inline, y las imagenes al lado en la raiz del repo.
+> [!NOTE]
+> Esta rama (`v2`) es la reescritura del sitio en Next.js + Supabase. La version en producción (Netlify, rama `main`) todavía es el `index.html` estático original — no se toca hasta el cutover final. Ver el plan completo de la reescritura para el detalle de fases.
+
+## Stack
+
+Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Prisma para el contenido dinámico. Sin login ni RSVP todavía — el modelo de datos ya los deja preparados, pero no están construidos en esta fase.
 
 ## Estructura
 
-| Archivo | Que es |
+| Carpeta / archivo | Qué es |
 | --- | --- |
-| `index.html` | El sitio entero: markup, estilos y navegacion por hash |
-| `logo.png` | Logo del club, usado en el header, el footer y como `og:image` |
-| `favicon.png` | Icono de la pestaña |
-| `equipo.jpg` | Foto del equipo, en la seccion Equipo |
-| `rosmaster.jpg` | Foto del ROSMASTER X3, en la seccion Proyectos |
-| `netlify.toml` | Configuracion del deploy y cabeceras de seguridad |
+| `src/app/` | Rutas de la app (Home, Eventos, Plataformas, Equipo, Contacto) |
+| `src/components/` | Componentes de layout (`layout/`), compartidos (`shared/`) y de Home (`home/`) |
+| `src/lib/` | Acceso a datos (`events.ts`, `robots.ts`, `team.ts`), utilidades y el cliente de Prisma |
+| `prisma/schema.prisma` | Modelo de datos (Event, EventRegistration, Robot, TeamMember) |
+| `prisma/seed-data/` | Contenido tipado (eventos, robots, equipo) — hoy es la única fuente de datos; en la Fase 2 se siembra a Postgres desde acá |
+| `public/` | Imágenes estáticas (logo, favicon, fotos) |
+| `netlify.toml` | Deploy de la versión **actual en producción** (rama `main`), sin tocar |
 
 ## Ver el sitio localmente
 
-Abrir `index.html` con doble clic alcanza para casi todo. Si algo se comporta raro, conviene servirlo por HTTP:
-
 ```bash
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
 
-Y entrar a http://localhost:8000.
+Y entrar a http://localhost:3000. No hace falta una base de datos para esto: el contenido sale de `prisma/seed-data/` mientras Postgres no esté conectado.
 
-## Como se publica
+### Variables de entorno
 
-**El sitio se publica solo.** Netlify esta conectado a este repositorio:
+Copiar `.env.example` a `.env`. Con valores dummy alcanza para levantar el sitio (`npm run dev`, `npm run build`); solo hacen falta las credenciales reales de Supabase para `prisma migrate dev` o `npm run db:seed`.
 
-- Cada **merge a `main`** publica el sitio en produccion, en unos segundos.
-- Cada **pull request** genera un *deploy preview*: una URL propia con los cambios de esa rama, para revisarlos antes de aprobar. El link aparece como un check en el PR.
+## Cómo proponer un cambio
 
-> [!IMPORTANT]
-> Ya no se sube un `.zip` a mano a Netlify. Si alguien arrastra un zip al dashboard, pisa el deploy de Git y el sitio queda desincronizado de lo que dice este repositorio. Los cambios entran por pull request.
-
-## Como proponer un cambio
-
-`main` esta protegido: no acepta pushes directos. Todo entra por pull request con una aprobacion.
+Mientras dure la reescritura, los PRs entran **a `v2`**, no a `main`:
 
 ```bash
+git switch v2
 git switch -c mi-cambio
-# editar index.html
+# editar
 git commit -am "descripcion del cambio"
 git push -u origin mi-cambio
-gh pr create
+gh pr create --base v2
 ```
 
-Antes de abrir el PR conviene mirar el sitio localmente, y despues revisar el deploy preview que deja Netlify en el PR.
+CI (`typecheck`, `lint`, `build`) corre en cada PR contra `v2` o `main`.
 
-### Imagenes
+### Contenido (eventos, robots, equipo)
 
-Las fotos van comprimidas antes de commitearlas: una imagen sin optimizar queda en el historial de Git para siempre, aunque despues se reemplace. Para una foto, JPEG con calidad ~82 alcanza y pesa un orden de magnitud menos que un PNG:
+Por ahora se edita directamente en `prisma/seed-data/*.ts` (arrays tipados) — mismo flujo de PR que el resto del código, sin panel de administración todavía. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
+
+### Imágenes
+
+Las fotos van comprimidas antes de commitearlas. Para una foto, JPEG con calidad ~82 alcanza y pesa un orden de magnitud menos que un PNG:
 
 ```bash
 convert foto-original.png -strip -interlace Plane -quality 82 foto.jpg
@@ -59,6 +63,6 @@ convert foto-original.png -strip -interlace Plane -quality 82 foto.jpg
 
 ## Convenciones
 
-Este repositorio se escribe en **español**: codigo, commits, PRs, issues y documentacion.
+Este repositorio se escribe en **español**: código, commits, PRs, issues y documentación.
 
-Guias generales de la organizacion: [CONTRIBUTING](https://github.com/AIRclub-UdeSA/.github/blob/main/CONTRIBUTING.md) y [codigo de conducta](https://github.com/AIRclub-UdeSA/.github/blob/main/CODE_OF_CONDUCT.md).
+Guías generales de la organización: [CONTRIBUTING](https://github.com/AIRclub-UdeSA/.github/blob/main/CONTRIBUTING.md) y [código de conducta](https://github.com/AIRclub-UdeSA/.github/blob/main/CODE_OF_CONDUCT.md).
