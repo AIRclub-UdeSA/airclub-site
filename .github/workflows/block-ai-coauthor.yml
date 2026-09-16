@@ -4,7 +4,7 @@ name: Block AI co-author
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, v2]
 
 jobs:
   check-commit-messages:
