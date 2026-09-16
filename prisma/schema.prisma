@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URLs are no longer set here in Prisma 7 — see prisma7.config.ts (CLI/migrate,
+  // uses DIRECT_URL) and src/lib/prisma.ts (runtime client, uses DATABASE_URL via a driver adapter).
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum RobotSpecGroup {
+  HARDWARE
+  SOFTWARE
+}
+
+model Event {
+  id                   String    @id @default(cuid())
+  slug                 String    @unique
+  title                String
+  tagline              String?
+  description          String    @db.Text
+  location             String?
+  startsAt             DateTime
+  endsAt               DateTime?
+  status               EventStatus @default(PUBLISHED)
+  externalUrl          String? // e.g. JAR site link, or a Google Form until RSVP ships
+  rsvpEnabled          Boolean     @default(false) // stays false until the RSVP feature (deferred) ships
+  capacity             Int?
+  featuredForCountdown Boolean     @default(false)
+  imageUrl             String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  registrations        EventRegistration[]
+
+  @@index([startsAt])
+}
+
+// Schema is ready for RSVP now (deferred feature — no form/UI ships yet, see AGENTS/plan notes).
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, email]) // one RSVP per person per event; also the future account-linking key
+  @@index([eventId])
+}
+
+model Robot {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  status      String // free text badge, e.g. "En desarrollo activo"
+  category    String?
+  tags        String[]
+  description String   @db.Text
+  imageUrl    String
+  imageAlt    String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  specs       RobotSpec[]
+  links       RobotLink[]
+}
+
+model RobotSpec {
+  id      String         @id @default(cuid())
+  robotId String
+  robot   Robot          @relation(fields: [robotId], references: [id], onDelete: Cascade)
+  group   RobotSpecGroup // HARDWARE | SOFTWARE
+  label   String
+  value   String
+  order   Int            @default(0)
+
+  @@index([robotId])
+}
+
+model RobotLink {
+  id      String @id @default(cuid())
+  robotId String
+  robot   Robot  @relation(fields: [robotId], references: [id], onDelete: Cascade)
+  label   String
+  url     String
+  order   Int    @default(0)
+
+  @@index([robotId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  role      String? // nullable: current roster has no roles yet
+  photoUrl  String? // nullable: currently one group photo, not per-person
+  bio       String?  @db.Text
+  order     Int      @default(0)
+  active    Boolean  @default(true) // soft-remove without losing history
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

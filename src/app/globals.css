@@ -1,0 +1,404 @@
+@import "tailwindcss";
+
+/* ===== Design tokens ===== */
+:root {
+  --bg: #faf8f8;
+  --bg2: #f3eeef;
+  --card: rgba(164, 12, 76, 0.04);
+  --card-h: rgba(164, 12, 76, 0.08);
+  --text: #1a0810;
+  --text2: rgba(26, 8, 16, 0.78);
+  --text3: rgba(26, 8, 16, 0.6);
+  --crimson: #a40c4c; /* fill role: buttons, gradients, selection */
+  --crimson-text: #a40c4c; /* text/link/icon role, split so dark mode can differ */
+  --magenta: #ac104c;
+  --rose: #ddaabc;
+  --mauve: #8f5261;
+  --dusty: #c08c94;
+  --border: rgba(164, 12, 76, 0.1);
+  --border-h: rgba(164, 12, 76, 0.25);
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --ease-club: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html.dark {
+  --bg: #100408;
+  --bg2: #180609;
+  --card: rgba(221, 170, 188, 0.05);
+  --card-h: rgba(221, 170, 188, 0.09);
+  --text: #f5e8ec;
+  --text2: rgba(245, 232, 236, 0.62);
+  --text3: rgba(245, 232, 236, 0.52);
+  --crimson: #a40c4c; /* unchanged: fill role stays saturated for white-on-fill contrast */
+  --crimson-text: #f0357f; /* was reused --crimson at 2.62:1 (fails AA); this is 5.29:1 */
+  --magenta: #ac104c;
+  --rose: #ddaabc;
+  --mauve: #c26179; /* was #8f5261 at 3.40:1 (fails AA); this is 5.06:1 */
+  --dusty: #c08c94;
+  --border: rgba(221, 170, 188, 0.12);
+  --border-h: rgba(221, 170, 188, 0.28);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-card: var(--card);
+  --color-card-h: var(--card-h);
+  --color-text: var(--text);
+  --color-text2: var(--text2);
+  --color-text3: var(--text3);
+  --color-crimson: var(--crimson);
+  --color-crimson-text: var(--crimson-text);
+  --color-magenta: var(--magenta);
+  --color-rose: var(--rose);
+  --color-mauve: var(--mauve);
+  --color-dusty: var(--dusty);
+  --color-border: var(--border);
+  --color-border-h: var(--border-h);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+
+  --font-display: var(--font-syne), sans-serif;
+  --font-logo: var(--font-anton), sans-serif;
+  --font-body: var(--font-outfit), sans-serif;
+  --font-mono: var(--font-jbmono), monospace;
+
+  --ease-club: var(--ease-club);
+}
+
+/* ===== Base ===== */
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(164, 12, 76, 0.2) transparent;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--crimson);
+  color: #fff;
+}
+:focus-visible {
+  outline: 2px solid var(--crimson-text);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== Skip link ===== */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  background: var(--crimson);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--r-sm);
+  z-index: 1000;
+  transition: top 0.2s var(--ease-club);
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ===== Reveal-on-scroll ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.9s var(--ease-club),
+    transform 0.9s var(--ease-club);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-d1 {
+  transition-delay: 0.1s;
+}
+.reveal-d2 {
+  transition-delay: 0.2s;
+}
+.reveal-d3 {
+  transition-delay: 0.3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===== Border trail (rotating rose outline on primary buttons / event cards) ===== */
+@property --trail-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes trail-spin {
+  to {
+    --trail-angle: 360deg;
+  }
+}
+.border-trail {
+  position: relative;
+}
+.border-trail::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--trail-angle),
+    transparent 0deg,
+    transparent 255deg,
+    var(--rose) 300deg,
+    #fff 328deg,
+    var(--rose) 345deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: trail-spin 2.6s linear infinite;
+  pointer-events: none;
+}
+.border-trail-hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--trail-angle),
+    transparent 0deg,
+    transparent 255deg,
+    var(--rose) 300deg,
+    var(--crimson) 328deg,
+    var(--rose) 345deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  animation: trail-spin 2.6s linear infinite;
+  pointer-events: none;
+}
+.border-trail-hover:hover::after {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .border-trail::before,
+  .border-trail-hover::after {
+    animation: none !important;
+  }
+}
+
+/* ===== Arm hero: 400vh scroll track, collapses for reduced motion ===== */
+.arm-scroll-track {
+  height: 400vh;
+  position: relative;
+}
+.arm-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .arm-scroll-track {
+    height: auto;
+  }
+  .arm-sticky {
+    position: static;
+    height: auto;
+    min-height: 60vh;
+    padding: 96px 24px 48px;
+  }
+}
+@media (max-width: 768px) {
+  .arm-scroll-track {
+    height: 280vh;
+  }
+}
+
+.arm-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+.arm-university {
+  position: absolute;
+  left: 50%;
+  top: 14vh;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--mauve);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: opacity 0.5s;
+}
+.arm-university.off {
+  opacity: 0;
+}
+.arm-stage-row {
+  --hero-h: clamp(190px, 42vh, 400px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0;
+  line-height: 1;
+}
+.hero-letter {
+  font-family: var(--font-logo);
+  font-size: var(--hero-h);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--crimson-text);
+  line-height: 0.78;
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s var(--ease-club),
+    transform 0.6s var(--ease-club);
+}
+.hero-letter.on {
+  opacity: 1;
+  transform: translateY(0);
+}
+#armSvg {
+  height: calc(var(--hero-h) * 0.92);
+  width: auto;
+  display: block;
+  margin: 0 clamp(-8px, -0.8vw, -2px);
+}
+.hero-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--mauve);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 16px;
+  opacity: 0;
+  transition: opacity 0.6s 0.15s;
+}
+.hero-subtitle.on {
+  opacity: 1;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--mauve);
+  opacity: 0.7;
+  transition: opacity 0.4s;
+}
+.scroll-hint.hidden {
+  opacity: 0;
+}
+.hero-fixed-text {
+  position: absolute;
+  bottom: 48px;
+  left: 56px;
+  z-index: 10;
+  max-width: 420px;
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+  pointer-events: none;
+}
+.hero-fixed-text.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+@media (max-width: 768px) {
+  .hero-fixed-text {
+    left: 22px;
+    right: 22px;
+    max-width: none;
+    bottom: 36px;
+  }
+}
+/* ===== Page hero (Eventos/Robots/Equipo/Contacto) ===== */
+.page-hero {
+  min-height: 38vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 150px 60px 52px;
+  background: linear-gradient(160deg, rgba(164, 12, 76, 0.05) 0%, rgba(250, 248, 248, 1) 62%);
+}
+html.dark .page-hero {
+  background: linear-gradient(160deg, rgba(164, 12, 76, 0.1) 0%, var(--bg) 62%);
+}
+@media (max-width: 768px) {
+  .page-hero {
+    padding: 120px 22px 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arm-university,
+  .hero-letter,
+  .hero-subtitle,
+  .scroll-hint,
+  .hero-fixed-text {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+  .scroll-hint {
+    display: none;
+  }
+}

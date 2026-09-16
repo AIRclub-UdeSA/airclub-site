@@ -1,0 +1,26 @@
+# Chequeo de CI para la reescritura en Next.js: instala, tipa, lintea y compila.
+# Corre en PRs contra v2 (donde vive el desarrollo de la 2.0) y contra main.
+name: CI
+
+on:
+  pull_request:
+    branches: [main, v2]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      # Valores dummy: alcanza con que existan para que `prisma generate` valide el
+      # schema. No se abre ninguna conexion real durante el build.
+      DATABASE_URL: postgresql://user:pass@localhost:5432/dummy
+      DIRECT_URL: postgresql://user:pass@localhost:5432/dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
