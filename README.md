@@ -3,7 +3,7 @@
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
 > [!NOTE]
-> Esta rama (`v2`) es la reescritura del sitio en Next.js + Supabase. La version en producción (Netlify, rama `main`) todavía es el `index.html` estático original — no se toca hasta el cutover final. Ver el plan completo de la reescritura para el detalle de fases.
+> Esta rama (`v2`) es la reescritura del sitio en Next.js + Supabase. La version en producción (Netlify, rama `main`) todavía es el `index.html` estático original — no se toca hasta el cutover final. **Antes de tocar nada, leer [CONTEXTO.md](CONTEXTO.md)** — tiene el estado real del rediseño de diseño/frontend (qué no se toca, qué ya se probó y se rechazó) y de qué lado del proyecto está cada quien.
 
 ## Stack
 
