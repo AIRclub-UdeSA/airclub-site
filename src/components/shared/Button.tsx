@@ -15,9 +15,10 @@ const base =
   "inline-flex items-center gap-2 rounded-full border-[1.5px] px-6.5 py-3.5 font-body text-[.88rem] font-medium transition-all duration-350 ease-club";
 
 const variants = {
-  default: "border-border-h bg-transparent text-text hover:-translate-y-0.5 hover:bg-card-h",
+  default:
+    "border-border-strong/25 hover:border-border-strong bg-transparent text-text hover:-translate-y-0.5 hover:bg-black/5 dark:hover:bg-white/10 active:translate-y-0",
   primary:
-    "border-trail relative overflow-hidden border-crimson bg-crimson text-white hover:-translate-y-0.5 hover:border-magenta hover:bg-magenta hover:shadow-[0_8px_30px_rgba(164,12,76,0.3)]",
+    "border-crimson bg-crimson text-white hover:-translate-y-0.5 hover:bg-crimson-hover hover:border-crimson-hover active:translate-y-0",
 };
 
 export function Button(props: ButtonProps) {
