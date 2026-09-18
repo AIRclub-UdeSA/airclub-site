@@ -68,181 +68,181 @@ function ArmModel({ isHovered, isClicked }: { isHovered: boolean; isClicked: boo
   });
 
   return (
-    <group position={[0, -1.95, 0]}>
-      {/* ===== BASE FIJA INDUSTRIAL (Pedestal mecanizado) ===== */}
-      {/* Brida de apoyo circular inferior */}
-      <mesh position={[0, 0.04, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.48, 0.54, 0.08, 36]} />
-        <meshStandardMaterial color={TITANIUM} roughness={0.35} metalness={0.7} />
+    <group position={[0, 0, 0]}>
+      {/* ===== SOMBRA DE CONTACTO BASE (Grounded physical shadow) ===== */}
+      <mesh position={[0, -0.986, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0, 0.38, 36]} />
+        <meshBasicMaterial color="#000000" opacity={0.16} transparent />
       </mesh>
 
-      {/* Anillo de pernos / mecanizado en aluminio */}
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <cylinderGeometry args={[0.44, 0.47, 0.05, 36]} />
-        <meshStandardMaterial color={ALUMINUM} roughness={0.2} metalness={0.85} />
+      {/* ===== BASE FIJA INDUSTRIAL (Pedestal mecanizado completo) ===== */}
+      {/* Brida de apoyo circular inferior (Piso metálico) */}
+      <mesh position={[0, -0.96, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.30, 0.34, 0.05, 36]} />
+        <meshStandardMaterial color={TITANIUM} roughness={0.32} metalness={0.75} />
       </mesh>
 
-      {/* Anillo LED perimetral de status */}
-      <mesh position={[0, 0.14, 0]}>
-        <torusGeometry args={[0.41, 0.015, 16, 40]} />
-        <meshStandardMaterial color={ACCENT_GLOW} emissive={CRIMSON} emissiveIntensity={0.8} />
+      {/* Anillo de pernos / bisel en aluminio mecanizado */}
+      <mesh position={[0, -0.918, 0]} castShadow>
+        <cylinderGeometry args={[0.26, 0.30, 0.035, 36]} />
+        <meshStandardMaterial color={ALUMINUM} roughness={0.2} metalness={0.88} />
+      </mesh>
+
+      {/* Anillo LED perimetral de status activo AIR */}
+      <mesh position={[0, -0.895, 0]}>
+        <torusGeometry args={[0.25, 0.01, 16, 40]} />
+        <meshStandardMaterial color={ACCENT_GLOW} emissive={CRIMSON} emissiveIntensity={0.9} />
       </mesh>
 
       {/* Cuello cilíndrico de la base */}
-      <mesh position={[0, 0.22, 0]} castShadow>
-        <cylinderGeometry args={[0.36, 0.42, 0.14, 32]} />
-        <meshStandardMaterial color={TITANIUM} roughness={0.3} metalness={0.65} />
+      <mesh position={[0, -0.85, 0]} castShadow>
+        <cylinderGeometry args={[0.20, 0.25, 0.10, 32]} />
+        <meshStandardMaterial color={TITANIUM} roughness={0.28} metalness={0.7} />
       </mesh>
 
       {/* ===== TORRETA GIRATORIA (EJE 1 - YAW) ===== */}
-      <group ref={baseRef} position={[0, 0.29, 0]}>
+      <group ref={baseRef} position={[0, -0.80, 0]}>
         {/* Cuerpo de la torreta */}
-        <mesh position={[0, 0.18, 0]} castShadow>
-          <cylinderGeometry args={[0.32, 0.35, 0.24, 32]} />
-          <meshStandardMaterial color={TITANIUM} roughness={0.28} metalness={0.7} />
+        <mesh position={[0, 0.07, 0]} castShadow>
+          <cylinderGeometry args={[0.18, 0.20, 0.14, 32]} />
+          <meshStandardMaterial color={TITANIUM} roughness={0.26} metalness={0.75} />
         </mesh>
 
         {/* Bridas laterales carmesí del soporte de hombro */}
-        <mesh position={[0.18, 0.35, 0]} castShadow>
-          <boxGeometry args={[0.07, 0.36, 0.28]} />
+        <mesh position={[0.11, 0.18, 0]} castShadow>
+          <boxGeometry args={[0.04, 0.22, 0.17]} />
           <meshStandardMaterial color={CRIMSON} roughness={0.25} metalness={0.45} />
         </mesh>
-        <mesh position={[-0.18, 0.35, 0]} castShadow>
-          <boxGeometry args={[0.07, 0.36, 0.28]} />
+        <mesh position={[-0.11, 0.18, 0]} castShadow>
+          <boxGeometry args={[0.04, 0.22, 0.17]} />
           <meshStandardMaterial color={CRIMSON} roughness={0.25} metalness={0.45} />
         </mesh>
 
         {/* Eje pasante central cromado */}
-        <mesh position={[0, 0.35, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 0.44, 28]} />
+        <mesh position={[0, 0.18, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 0.26, 28]} />
           <meshStandardMaterial color={CHROME} roughness={0.15} metalness={0.92} />
         </mesh>
 
         {/* ===== HOMBRO (EJE 2 - PITCH) ===== */}
-        <group ref={shoulderRef} position={[0, 0.35, 0]}>
+        <group ref={shoulderRef} position={[0, 0.18, 0]}>
           {/* BRAZO PRINCIPAL (LINK 1 - Chasis aerodinámico) */}
-          <group position={[0, 0.68, 0]}>
+          <group position={[0, 0.36, 0]}>
             {/* Viga estructural derecha en Carmesí AIR */}
-            <mesh position={[0.12, 0, 0]} castShadow>
-              <boxGeometry args={[0.06, 1.3, 0.18]} />
+            <mesh position={[0.075, 0, 0]} castShadow>
+              <boxGeometry args={[0.035, 0.70, 0.11]} />
               <meshStandardMaterial color={CRIMSON} roughness={0.25} metalness={0.45} />
             </mesh>
             {/* Viga estructural izquierda en Carmesí AIR */}
-            <mesh position={[-0.12, 0, 0]} castShadow>
-              <boxGeometry args={[0.06, 1.3, 0.18]} />
+            <mesh position={[-0.075, 0, 0]} castShadow>
+              <boxGeometry args={[0.035, 0.70, 0.11]} />
               <meshStandardMaterial color={CRIMSON} roughness={0.25} metalness={0.45} />
             </mesh>
             {/* Núcleo estructural interno en titanio satinado */}
             <mesh position={[0, 0, 0]} castShadow>
-              <boxGeometry args={[0.16, 1.22, 0.12]} />
+              <boxGeometry args={[0.10, 0.65, 0.07]} />
               <meshStandardMaterial color={SLATE_DARK} roughness={0.35} metalness={0.7} />
             </mesh>
             {/* Varillas de guía y refuerzo en aluminio pulido */}
-            <mesh position={[0.16, 0, 0]}>
-              <cylinderGeometry args={[0.012, 0.012, 1.15, 16]} />
+            <mesh position={[0.098, 0, 0]}>
+              <cylinderGeometry args={[0.007, 0.007, 0.62, 16]} />
               <meshStandardMaterial color={ALUMINUM} roughness={0.18} metalness={0.88} />
             </mesh>
-            <mesh position={[-0.16, 0, 0]}>
-              <cylinderGeometry args={[0.012, 0.012, 1.15, 16]} />
+            <mesh position={[-0.098, 0, 0]}>
+              <cylinderGeometry args={[0.007, 0.007, 0.62, 16]} />
               <meshStandardMaterial color={ALUMINUM} roughness={0.18} metalness={0.88} />
             </mesh>
           </group>
 
           {/* ===== CODO (EJE 3 - PITCH) ===== */}
-          <group ref={elbowRef} position={[0, 1.35, 0]}>
+          <group ref={elbowRef} position={[0, 0.72, 0]}>
             {/* Articulación de codo cilíndrica mecanizada */}
             <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-              <cylinderGeometry args={[0.13, 0.13, 0.36, 28]} />
+              <cylinderGeometry args={[0.075, 0.075, 0.22, 28]} />
               <meshStandardMaterial color={CHROME} roughness={0.15} metalness={0.9} />
             </mesh>
             {/* Aros de retén laterales en carmesí */}
-            <mesh position={[0.19, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <torusGeometry args={[0.12, 0.02, 16, 32]} />
+            <mesh position={[0.12, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <torusGeometry args={[0.07, 0.012, 16, 28]} />
               <meshStandardMaterial color={CRIMSON_LIGHT} roughness={0.25} metalness={0.5} />
             </mesh>
-            <mesh position={[-0.19, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <torusGeometry args={[0.12, 0.02, 16, 32]} />
+            <mesh position={[-0.12, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <torusGeometry args={[0.07, 0.012, 16, 28]} />
               <meshStandardMaterial color={CRIMSON_LIGHT} roughness={0.25} metalness={0.5} />
             </mesh>
 
-            {/* ANTEBRAZO (LINK 2 - Estructura cilíndrica de precisión) */}
-            <group position={[0, 0.58, 0]}>
+            {/* ANTEBRAZO (LINK 2 - Estructura de precisión) */}
+            <group position={[0, 0.29, 0]}>
               {/* Caña central cilíndrica */}
               <mesh castShadow>
-                <cylinderGeometry args={[0.09, 0.12, 1.08, 28]} />
+                <cylinderGeometry args={[0.055, 0.07, 0.56, 28]} />
                 <meshStandardMaterial color={TITANIUM} roughness={0.3} metalness={0.7} />
               </mesh>
               {/* Cubierta superior esculpida en carmesí */}
-              <mesh position={[0, 0.04, 0.07]} castShadow>
-                <boxGeometry args={[0.14, 0.85, 0.05]} />
+              <mesh position={[0, 0.015, 0.04]} castShadow>
+                <boxGeometry args={[0.085, 0.46, 0.032]} />
                 <meshStandardMaterial color={CRIMSON} roughness={0.25} metalness={0.45} />
               </mesh>
-              {/* Cableado / conducto flexible decorativo */}
-              <mesh position={[0, 0, -0.09]}>
-                <cylinderGeometry args={[0.02, 0.02, 0.9, 16]} />
+              {/* Conducto flexible de señal */}
+              <mesh position={[0, 0.015, -0.05]}>
+                <cylinderGeometry args={[0.011, 0.011, 0.46, 16]} />
                 <meshStandardMaterial color={ALUMINUM} roughness={0.2} metalness={0.8} />
               </mesh>
             </group>
 
             {/* ===== MUÑECA (EJES 4/5/6) ===== */}
-            <group ref={wristRef} position={[0, 1.16, 0]}>
+            <group ref={wristRef} position={[0, 0.58, 0]}>
               {/* Rodamiento de muñeca */}
-              <mesh position={[0, 0.06, 0]} castShadow>
-                <cylinderGeometry args={[0.08, 0.09, 0.12, 24]} />
+              <mesh position={[0, 0.03, 0]} castShadow>
+                <cylinderGeometry args={[0.045, 0.055, 0.06, 24]} />
                 <meshStandardMaterial color={CHROME} roughness={0.15} metalness={0.92} />
               </mesh>
               {/* Placa de anclaje de la pinza */}
-              <mesh position={[0, 0.16, 0]} castShadow>
-                <boxGeometry args={[0.26, 0.08, 0.16]} />
+              <mesh position={[0, 0.075, 0]} castShadow>
+                <boxGeometry args={[0.16, 0.035, 0.09]} />
                 <meshStandardMaterial color={CRIMSON} roughness={0.28} metalness={0.5} />
               </mesh>
 
               {/* Sensor óptico central LED */}
-              <mesh position={[0, 0.2, 0.07]}>
-                <sphereGeometry args={[0.025, 16, 16]} />
+              <mesh position={[0, 0.09, 0.04]}>
+                <sphereGeometry args={[0.014, 16, 16]} />
                 <meshStandardMaterial color="#ffffff" emissive={ACCENT_GLOW} emissiveIntensity={1.8} />
               </mesh>
 
               {/* Guía lineal horizontal de la pinza */}
-              <mesh position={[0, 0.22, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-                <cylinderGeometry args={[0.02, 0.02, 0.28, 16]} />
+              <mesh position={[0, 0.105, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+                <cylinderGeometry args={[0.011, 0.011, 0.18, 16]} />
                 <meshStandardMaterial color={ALUMINUM} roughness={0.15} metalness={0.9} />
               </mesh>
 
               {/* ===== PINZA PARALELA INDUSTRIAL (Dedo Izquierdo) ===== */}
-              <group ref={leftFingerRef} position={[-0.09, 0.24, 0]}>
-                {/* Deslizador del dedo */}
-                <mesh position={[0, 0.05, 0]} castShadow>
-                  <boxGeometry args={[0.045, 0.08, 0.09]} />
+              <group ref={leftFingerRef} position={[-0.05, 0.12, 0]}>
+                <mesh position={[0, 0.025, 0]} castShadow>
+                  <boxGeometry args={[0.028, 0.045, 0.055]} />
                   <meshStandardMaterial color={TITANIUM} roughness={0.3} metalness={0.75} />
                 </mesh>
-                {/* Garra vertical */}
-                <mesh position={[0, 0.18, 0]} castShadow>
-                  <boxGeometry args={[0.035, 0.22, 0.07]} />
+                <mesh position={[0, 0.11, 0]} castShadow>
+                  <boxGeometry args={[0.020, 0.15, 0.045]} />
                   <meshStandardMaterial color={ALUMINUM} roughness={0.22} metalness={0.85} />
                 </mesh>
-                {/* Almohadilla de agarre interior en goma carmesí */}
-                <mesh position={[0.016, 0.2, 0]}>
-                  <boxGeometry args={[0.012, 0.16, 0.06]} />
+                <mesh position={[0.009, 0.115, 0]}>
+                  <boxGeometry args={[0.006, 0.11, 0.035]} />
                   <meshStandardMaterial color={CRIMSON} roughness={0.65} metalness={0.2} />
                 </mesh>
               </group>
 
               {/* ===== PINZA PARALELA INDUSTRIAL (Dedo Derecho) ===== */}
-              <group ref={rightFingerRef} position={[0.09, 0.24, 0]}>
-                {/* Deslizador del dedo */}
-                <mesh position={[0, 0.05, 0]} castShadow>
-                  <boxGeometry args={[0.045, 0.08, 0.09]} />
+              <group ref={rightFingerRef} position={[0.05, 0.12, 0]}>
+                <mesh position={[0, 0.025, 0]} castShadow>
+                  <boxGeometry args={[0.028, 0.045, 0.055]} />
                   <meshStandardMaterial color={TITANIUM} roughness={0.3} metalness={0.75} />
                 </mesh>
-                {/* Garra vertical */}
-                <mesh position={[0, 0.18, 0]} castShadow>
-                  <boxGeometry args={[0.035, 0.22, 0.07]} />
+                <mesh position={[0, 0.11, 0]} castShadow>
+                  <boxGeometry args={[0.020, 0.15, 0.045]} />
                   <meshStandardMaterial color={ALUMINUM} roughness={0.22} metalness={0.85} />
                 </mesh>
-                {/* Almohadilla de agarre interior en goma carmesí */}
-                <mesh position={[-0.016, 0.2, 0]}>
-                  <boxGeometry args={[0.012, 0.16, 0.06]} />
+                <mesh position={[-0.009, 0.115, 0]}>
+                  <boxGeometry args={[0.006, 0.11, 0.035]} />
                   <meshStandardMaterial color={CRIMSON} roughness={0.65} metalness={0.2} />
                 </mesh>
               </group>
@@ -263,29 +263,22 @@ export default function RobotArm3D({
 }) {
   return (
     <div className="w-full h-full relative flex items-center justify-center">
-      <Canvas
-        camera={{ position: [0, 0.35, 4.4], fov: 44 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        dpr={[1, 2]}
-      >
-        {/* Iluminación de estudio multi-punto */}
-        {/* Luz ambiental difusa para levantar sombras */}
-        <ambientLight intensity={1.3} />
+      <div className="absolute -top-[16%] -bottom-[16%] -left-[25%] -right-[25%]">
+        <Canvas
+          camera={{ position: [0, 0, 4.0], fov: 36 }}
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          dpr={[1, 2]}
+        >
+          {/* Iluminación de estudio multi-punto industrial */}
+          <ambientLight intensity={1.35} />
+          <directionalLight position={[4, 5, 4]} intensity={2.0} />
+          <directionalLight position={[-4, 3, 3]} intensity={1.3} color="#e8eeff" />
+          <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
+          <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
 
-        {/* Luz principal (Key light) con temperatura neutra/cálida */}
-        <directionalLight position={[4, 6, 5]} intensity={2.0} />
-
-        {/* Luz de relleno fría opuesta (Fill light) */}
-        <directionalLight position={[-4, 3, 3]} intensity={1.4} color="#e8eeff" />
-
-        {/* Luz de recorte (Rim light) trasera superior para marcar silueta metálica */}
-        <directionalLight position={[0, 5, -4]} intensity={1.8} color="#ffffff" />
-
-        {/* Luz de acento carmesí inferior sutil de la marca */}
-        <pointLight position={[0, -1.8, 1.5]} intensity={1.5} color={ACCENT_GLOW} distance={4} />
-
-        <ArmModel isHovered={isHovered} isClicked={isClicked} />
-      </Canvas>
+          <ArmModel isHovered={isHovered} isClicked={isClicked} />
+        </Canvas>
+      </div>
     </div>
   );
 }

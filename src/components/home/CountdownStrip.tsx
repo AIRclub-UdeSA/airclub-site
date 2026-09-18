@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Timer } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ArrowUpRight } from "lucide-react";
 import type { EventItem } from "@/lib/events";
+
+// Carga dinámica con SSR deshabilitado para el fondo 3D shadergradient
+const ShaderGradientBg = dynamic(
+  () => import("./ShaderGradientBg").then((mod) => mod.ShaderGradientBg),
+  { ssr: false }
+);
 
 function diffParts(targetMs: number) {
   const diff = targetMs - Date.now();
@@ -34,7 +41,7 @@ export function CountdownStrip({ event }: { event: EventItem }) {
 
   if (isPast) {
     return (
-      <section className="border-y border-border bg-card text-text px-6 sm:px-8 md:px-12 py-8">
+      <section className="border-y border-[#42433d] bg-[#0e100f] text-[#fffce1] px-6 sm:px-8 md:px-12 py-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <span className="font-display text-[1.2rem] font-bold">🎉 {event.title} está en curso</span>
           {event.externalUrl && (
@@ -42,7 +49,7 @@ export function CountdownStrip({ event }: { event: EventItem }) {
               href={event.externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-mono text-[.82rem] font-semibold uppercase tracking-wider text-crimson hover:underline"
+              className="inline-flex items-center gap-1.5 font-mono text-[.82rem] font-semibold uppercase tracking-wider text-[#ff2a6d] hover:underline"
             >
               Ver transmisión en vivo
               <ArrowUpRight className="h-4 w-4" />
@@ -54,53 +61,61 @@ export function CountdownStrip({ event }: { event: EventItem }) {
   }
 
   return (
-    <section id="cuenta-regresiva" className="border-y border-border/80 bg-surface/30 my-8">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 py-16 sm:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Lado izquierdo: Metadatos editoriales del evento */}
-          <div className="lg:col-span-6">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 font-mono text-[.7rem] uppercase tracking-[.22em] text-crimson font-bold">
-                <Timer className="h-3.5 w-3.5" />
-                Hito Nacional del Club
-              </span>
-            </div>
-            <h2 className="font-display text-[clamp(2rem,4vw,3.2rem)] font-extrabold tracking-tight text-text leading-[1.05] uppercase mb-3">
-              Challenge JAR 2026, Rosario
+    <section
+      id="cuenta-regresiva"
+      className="relative border-y border-white/10 bg-[#0e0309] text-[#fffce1] overflow-hidden my-16 py-16 sm:py-24"
+    >
+      {/* Fondo inmersivo 3D ShaderGradient en paleta carmesí/vino auténtica */}
+      <ShaderGradientBg />
+
+      {/* Contenido en primer plano */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 md:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 xl:gap-16 items-center">
+          {/* Lado izquierdo: Título, descripción y botones oficiales */}
+          <div className="lg:col-span-6 xl:col-span-6">
+            <h2 className="font-display text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#fffce1] leading-[0.94] uppercase mb-5">
+              Challenge JAR 2026,
+              <br />
+              <span className="text-[#ff2a6d]">Rosario.</span>
             </h2>
-            <p className="font-body text-[.98rem] text-text2 leading-[1.7] mb-6 max-w-lg">
-              El AIR Club UdeSA presenta un desafío de comportamiento autónomo con robots móviles en la Jornada Argentina de Robótica. Desarrollá en Gazebo y competí en pista física.
+
+            <p className="font-body text-[1rem] sm:text-[1.08rem] text-[#fffce1]/85 leading-[1.75] mb-8 max-w-lg">
+              El AIR Club UdeSA presenta un desafío nacional de comportamiento autónomo con robots móviles en la Jornada Argentina de Robótica. Desarrollá en Gazebo y competí en pista física.
             </p>
+
             <div className="flex flex-wrap items-center gap-4">
               {event.externalUrl && (
                 <a
                   href={event.externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-text bg-text px-6 py-2.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-bg transition-all hover:bg-crimson hover:border-crimson"
+                  className="group inline-flex items-center gap-2 rounded-full border-[1.5px] border-[#fffce1] px-7 py-3.5 font-mono text-[.82rem] font-semibold uppercase tracking-[.12em] text-[#fffce1] hover:bg-[#fffce1] hover:text-[#0e100f] transition-all"
                 >
-                  Sitio oficial JAR 2026
-                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  <span>Sitio oficial JAR 2026</span>
+                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
               )}
               <a
                 href="https://forms.gle/2zkW6gwJQptUzbXn6"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-text2 hover:text-crimson transition-colors"
+                className="inline-flex items-center gap-1.5 font-mono text-[.82rem] font-semibold uppercase tracking-[.12em] text-[#fffce1]/70 hover:text-[#ff2a6d] transition-colors"
               >
                 Postular equipo ↗
               </a>
             </div>
           </div>
 
-          {/* Lado derecho: Cronómetro Monumental en Columnas Arquitectónicas (Sin caja redondeada!) */}
-          <div className="lg:col-span-6 flex justify-start lg:justify-end">
-            <div className="grid grid-cols-4 divide-x divide-border/80 border-y sm:border-x border-border/80 bg-card py-6 px-2 sm:px-6 w-full max-w-xl">
+          {/* Lado derecho: Cronómetro puramente minimalista sin cajas ni bordes */}
+          <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center lg:items-end justify-center">
+            <div id="cronometro-unidades" className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4.5">
               <Unit value={parts?.d} label="Días" />
+              <Sep />
               <Unit value={parts?.h} label="Horas" />
+              <Sep />
               <Unit value={parts?.m} label="Minutos" />
-              <Unit value={parts?.s} label="Segundos" />
+              <Sep />
+              <Unit value={parts?.s} label="Segundos" isLive />
             </div>
           </div>
         </div>
@@ -109,15 +124,31 @@ export function CountdownStrip({ event }: { event: EventItem }) {
   );
 }
 
-function Unit({ value, label }: { value?: number; label: string }) {
+function Unit({ value, label, isLive }: { value?: number; label: string; isLive?: boolean }) {
   return (
-    <div className="text-center px-2 sm:px-4">
-      <span className="block font-logo text-[2.8rem] sm:text-[3.6rem] md:text-[4.2rem] font-normal leading-none tracking-tight text-text">
+    <div className="flex flex-col items-center">
+      <span
+        className={`block font-display text-[clamp(1.8rem,3vw,3rem)] font-extrabold leading-none tracking-tight tabular-nums ${
+          isLive ? "text-[#ff2a6d]" : "text-[#fffce1]"
+        }`}
+      >
         {value === undefined ? "--" : pad(value)}
       </span>
-      <span className="mt-2 block font-mono text-[.64rem] uppercase tracking-[.22em] text-mauve font-semibold">
+      <span
+        className={`mt-2 block font-mono text-[.56rem] sm:text-[.64rem] uppercase tracking-[.2em] ${
+          isLive ? "text-[#ff2a6d]/90 font-semibold" : "text-[#ddaabc]/80 font-medium"
+        }`}
+      >
         {label}
       </span>
     </div>
+  );
+}
+
+function Sep() {
+  return (
+    <span className="font-display text-[1.3rem] sm:text-[1.8rem] font-light text-white/25 -translate-y-1.5 select-none">
+      :
+    </span>
   );
 }

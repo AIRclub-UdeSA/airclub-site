@@ -13,9 +13,8 @@ export async function EventsTeaser() {
         <div className="mb-16 sm:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border/80 pb-12">
           <div>
             <div className="mb-4 flex items-center gap-3">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-crimson" />
-              <span className="font-mono text-[.72rem] uppercase tracking-[.25em] text-mauve font-semibold">
-                Agenda Oficial · Encuentros &amp; Desafíos
+              <span className="font-mono text-[.74rem] uppercase tracking-[.25em] text-mauve font-semibold">
+                &#123; Agenda // 04 · Convocatorias &amp; Desafíos &#125;
               </span>
             </div>
             <h2 className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.95] tracking-tight text-text uppercase">

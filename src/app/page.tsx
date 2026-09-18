@@ -1,6 +1,9 @@
 import { ArmHero } from "@/components/home/ArmHero";
 import { AboutSection } from "@/components/home/AboutSection";
+import { WordSlideshow } from "@/components/home/WordSlideshow";
+import { IdeaCallout } from "@/components/home/IdeaCallout";
 import { CountdownStrip } from "@/components/home/CountdownStrip";
+import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
@@ -14,14 +17,23 @@ export default async function HomePage() {
       <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
       <ArmHero />
       <div id="contenido" className="scroll-mt-20">
-        {/* Presentación del Club */}
+        {/* 01. Manifiesto del Club */}
         <AboutSection />
 
-        {/* El Hito más cercano + Contador */}
+        {/* 02. Slideshow Horizontal con Palabras Monumentales & Fondo Dinámico */}
+        <WordSlideshow />
+
+        {/* 03. "Tengo una idea, pero no sé por dónde empezar" */}
+        <IdeaCallout />
+
+        {/* 04. Hito Nacional + Cronómetro sobre ShaderGradient */}
         {featuredEvent && <CountdownStrip event={featuredEvent} />}
 
-        {/* Próximas Actividades */}
+        {/* 05. Próximas Actividades */}
         <EventsTeaser />
+
+        {/* 06. Plataforma Oficial JAR 2026: ROSMASTER X3 CAD en pista minimalista */}
+        <RosmasterTrack />
       </div>
     </>
   );
