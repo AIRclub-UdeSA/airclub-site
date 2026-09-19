@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo, useState, useEffect, useSyncExternalStore } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -15,7 +15,7 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
   const lidarRef = useRef<THREE.Object3D | null>(null);
 
   // Clona la escena para aislar modificaciones de materiales y nodos
-  const cloned = useMemo(() => {
+  const { cloned, wheels, lidar } = useMemo(() => {
     const root = scene.clone(true);
 
     // Ajuste específico de la cámara Orbbec Astra heredado de jar_site
@@ -83,8 +83,7 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
       }
     });
 
-    wheelsRef.current = detectedWheels;
-    lidarRef.current = root.getObjectByName("lidar_sensor") || null;
+    const lidarNode = root.getObjectByName("lidar_sensor") || null;
 
     // Normalización y centrado de escala del CAD (1.32 unidades de referencia)
     const box = new THREE.Box3().setFromObject(root);
@@ -99,8 +98,14 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
     root.position.y = -box.min.y * scale;
     root.position.z = -center.z * scale;
 
-    return root;
+    return { cloned: root, wheels: detectedWheels, lidar: lidarNode };
   }, [scene]);
+
+  // Las refs se actualizan en un efecto (no durante el render) para que useFrame las lea.
+  useEffect(() => {
+    wheelsRef.current = wheels;
+    lidarRef.current = lidar;
+  }, [wheels, lidar]);
 
   // Animación continua de avance a alta velocidad y rotación de actuadores
   const progressRef = useRef(-4);
@@ -174,12 +179,13 @@ function RunwayGrid() {
 }
 
 export function RosmasterTrack() {
-  const [mounted, setMounted] = useState(false);
+  // false en el servidor y en la hidratación, true ya en el cliente: el Canvas WebGL solo se monta ahí.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [speedBoost, setSpeedBoost] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <section

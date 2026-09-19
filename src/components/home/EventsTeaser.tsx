@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, MapPin, Calendar } from "lucide-react";
+import { ArrowUpRight, ArrowRight, MapPin } from "lucide-react";
 import { getUpcomingEvents } from "@/lib/events";
 import { formatEventDate, formatDaysUntil } from "@/lib/dates";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
