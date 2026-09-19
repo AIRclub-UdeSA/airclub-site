@@ -1,0 +1,50 @@
+.proyectos-container *, .proyectos-container *::before, .proyectos-container *::after {
+  box-sizing: border-box;
+}
+.proyectos-container {
+  min-height: 100vh;
+  background: transparent;
+  padding: 140px 28px 64px;
+  overflow-x: hidden;
+  color: var(--text, #1a0810);
+  font-family: var(--font-outfit), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.proyectos-container a {
+  color: #a40c4c;
+  text-decoration: none;
+}
+.proyectos-container a:hover {
+  color: #ac104c;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(46px) scale(0.62) rotate(-6deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+}
+@keyframes cardOut {
+  from { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  to { opacity: 0; transform: translateY(60px) scale(0.55) rotate(5deg); }
+}
+@keyframes veilIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes veilOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes slipUp {
+  from { opacity: 0; transform: translate(-50%, 26px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes stampIn {
+  from { opacity: 0; transform: rotate(-14deg) scale(1.5); }
+  to { opacity: 0.62; transform: rotate(-9deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .proyectos-container * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
