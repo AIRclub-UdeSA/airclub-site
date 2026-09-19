@@ -53,7 +53,7 @@ const fragmentShader = `
 `;
 
 function WavePlane() {
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
@@ -66,16 +66,15 @@ function WavePlane() {
   );
 
   useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
+    if (meshRef.current) {
+      uniforms.uTime.value = state.clock.getElapsedTime();
     }
   });
 
   return (
-    <mesh rotation={[-Math.PI / 4, 0, 0]} position={[0, -0.2, -0.5]}>
+    <mesh ref={meshRef} rotation={[-Math.PI / 4, 0, 0]} position={[0, -0.2, -0.5]}>
       <planeGeometry args={[7, 4.5, 48, 48]} />
       <shaderMaterial
-        ref={materialRef}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
