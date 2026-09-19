@@ -94,7 +94,10 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
     const scale = 2.4 / maxDim;
 
     root.scale.setScalar(scale);
-    root.position.copy(center).multiplyScalar(-scale);
+    // Alineamos el centro en X y Z a 0, y fijamos la base más baja de las ruedas exactamente en y = 0
+    root.position.x = -center.x * scale;
+    root.position.y = -box.min.y * scale;
+    root.position.z = -center.z * scale;
 
     return root;
   }, [scene]);
@@ -115,8 +118,8 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
 
     if (robotRigRef.current) {
       robotRigRef.current.position.x = progressRef.current;
-      // Ligera vibración de suspensión y cabeceo dinámico por aceleración
-      robotRigRef.current.position.y = -0.15 + Math.sin(state.clock.elapsedTime * 24) * 0.015;
+      // Posicionado estrictamente encima de la grilla (-0.75) con vibración de suspensión
+      robotRigRef.current.position.y = -0.745 + Math.abs(Math.sin(state.clock.elapsedTime * 24)) * 0.008;
       robotRigRef.current.rotation.z = -0.03; // Pitch leve hacia adelante
       // Rotado hacia la derecha (+X) con ligera inclinación hacia la cámara (3/4 dinámico)
       robotRigRef.current.rotation.y = Math.PI / 2 + 0.28;
@@ -134,7 +137,7 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
   });
 
   return (
-    <group ref={robotRigRef} position={[-10, -0.15, 0]}>
+    <group ref={robotRigRef} position={[-10, -0.745, 0]}>
       <primitive object={cloned} />
     </group>
   );

@@ -18,37 +18,37 @@ const SLIDES: WordSlide[] = [
     title: "WORKSHOPS",
     tagline: "Aprender metiendo mano. Conectamos cables, cargamos código y movemos motores sin requisitos previos.",
     href: "/eventos",
-    bg: "#1a0511", // Deep Velvet Bordeaux
+    bg: "#440924", // Deep Velvet Bordeaux Vivo
     accent: "#ff2a6d",
   },
   {
     title: "AIR TALKS",
     tagline: "Espacio abierto para que tesistas muestren sus avances, estudiantes compartan ideas y vengan invitados.",
     href: "/eventos",
-    bg: "#240616", // Rich Dark Ruby
-    accent: "#f0357f",
+    bg: "#520b2f", // Rich Saturated Ruby
+    accent: "#ff4d8d",
   },
   {
     title: "PROYECTOS ESTUDIANTILES",
     tagline: "Construcción de plataformas robóticas reales, chasis móviles omnidireccionales y visión por computadora.",
     href: "/plataformas",
-    bg: "#13030b", // Midnight Obsidian Cherry
-    accent: "#ff4370",
+    bg: "#380931", // Electric Midnight Plum
+    accent: "#ff5c8a",
   },
   {
     title: "COMPETENCIAS",
     tagline: "Impulsamos equipos para medirnos a nivel nacional: simulación en Gazebo y pista física en la JAR 2026.",
     href: "#cuenta-regresiva",
-    bg: "#28081c", // Deep Plum Crimson
-    accent: "#ff6392",
+    bg: "#5a0827", // Intense Cardinal Wine
+    accent: "#ff6b95",
   },
   {
     title: "GITHUB",
     tagline: "Nuestros paquetes, librerías y simuladores están abiertos en GitHub para que cualquiera clone y colabore.",
     href: "https://github.com/airclub-udesa",
     isExternal: true,
-    bg: "#170512", // Dark Rosewood Slate
-    accent: "#ddaabc",
+    bg: "#3b0d2a", // Saturated Deep Mauve Wine
+    accent: "#f7a8c4",
   },
 ];
 
@@ -95,9 +95,14 @@ export function WordSlideshow() {
       className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out border-y border-white/10 my-16 select-none"
       style={{ backgroundColor: activeSlide.bg }}
     >
-      {/* Resplandor ambiental de color sutil */}
+      {/* Resplandor ambiental dinámico superior derecho */}
       <div
-        className="absolute -right-24 -top-24 w-96 h-96 rounded-full blur-[140px] pointer-events-none opacity-20 transition-all duration-700"
+        className="absolute -right-20 -top-20 w-[480px] h-[480px] rounded-full blur-[140px] pointer-events-none opacity-35 transition-all duration-700"
+        style={{ backgroundColor: activeSlide.accent }}
+      />
+      {/* Resplandor ambiental complementario inferior izquierdo */}
+      <div
+        className="absolute -left-20 -bottom-20 w-[420px] h-[420px] rounded-full blur-[130px] pointer-events-none opacity-25 transition-all duration-700"
         style={{ backgroundColor: activeSlide.accent }}
       />
 

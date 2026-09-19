@@ -1,95 +1,200 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { ArrowUpRight, ArrowRight, MapPin, Calendar } from "lucide-react";
 import { getUpcomingEvents } from "@/lib/events";
-import { formatEventDate } from "@/lib/dates";
+import { formatEventDate, formatDaysUntil } from "@/lib/dates";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
 export async function EventsTeaser() {
   const upcoming = await getUpcomingEvents({ take: 3 });
 
   return (
-    <section id="actividades" className="px-6 sm:px-8 md:px-12 py-24 sm:py-36 max-w-7xl mx-auto">
-      <RevealOnScroll>
-        <div className="mb-16 sm:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border/80 pb-12">
-          <div>
-            <div className="mb-4 flex items-center gap-3">
-              <span className="font-mono text-[.74rem] uppercase tracking-[.25em] text-mauve font-semibold">
-                &#123; Agenda // 04 · Convocatorias &amp; Desafíos &#125;
-              </span>
-            </div>
-            <h2 className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.95] tracking-tight text-text uppercase">
+    <section id="actividades" className="px-6 sm:px-8 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto">
+      {/* Encabezado minimalista sin micro-etiquetas ni textos sobrantes */}
+      <div className="mb-10 sm:mb-14">
+        <RevealOnScroll>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border/80">
+            <h2 className="font-display text-[clamp(2.4rem,5vw,3.8rem)] font-black leading-[0.95] tracking-tight text-text uppercase">
               Próximas <span className="text-crimson">actividades.</span>
             </h2>
-          </div>
-          <p className="max-w-md font-body text-[1rem] leading-[1.75] text-text2">
-            Cada evento cuenta con documentación técnica, workshops preparatorios y fechas límite. Entrá para sumarte a los equipos.
-          </p>
-        </div>
-      </RevealOnScroll>
-
-      {/* Agenda Ledger: Lista abierta sin tarjetas redondeadas */}
-      <div className="divide-y divide-border/80 border-b border-border/80">
-        {upcoming.map((event, i) => (
-          <RevealOnScroll key={event.slug} delay={(i + 1) as 1 | 2 | 3}>
             <Link
-              href={event.externalUrl || `/eventos/${event.slug}`}
-              target={event.externalUrl ? "_blank" : undefined}
-              rel={event.externalUrl ? "noopener noreferrer" : undefined}
-              className="group py-8 sm:py-10 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-baseline transition-colors hover:bg-black/[0.015] dark:hover:bg-white/[0.015] px-2 sm:px-4"
+              href="/eventos"
+              className="group inline-flex items-center gap-1.5 font-mono text-[.82rem] uppercase tracking-[.14em] font-semibold text-text hover:text-crimson transition-colors"
             >
-              {/* Fecha y lugar */}
-              <div className="md:col-span-3">
-                <span className="font-mono text-[.76rem] font-semibold text-crimson block tracking-wider uppercase mb-1">
-                  {formatEventDate(event.startsAt, event.endsAt)}
-                </span>
-                {event.location && (
-                  <span className="font-mono text-[.68rem] uppercase tracking-widest text-text3 block">
-                    {event.location}
-                  </span>
-                )}
-              </div>
-
-              {/* Título */}
-              <div className="md:col-span-4">
-                <h3 className="font-display text-[1.4rem] sm:text-[1.65rem] font-bold text-text leading-snug group-hover:text-crimson transition-colors">
-                  {event.title}
-                </h3>
-                {event.tagline && (
-                  <span className="font-mono text-[.72rem] text-text3 mt-1 block">
-                    {event.tagline}
-                  </span>
-                )}
-              </div>
-
-              {/* Descripción */}
-              <div className="md:col-span-4">
-                <p className="font-body text-[.92rem] leading-[1.7] text-text2">
-                  {event.description}
-                </p>
-              </div>
-
-              {/* Acción / Flecha */}
-              <div className="md:col-span-1 flex justify-end">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/80 bg-card text-text group-hover:bg-crimson group-hover:text-white group-hover:border-crimson transition-all">
-                  <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </div>
-              </div>
+              <span>Ver calendario completo</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 text-crimson" />
             </Link>
-          </RevealOnScroll>
-        ))}
+          </div>
+        </RevealOnScroll>
       </div>
 
-      {/* Footer de la agenda: Enlace a calendario completo */}
-      <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
-        <span className="font-mono text-[.76rem] uppercase tracking-widest text-text3">
+      {/* Formato arquitectónico de eventos */}
+      {upcoming.length === 0 ? (
+        <div className="py-12 text-center border border-dashed border-border/80 p-8">
+          <p className="font-mono text-[.82rem] uppercase tracking-wider text-text3">
+            No hay actividades programadas por el momento.
+          </p>
+        </div>
+      ) : upcoming.length === 1 ? (
+        /* Caso destacado: Evento principal en panel editorial split */
+        <RevealOnScroll>
+          {upcoming.map((event) => {
+            const daysUntil = formatDaysUntil(event.startsAt);
+            const targetHref = event.externalUrl || `/eventos/${event.slug}`;
+            const isExternal = Boolean(event.externalUrl);
+
+            return (
+              <div
+                key={event.slug}
+                className="group relative border border-border/80 hover:border-crimson/80 bg-card/30 dark:bg-card/15 transition-colors p-8 sm:p-12"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
+                  {/* Lado izquierdo: Fecha monumental y estado */}
+                  <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-border/80 pb-6 lg:pb-0 lg:pr-8">
+                    <div className="flex items-center gap-2 mb-4 font-mono text-[.74rem] uppercase tracking-[.18em] font-semibold text-crimson">
+                      <span className="h-2 w-2 rounded-full bg-crimson animate-pulse" />
+                      <span>{daysUntil || "Convocatoria Activa"}</span>
+                    </div>
+
+                    <div className="mb-4">
+                      <span className="font-display text-[clamp(2.4rem,4.5vw,3.6rem)] font-black text-text leading-none tracking-tight block">
+                        {event.startsAt.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }).toUpperCase()}
+                      </span>
+                      <span className="font-mono text-[.78rem] uppercase tracking-[.18em] text-text3 mt-1.5 block">
+                        {formatEventDate(event.startsAt, event.endsAt)}
+                      </span>
+                    </div>
+
+                    {event.location && (
+                      <div className="flex items-center gap-1.5 font-mono text-[.76rem] uppercase tracking-[.14em] text-text2">
+                        <MapPin className="h-3.5 w-3.5 text-crimson" />
+                        <span>{event.location}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lado derecho: Título, descripción y botón de acción */}
+                  <div className="lg:col-span-8 flex flex-col justify-center">
+                    {event.tagline && (
+                      <span className="font-mono text-[.78rem] uppercase tracking-[.18em] text-mauve font-semibold mb-2 block">
+                        {event.tagline}
+                      </span>
+                    )}
+
+                    <h3 className="font-display text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold text-text group-hover:text-crimson transition-colors leading-[1.08] tracking-tight uppercase mb-4">
+                      {event.title}
+                    </h3>
+
+                    <p className="font-body text-[1rem] sm:text-[1.08rem] leading-relaxed text-text2 mb-8 max-w-2xl">
+                      {event.description}
+                    </p>
+
+                    <div>
+                      {isExternal ? (
+                        <a
+                          href={targetHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-background transition-all"
+                        >
+                          <span>Acceder al evento</span>
+                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
+                        </a>
+                      ) : (
+                        <Link
+                          href={targetHref}
+                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-background transition-all"
+                        >
+                          <span>Acceder al evento</span>
+                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </RevealOnScroll>
+      ) : (
+        /* Caso múltiple: Retícula de paneles arquitectónicos */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {upcoming.map((event, i) => {
+            const daysUntil = formatDaysUntil(event.startsAt);
+            const targetHref = event.externalUrl || `/eventos/${event.slug}`;
+            const isExternal = Boolean(event.externalUrl);
+
+            return (
+              <RevealOnScroll key={event.slug} delay={(i + 1) as 1 | 2 | 3}>
+                <div className="group h-full border border-border/80 hover:border-crimson/80 bg-card/30 dark:bg-card/15 transition-colors p-7 sm:p-8 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-6">
+                      <span className="font-mono text-[.7rem] uppercase tracking-[.18em] font-semibold text-crimson flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-crimson animate-pulse" />
+                        {daysUntil || "Próximamente"}
+                      </span>
+                      {event.location && (
+                        <span className="font-mono text-[.68rem] uppercase tracking-[.12em] text-text3">
+                          {event.location}
+                        </span>
+                      )}
+                    </div>
+
+                    {event.tagline && (
+                      <span className="font-mono text-[.74rem] uppercase tracking-[.16em] text-mauve font-semibold mb-2 block">
+                        {event.tagline}
+                      </span>
+                    )}
+
+                    <h3 className="font-display text-[1.45rem] font-bold text-text group-hover:text-crimson transition-colors leading-snug uppercase mb-3">
+                      {event.title}
+                    </h3>
+
+                    <p className="font-body text-[.92rem] leading-relaxed text-text2 mb-6">
+                      {event.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-6 border-t border-border/80 flex items-center justify-between">
+                    <span className="font-mono text-[.74rem] uppercase tracking-wider text-text3">
+                      {formatEventDate(event.startsAt, event.endsAt)}
+                    </span>
+
+                    {isExternal ? (
+                      <a
+                        href={targetHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/80 group-hover:border-crimson group-hover:bg-crimson group-hover:text-white transition-all text-text"
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <Link
+                        href={targetHref}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/80 group-hover:border-crimson group-hover:bg-crimson group-hover:text-white transition-all text-text"
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </RevealOnScroll>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Footer de la sección: Proponer evento */}
+      <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-border/80">
+        <span className="font-mono text-[.76rem] uppercase tracking-[.16em] text-text3">
           ¿Querés proponer un workshop o charla técnica?
         </span>
         <Link
-          href="/eventos"
-          className="group inline-flex items-center gap-2 font-mono text-[.8rem] uppercase tracking-[.12em] font-semibold text-text hover:text-crimson transition-colors"
+          href="/contacto"
+          className="group inline-flex items-center gap-1.5 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:text-crimson transition-colors"
         >
-          <span>Explorar agenda completa del club</span>
-          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 text-crimson" />
+          <span>Proponer actividad</span>
+          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1 text-crimson" />
         </Link>
       </div>
     </section>

@@ -29,11 +29,11 @@ export default async function HomePage() {
         {/* 04. Hito Nacional + Cronómetro sobre ShaderGradient */}
         {featuredEvent && <CountdownStrip event={featuredEvent} />}
 
-        {/* 05. Próximas Actividades */}
-        <EventsTeaser />
-
-        {/* 06. Plataforma Oficial JAR 2026: ROSMASTER X3 CAD en pista minimalista */}
+        {/* 05. Plataforma Oficial JAR 2026: ROSMASTER X3 CAD en pista minimalista (fondo blanco + grilla rosa) */}
         <RosmasterTrack />
+
+        {/* 06. Próximas Actividades */}
+        <EventsTeaser />
       </div>
     </>
   );
