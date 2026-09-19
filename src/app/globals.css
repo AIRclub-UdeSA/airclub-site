@@ -237,6 +237,67 @@ body {
   }
 }
 
+/* ===== AIR Talks: apertura del drawer de detalle ===== */
+/* Una vuelta de luz por el borde al abrirse, que se apaga sola. */
+@keyframes drawer-flash-fade {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.drawer-flash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--trail-angle),
+    transparent 0deg,
+    transparent 255deg,
+    var(--rose) 300deg,
+    var(--crimson) 328deg,
+    var(--rose) 345deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation:
+    trail-spin 1.2s linear 1,
+    drawer-flash-fade 1.2s ease-out 1 forwards;
+  pointer-events: none;
+}
+/* Cada bloque del detalle sube y aparece, uno tras otro (--d = retraso). */
+@keyframes talk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.talk-rise {
+  animation: talk-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-flash::before,
+  .talk-rise {
+    animation: none !important;
+  }
+}
+
 /* ===== Arm Hero: 100vh Gate Screen (Flying Papers style) ===== */
 .arm-gate-screen {
   min-height: 100vh;

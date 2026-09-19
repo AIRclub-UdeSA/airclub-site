@@ -10,6 +10,7 @@ import { NavHoverHighlight } from "./NavHoverHighlight";
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/eventos", label: "Eventos" },
+  { href: "/talks", label: "AIR Talks" },
   { href: "/plataformas", label: "Robots" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
