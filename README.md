@@ -1,4 +1,4 @@
-# pagina-web
+# airclub-site
 
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
