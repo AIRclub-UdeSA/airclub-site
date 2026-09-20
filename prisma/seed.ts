@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { events } from "./seed-data/events";
 import { robots } from "./seed-data/robots";
-import { team } from "./seed-data/team";
+import { collaborators, founders } from "./seed-data/team";
 
 const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -34,12 +34,18 @@ async function main() {
     });
   }
 
+  // El grupo (Fundador / Colaborador) se guarda en `role`. Los links y la foto de LinkedIn (`links`) todavía no tienen
+  // columna en TeamMember, así que por ahora no se persisten en la base.
+  const people = [
+    ...founders.map((m) => ({ ...m, role: m.role ?? "Fundador" })),
+    ...collaborators.map((m) => ({ ...m, role: m.role ?? "Colaborador" })),
+  ];
   await prisma.teamMember.deleteMany({});
   await prisma.teamMember.createMany({
-    data: team.map((member, i) => ({ ...member, order: i })),
+    data: people.map(({ name, role, photoUrl }, i) => ({ name, role, photoUrl, order: i })),
   });
 
-  console.log(`Seed OK: ${events.length} eventos, ${robots.length} robots, ${team.length} personas.`);
+  console.log(`Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas.`);
 }
 
 main()
