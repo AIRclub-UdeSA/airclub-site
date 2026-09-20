@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useRef, useMemo, useState, useEffect, useSyncExternalStore } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -83,9 +83,6 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
       }
     });
 
-    wheelsRef.current = detectedWheels;
-    lidarRef.current = root.getObjectByName("lidar_sensor") || null;
-
     // Normalización y centrado de escala del CAD (1.32 unidades de referencia)
     const box = new THREE.Box3().setFromObject(root);
     const size = box.getSize(new THREE.Vector3());
@@ -101,6 +98,17 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
 
     return root;
   }, [scene]);
+
+  useEffect(() => {
+    const wheels: THREE.Object3D[] = [];
+    cloned.traverse((child) => {
+      if (child.name && child.name.toLowerCase().includes("wheel")) {
+        wheels.push(child);
+      }
+    });
+    wheelsRef.current = wheels;
+    lidarRef.current = cloned.getObjectByName("lidar_sensor") || null;
+  }, [cloned]);
 
   // Animación continua de avance a alta velocidad y rotación de actuadores
   const progressRef = useRef(-4);
@@ -173,13 +181,15 @@ function RunwayGrid() {
   );
 }
 
-export function RosmasterTrack() {
-  const [mounted, setMounted] = useState(false);
-  const [speedBoost, setSpeedBoost] = useState(false);
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export function RosmasterTrack() {
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const [speedBoost, setSpeedBoost] = useState(false);
 
   return (
     <section
