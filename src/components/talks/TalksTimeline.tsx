@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, ExternalLink, Play, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Play, Presentation, Camera, X } from "lucide-react";
 import { formatEventDate } from "@/lib/dates";
-import type { TalkMedia } from "@/lib/talks";
+import type { TalkMedia, TalkSlide, TalkSpeaker } from "@/lib/talks";
+import type { FloatingWindowTab } from "./TalkFloatingWindow";
 import { TiltCard } from "@/components/shared/TiltCard";
 import { cn } from "@/lib/utils";
 
@@ -14,10 +15,12 @@ export type TimelineTalk = {
   subtitle: string;
   details: string;
   abstract: string;
+  speaker?: TalkSpeaker;
   startsAt?: string; // ISO; sin fecha = siempre al final
   dateLabel?: string;
   placeholder?: string;
   media: TalkMedia[];
+  slides?: TalkSlide[];
   links?: { label: string; url: string }[];
   cta?: { label: string; url: string };
 };
@@ -179,7 +182,13 @@ function TalkDetail({ talk }: { talk: TimelineTalk }) {
   );
 }
 
-export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; nextSlug: string | null }) {
+interface TalksTimelineProps {
+  talks: TimelineTalk[];
+  nextSlug: string | null;
+  onOpenTalk?: (slug: string, tab?: FloatingWindowTab) => void;
+}
+
+export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProps) {
   // Posición del ancla "hoy": justo antes de la próxima charla; si no hay, antes de las tarjetas sin fecha
   // (Call for Speakers), que siempre van al final.
   const firstUndated = talks.findIndex((t) => !t.startsAt);
@@ -201,9 +210,7 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
   const closeRef = useRef<HTMLButtonElement>(null);
   const lastTrigger = useRef<HTMLElement | null>(null);
-  const drag = useRef({ active: false, moved: false, startX: 0, startScroll: 0 });
-
-  const isHorizontal = () => window.matchMedia("(min-width: 768px)").matches;
+  const isHorizontal = () => (typeof window !== "undefined" ? window.matchMedia("(min-width: 768px)").matches : false);
 
   const center = useCallback((id: string, smooth = true) => {
     const el = itemRefs.current[id];
@@ -240,7 +247,6 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
   }, [nextSlug]);
 
   useLayoutEffect(() => {
-    // Solo aplica al eje horizontal (desktop); en mobile la página no salta sola.
     center(TODAY_ID, false);
     applyFocus();
   }, [center, applyFocus]);
@@ -284,7 +290,12 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
     };
   }, [open, closeDrawer]);
 
-  function openTalk(slug: string, trigger?: HTMLElement | null) {
+  function handleCardClick(slug: string, trigger?: HTMLElement | null, tab?: FloatingWindowTab) {
+    if (onOpenTalk) {
+      onOpenTalk(slug, tab);
+      center(slug);
+      return;
+    }
     if (trigger) lastTrigger.current = trigger;
     setSelected(slug);
     setOpen(true);
@@ -304,22 +315,24 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
     }
   }
 
-  // Drag con mouse (el touch ya scrollea nativo).
+  const pointerState = useRef({ active: false, moved: false, startX: 0, startScroll: 0 });
+
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType !== "mouse" || !trackRef.current) return;
-    drag.current = { active: true, moved: false, startX: e.clientX, startScroll: trackRef.current.scrollLeft };
+    pointerState.current = { active: true, moved: false, startX: e.clientX, startScroll: trackRef.current.scrollLeft };
   }
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    const d = drag.current;
+    const d = pointerState.current;
     if (!d.active || !trackRef.current) return;
     const dx = e.clientX - d.startX;
     if (Math.abs(dx) > 5) d.moved = true;
     if (d.moved) trackRef.current.scrollLeft = d.startScroll - dx;
   }
   function endDrag() {
-    drag.current.active = false;
-    // El click posterior al drag se descarta en onClickCapture; el flag se limpia después.
-    setTimeout(() => (drag.current.moved = false), 0);
+    pointerState.current.active = false;
+    setTimeout(() => {
+      pointerState.current.moved = false;
+    }, 0);
   }
 
   const selectedTalk = talks.find((t) => t.slug === selected);
@@ -334,7 +347,7 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
         onClickCapture={(e) => {
-          if (drag.current.moved) e.stopPropagation();
+          if (pointerState.current.moved) e.stopPropagation();
         }}
         className={cn(
           "flex flex-col gap-8 px-5.5",
@@ -357,6 +370,9 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
           }
           const isSelected = open && item.slug === selected;
           const upcoming = talks.indexOf(item) >= nextIndex;
+          const hasSlides = item.slides && item.slides.length > 0;
+          const hasMedia = item.media && item.media.length > 0;
+
           return (
             <div key={item.slug} className="shrink-0 md:w-[400px] md:px-4">
               <button
@@ -364,7 +380,7 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
                 ref={(el) => {
                   itemRefs.current[item.slug] = el;
                 }}
-                onClick={(e) => openTalk(item.slug, e.currentTarget)}
+                onClick={(e) => handleCardClick(item.slug, e.currentTarget)}
                 className="group block w-full text-left transition-[filter,opacity] duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-crimson-text"
               >
                 {/* Eje: línea con nodo */}
@@ -393,11 +409,29 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
                       isSelected ? "border-border-h after:opacity-100!" : "border-border group-hover:border-border-h",
                     )}
                   >
-                    <Photo
-                      talk={item}
-                      className="aspect-[16/9] w-full rounded-xl"
-                      sizes="(min-width: 768px) 430px, 100vw"
-                    />
+                    <div className="relative">
+                      <Photo
+                        talk={item}
+                        className="aspect-[16/9] w-full rounded-xl"
+                        sizes="(min-width: 768px) 430px, 100vw"
+                      />
+                      {/* Badges de recursos disponibles */}
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                        {hasSlides && (
+                          <span className="flex items-center gap-1 rounded-full bg-black/75 px-2 py-0.5 font-mono text-[.64rem] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                            <Presentation size={11} className="text-crimson" />
+                            <span>Slides</span>
+                          </span>
+                        )}
+                        {hasMedia && (
+                          <span className="flex items-center gap-1 rounded-full bg-black/75 px-2 py-0.5 font-mono text-[.64rem] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+                            <Camera size={11} />
+                            <span>{item.media.length}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="mt-4 px-1 pb-1">
                       <div className="font-display text-[1.2rem] font-extrabold uppercase leading-[1.12] tracking-tight text-text">
                         {item.title}
@@ -447,66 +481,67 @@ export function TalksTimeline({ talks, nextSlug }: { talks: TimelineTalk[]; next
         </div>
       </div>
 
-      {/* Drawer lateral con el detalle */}
-      <div
-        className={cn(
-          "fixed inset-0 z-[1100] transition-opacity duration-300",
-          open ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-        aria-hidden={!open}
-        inert={!open}
-      >
-        <div className="absolute inset-0 bg-black/45 backdrop-blur-[3px]" onClick={closeDrawer} />
-        <aside
-          role="dialog"
-          aria-modal="true"
-          aria-label="Detalle de la charla"
-          onKeyDown={(e) => {
-            if (e.key === "ArrowRight") step(1);
-            if (e.key === "ArrowLeft") step(-1);
-          }}
+      {/* Drawer lateral de respaldo si no hay modal externo */}
+      {!onOpenTalk && (
+        <div
           className={cn(
-            "absolute right-0 top-0 h-full w-full overflow-y-auto border-l border-border bg-bg px-6 pb-12 transition-transform sm:w-[600px] sm:rounded-l-[28px] sm:px-8",
-            // Entra con desaceleración larga y sale más rápido; al abrir, una luz recorre el borde.
-            open
-              ? "drawer-flash translate-x-0 duration-[500ms] ease-[cubic-bezier(.22,1,.36,1)]"
-              : "translate-x-full duration-[260ms] ease-in",
+            "fixed inset-0 z-[1100] transition-opacity duration-300",
+            open ? "opacity-100" : "pointer-events-none opacity-0",
           )}
+          aria-hidden={!open}
+          inert={!open}
         >
-          <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between bg-bg/90 px-6 py-4 backdrop-blur-md sm:-mx-8 sm:px-8">
-            <div className="flex items-center gap-2">
+          <div className="absolute inset-0 bg-black/45 backdrop-blur-[3px]" onClick={closeDrawer} />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Detalle de la charla"
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight") step(1);
+              if (e.key === "ArrowLeft") step(-1);
+            }}
+            className={cn(
+              "absolute right-0 top-0 h-full w-full overflow-y-auto border-l border-border bg-bg px-6 pb-12 transition-transform sm:w-[600px] sm:rounded-l-[28px] sm:px-8",
+              open
+                ? "drawer-flash translate-x-0 duration-[500ms] ease-[cubic-bezier(.22,1,.36,1)]"
+                : "translate-x-full duration-[260ms] ease-in",
+            )}
+          >
+            <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between bg-bg/90 px-6 py-4 backdrop-blur-md sm:-mx-8 sm:px-8">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Charla anterior"
+                  onClick={() => step(-1)}
+                  disabled={selectedIndex <= 0}
+                  className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson disabled:pointer-events-none disabled:opacity-30"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Charla siguiente"
+                  onClick={() => step(1)}
+                  disabled={selectedIndex >= talks.length - 1}
+                  className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson disabled:pointer-events-none disabled:opacity-30"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              </div>
               <button
+                ref={closeRef}
                 type="button"
-                aria-label="Charla anterior"
-                onClick={() => step(-1)}
-                disabled={selectedIndex <= 0}
-                className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson disabled:pointer-events-none disabled:opacity-30"
+                aria-label="Cerrar detalle"
+                onClick={closeDrawer}
+                className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson"
               >
-                <ArrowLeft size={16} />
-              </button>
-              <button
-                type="button"
-                aria-label="Charla siguiente"
-                onClick={() => step(1)}
-                disabled={selectedIndex >= talks.length - 1}
-                className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson disabled:pointer-events-none disabled:opacity-30"
-              >
-                <ArrowRight size={16} />
+                <X size={16} />
               </button>
             </div>
-            <button
-              ref={closeRef}
-              type="button"
-              aria-label="Cerrar detalle"
-              onClick={closeDrawer}
-              className="rounded-full border border-text p-2 text-text transition-colors hover:border-crimson hover:text-crimson"
-            >
-              <X size={16} />
-            </button>
-          </div>
-          {selectedTalk && <TalkDetail key={`${selectedTalk.slug}:${openTick}`} talk={selectedTalk} />}
-        </aside>
-      </div>
+            {selectedTalk && <TalkDetail key={`${selectedTalk.slug}:${openTick}`} talk={selectedTalk} />}
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
