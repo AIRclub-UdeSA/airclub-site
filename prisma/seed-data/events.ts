@@ -38,28 +38,4 @@ export const events: SeedEvent[] = [
     rsvpEnabled: false,
     featuredForCountdown: true,
   },
-  {
-    slug: "taller-ros2-gazebo",
-    title: "Workshop: Simulación con ROS 2 y Gazebo",
-    tagline: "Hands-on Workshop",
-    description:
-      "Aprender metiendo mano en entornos de simulación física, control de robots móviles por topics e integración de sensores LIDAR.",
-    location: "Laboratorio M112",
-    startsAt: new Date("2026-10-08T16:00:00-03:00"),
-    endsAt: new Date("2026-10-08T18:30:00-03:00"),
-    rsvpEnabled: false,
-    featuredForCountdown: false,
-  },
-  {
-    slug: "air-talks-02",
-    title: "AIR Talks #2: Navegación Autónoma y Percepción",
-    tagline: "Charla abierta & demo",
-    description:
-      "Discusión técnica con tesistas e investigadores invitados sobre algoritmos de SLAM y percepción visual en robots móviles reales.",
-    location: "Aula Magna",
-    startsAt: new Date("2026-10-22T17:00:00-03:00"),
-    endsAt: new Date("2026-10-22T18:30:00-03:00"),
-    rsvpEnabled: false,
-    featuredForCountdown: false,
-  },
 ];
