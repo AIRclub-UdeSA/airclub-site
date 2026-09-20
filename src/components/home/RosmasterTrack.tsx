@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState, useEffect, useSyncExternalStore } from "react";
+import { useRef, useMemo, useState, useSyncExternalStore } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
@@ -11,8 +11,6 @@ useGLTF.preload("/models/rosmaster_unified.glb");
 function CadRobot({ speedBoost }: { speedBoost: boolean }) {
   const { scene } = useGLTF("/models/rosmaster_unified.glb");
   const robotRigRef = useRef<THREE.Group>(null);
-  const wheelsRef = useRef<THREE.Object3D[]>([]);
-  const lidarRef = useRef<THREE.Object3D | null>(null);
 
   // Clona la escena para aislar modificaciones de materiales y nodos
   const cloned = useMemo(() => {
@@ -54,8 +52,6 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
       metalness: 0.6,
     });
 
-    const detectedWheels: THREE.Object3D[] = [];
-
     root.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
@@ -77,10 +73,6 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
           mesh.material = lidarMaterial;
         }
       }
-
-      if (child.name && child.name.toLowerCase().includes("wheel")) {
-        detectedWheels.push(child);
-      }
     });
 
     // Normalización y centrado de escala del CAD (1.32 unidades de referencia)
@@ -99,18 +91,7 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
     return root;
   }, [scene]);
 
-  useEffect(() => {
-    const wheels: THREE.Object3D[] = [];
-    cloned.traverse((child) => {
-      if (child.name && child.name.toLowerCase().includes("wheel")) {
-        wheels.push(child);
-      }
-    });
-    wheelsRef.current = wheels;
-    lidarRef.current = cloned.getObjectByName("lidar_sensor") || null;
-  }, [cloned]);
-
-  // Animación continua de avance a alta velocidad y rotación de actuadores
+  // Animación continua de avance a alta velocidad y cabeceo dinámico
   const progressRef = useRef(-4);
 
   useFrame((state, delta) => {
@@ -131,16 +112,6 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
       robotRigRef.current.rotation.z = -0.03; // Pitch leve hacia adelante
       // Rotado hacia la derecha (+X) con ligera inclinación hacia la cámara (3/4 dinámico)
       robotRigRef.current.rotation.y = Math.PI / 2 + 0.28;
-    }
-
-    // Rotación de ruedas mecanum con el avance (eje de rodamiento hacia adelante)
-    wheelsRef.current.forEach((w) => {
-      w.rotation.y += delta * speed * 3.2;
-    });
-
-    // Rotación rápida del escáner LiDAR 360°
-    if (lidarRef.current) {
-      lidarRef.current.rotation.y += delta * 16;
     }
   });
 
