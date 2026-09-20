@@ -29,29 +29,29 @@ export function TalkFeaturedShowcase({
       {/* Fondo inmersivo 3D ShaderGradient de Challenge JAR */}
       <ShaderGradientBg />
 
-      <div className="relative z-10 w-full max-w-7xl px-4 sm:px-8 md:px-12">
+      <div className="relative z-10 w-full px-4 sm:px-8 md:px-12">
         {/* ===== MÓDULO AUDITORIO DARK VELVET: ÚLTIMA CHARLA REALIZADA ===== */}
         <article className="border-b border-white/10 pb-12 md:pb-16">
-          {/* Metadatos en JetBrains Mono sobrio */}
+          {/* Metadatos en JetBrains Mono sobrio que van de borde a borde */}
           <div className="flex flex-wrap items-baseline justify-between gap-4 font-mono text-[.8rem] uppercase tracking-[.16em] text-white/40">
             <time dateTime="2026-09-03">03 de Septiembre, 2026</time>
             <span>Aula Magna · Campus Victoria, UdeSA</span>
           </div>
 
-          {/* Título de la charla en Syne con peso audaz pero en Title Case para no competir con el masthead */}
-          <h2 className="mt-4 font-display text-[clamp(1.85rem,3.6vw,3.2rem)] font-bold tracking-tight text-white leading-[1.1]">
+          {/* Título de la charla en Syne aprovechando el ancho disponible */}
+          <h2 className="mt-4 font-display text-[clamp(2rem,3.8vw,3.6rem)] font-bold tracking-tight text-white leading-[1.08]">
             Presentación del Club <span className="text-crimson font-light">&amp;</span> Tadeo Casiraghi
           </h2>
 
-          {/* Subtítulo del tema en Outfit cursiva elegante, sin el look plano de código */}
-          <p className="mt-2.5 font-body text-[1.05rem] sm:text-[1.18rem] text-rose/90 font-light italic leading-relaxed">
+          {/* Subtítulo del tema en Outfit cursiva elegante */}
+          <p className="mt-2.5 font-body text-[1.05rem] sm:text-[1.2rem] text-rose/90 font-light italic leading-relaxed">
             “Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas”
           </p>
 
-          {/* Layout asimétrico de sala de proyección */}
-          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14 items-start">
-            {/* Fotografía editorial de la sesión (7 cols) */}
-            <div className="lg:col-span-7 flex flex-col">
+          {/* Layout cinematográfico de ancho completo */}
+          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-12 xl:gap-16 items-start">
+            {/* Fotografía editorial de la sesión (7 cols en lg, 8 cols en xl) */}
+            <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
               <div
                 onClick={() => onOpenTalk(latestPastTalk.slug, "gallery")}
                 className="group relative aspect-[16/10] w-full cursor-pointer overflow-hidden rounded-xl bg-black border border-white/15 shadow-2xl"
@@ -62,7 +62,7 @@ export function TalkFeaturedShowcase({
                     alt="Presentación de AIR Club en Aula Magna"
                     fill
                     priority
-                    sizes="(min-width: 1024px) 720px, 100vw"
+                    sizes="(min-width: 1280px) 68vw, (min-width: 1024px) 60vw, 100vw"
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                   />
                 )}
@@ -101,8 +101,8 @@ export function TalkFeaturedShowcase({
               </div>
             </div>
 
-            {/* Ficha del orador y crónica directa (5 cols) */}
-            <div className="lg:col-span-5 flex flex-col justify-between">
+            {/* Ficha del orador y crónica directa (5 cols en lg, 4 cols en xl) */}
+            <div className="lg:col-span-5 xl:col-span-4 flex flex-col justify-between">
               <div>
                 {/* Ficha de Tadeo Casiraghi con foto real de LinkedIn */}
                 {latestPastTalk.speaker && (
@@ -146,7 +146,7 @@ export function TalkFeaturedShowcase({
 
                 {/* Crónica directa y concisa sin relleno */}
                 <div className="mt-6">
-                  <p className="text-[.98rem] leading-[1.8] text-white/80">
+                  <p className="text-[.98rem] leading-[1.8] text-white/80 max-w-xl">
                     Primer encuentro abierto de AIR Club ante más de 40 estudiantes, docentes e investigadores. Presentamos
                     los proyectos de robótica autónoma, el Challenge JAR 2026 y los avances de tesis de Tadeo Casiraghi sobre
                     diseño, actuadores y control biomecánico de prótesis activas de tobillo.
@@ -161,15 +161,15 @@ export function TalkFeaturedShowcase({
         {nextUpcomingTalk && (
           <section className="pt-10 md:pt-14">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-baseline">
-              <div className="lg:col-span-4 font-mono text-[.78rem] uppercase tracking-[.18em] text-crimson-text font-semibold">
+              <div className="lg:col-span-4 xl:col-span-3 font-mono text-[.78rem] uppercase tracking-[.18em] text-crimson-text font-semibold">
                 Próxima Edición · {nextUpcomingTalk.dateLabel ?? "Octubre 2026"}
               </div>
 
-              <div className="lg:col-span-8">
+              <div className="lg:col-span-8 xl:col-span-9">
                 <h3 className="font-display text-[clamp(1.5rem,2.8vw,2.2rem)] font-bold leading-[1.1] tracking-tight text-white">
                   {nextUpcomingTalk.title}
                 </h3>
-                <p className="mt-3 text-[.96rem] leading-[1.7] text-white/70 max-w-[60ch]">
+                <p className="mt-3 text-[.96rem] leading-[1.7] text-white/70 max-w-[75ch]">
                   {nextUpcomingTalk.abstract}
                 </p>
 
