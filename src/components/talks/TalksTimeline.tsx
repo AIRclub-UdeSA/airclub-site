@@ -95,7 +95,7 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
               <span className="size-2 rounded-full bg-crimson" />
               <span>Cronograma & Archivo</span>
             </div>
-            <h2 className="mt-1 font-display text-[clamp(1.6rem,2.8vw,2.3rem)] font-black uppercase tracking-tight text-text">
+            <h2 className="mt-1 font-display text-[clamp(1.5rem,2.6vw,2.2rem)] font-bold tracking-tight text-text">
               Sesiones del Club
             </h2>
           </div>

@@ -1,9 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Presentation, Camera, ArrowRight, ExternalLink } from "lucide-react";
 import type { TimelineTalk } from "./TalksTimeline";
 import type { FloatingWindowTab } from "./TalkFloatingWindow";
+
+const ShaderGradientBg = dynamic(
+  () => import("../home/ShaderGradientBg").then((mod) => mod.ShaderGradientBg),
+  { ssr: false }
+);
 
 interface TalkFeaturedShowcaseProps {
   latestPastTalk?: TimelineTalk;
@@ -19,8 +25,11 @@ export function TalkFeaturedShowcase({
   if (!latestPastTalk) return null;
 
   return (
-    <div className="w-full bg-[#0c0407] text-[#f5e8ec] border-b border-white/10">
-      <div className="mx-auto max-w-7xl px-6 py-12 sm:px-8 sm:py-16 md:px-12 md:py-20">
+    <section className="relative overflow-hidden my-6 sm:my-10 bg-[#0e0407] text-[#f5e8ec] py-10 sm:py-14 md:py-18 shadow-2xl">
+      {/* Fondo inmersivo 3D ShaderGradient de Challenge JAR */}
+      <ShaderGradientBg />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 md:px-12">
         {/* ===== MÓDULO AUDITORIO DARK VELVET: ÚLTIMA CHARLA REALIZADA ===== */}
         <article className="border-b border-white/10 pb-12 md:pb-16">
           {/* Metadatos en JetBrains Mono sobrio */}
@@ -29,13 +38,13 @@ export function TalkFeaturedShowcase({
             <span>Aula Magna · Campus Victoria, UdeSA</span>
           </div>
 
-          {/* Título de la charla en blanco sobre fondo terciopelo */}
-          <h2 className="mt-3 font-display text-[clamp(2.2rem,5vw,4.2rem)] font-black uppercase leading-[0.95] tracking-tight text-white">
-            Presentación del club <span className="text-crimson">&</span> Tadeo Casiraghi
+          {/* Título de la charla en Syne con peso audaz pero en Title Case para no competir con el masthead */}
+          <h2 className="mt-4 font-display text-[clamp(1.85rem,3.6vw,3.2rem)] font-bold tracking-tight text-white leading-[1.1]">
+            Presentación del Club <span className="text-crimson font-light">&amp;</span> Tadeo Casiraghi
           </h2>
 
-          {/* Subtítulo único: tema de investigación */}
-          <p className="mt-3 font-mono text-[.95rem] sm:text-[1.1rem] text-crimson-text">
+          {/* Subtítulo del tema en Outfit cursiva elegante, sin el look plano de código */}
+          <p className="mt-2.5 font-body text-[1.05rem] sm:text-[1.18rem] text-rose/90 font-light italic leading-relaxed">
             “Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas”
           </p>
 
@@ -157,7 +166,7 @@ export function TalkFeaturedShowcase({
               </div>
 
               <div className="lg:col-span-8">
-                <h3 className="font-display text-[clamp(1.6rem,3vw,2.4rem)] font-black uppercase leading-[1.05] tracking-tight text-white">
+                <h3 className="font-display text-[clamp(1.5rem,2.8vw,2.2rem)] font-bold leading-[1.1] tracking-tight text-white">
                   {nextUpcomingTalk.title}
                 </h3>
                 <p className="mt-3 text-[.96rem] leading-[1.7] text-white/70 max-w-[60ch]">
@@ -180,6 +189,6 @@ export function TalkFeaturedShowcase({
           </section>
         )}
       </div>
-    </div>
+    </section>
   );
 }
