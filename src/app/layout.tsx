@@ -3,7 +3,6 @@ import { Anton, Syne, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
-import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { Footer } from "@/components/layout/Footer";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { ScrollTopButton } from "@/components/layout/ScrollTopButton";
@@ -50,7 +49,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ParticlesBackground />
         <Nav />
         <main id="main-content">{children}</main>
-        <SponsorStrip />
         <Footer />
         <ThemeToggle />
         <ScrollTopButton />

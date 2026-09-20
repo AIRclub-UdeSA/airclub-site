@@ -5,6 +5,7 @@ import { IdeaCallout } from "@/components/home/IdeaCallout";
 import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
+import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
 export default async function HomePage() {
@@ -34,6 +35,9 @@ export default async function HomePage() {
 
         {/* 06. Próximas Actividades */}
         <EventsTeaser />
+
+        {/* 07. Alianzas y Empresas (solo en landing) */}
+        <SponsorStrip />
       </div>
     </>
   );

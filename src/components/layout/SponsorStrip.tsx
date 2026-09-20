@@ -5,12 +5,6 @@ export function SponsorStrip() {
     <section className="border-t border-border/80 bg-surface/20">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 py-16 sm:py-20 flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="max-w-2xl">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-crimson" />
-            <span className="font-mono text-[.7rem] uppercase tracking-[.22em] text-mauve font-semibold">
-              Alianzas &amp; Vinculación Tecnológica
-            </span>
-          </div>
           <h3 className="mb-3 font-display text-[1.4rem] sm:text-[1.75rem] font-bold text-text leading-tight">
             ¿Tu empresa u organización quiere impulsar la robótica en Argentina?
           </h3>

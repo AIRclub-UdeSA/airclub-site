@@ -4,6 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 
 const FOOTER_LINKS = [
   { href: "/", label: "Inicio" },
+  { href: "/proyectos", label: "Proyectos" },
   { href: "/eventos", label: "Eventos" },
   { href: "/talks", label: "AIR Talks" },
   { href: "/plataformas", label: "Robots" },
