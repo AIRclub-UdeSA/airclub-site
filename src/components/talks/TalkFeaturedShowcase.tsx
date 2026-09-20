@@ -29,7 +29,7 @@ export function TalkFeaturedShowcase({
       {/* Fondo inmersivo 3D ShaderGradient de Challenge JAR */}
       <ShaderGradientBg />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 md:px-12">
+      <div className="relative z-10 w-full max-w-7xl px-4 sm:px-8 md:px-12">
         {/* ===== MÓDULO AUDITORIO DARK VELVET: ÚLTIMA CHARLA REALIZADA ===== */}
         <article className="border-b border-white/10 pb-12 md:pb-16">
           {/* Metadatos en JetBrains Mono sobrio */}
