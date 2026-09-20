@@ -5,17 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   X,
   Presentation,
-  Camera,
-  FileText,
   ExternalLink,
   Play,
-  ArrowRight,
-  User,
-  Calendar,
-  Layers,
 } from "lucide-react";
 import type { TimelineTalk } from "./TalksTimeline";
-import { formatEventDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 export type FloatingWindowTab = "slides" | "gallery" | "overview";
@@ -29,7 +22,7 @@ interface TalkFloatingWindowProps {
 
 const thumbOf = (m: TimelineTalk["media"][number]) => (m.type === "video" ? m.poster : m.src);
 
-function TalkFloatingWindowContent({
+function TalkViewerContent({
   talk,
   initialTab,
   onClose,
@@ -57,74 +50,36 @@ function TalkFloatingWindowContent({
 
   const currentSlide = slides[activeSlideIndex] ?? slides[0];
   const currentMedia = talk.media?.[activeMediaIndex] ?? talk.media?.[0];
-  const dateDisplay = talk.dateLabel ?? (talk.startsAt ? formatEventDate(new Date(talk.startsAt)) : "");
 
   return (
-    <div
-      className="relative z-10 flex h-[92vh] max-h-[860px] w-full max-w-5xl flex-col overflow-hidden rounded-[22px] border border-border/90 bg-card shadow-2xl transition-all"
-      style={{
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border)",
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Barra superior de control y metadatos */}
-      <header className="flex shrink-0 flex-wrap items-center justify-between border-b border-border bg-bg/80 px-5 py-3.5 backdrop-blur-sm sm:px-7">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-2 rounded-full bg-crimson shadow-[0_0_8px_rgba(164,12,76,0.8)]" />
-          <span className="truncate font-mono text-[.72rem] font-semibold uppercase tracking-[.18em] text-crimson-text">
-            AIR Talks Archivo
+    <div className="relative z-10 flex h-screen w-screen flex-col bg-[#0b0306] text-white">
+      {/* Barra superior de proyección tipo Screening Room */}
+      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-4 sm:px-10">
+        {/* Título de la sesión */}
+        <div className="flex min-w-0 items-baseline gap-4">
+          <span className="font-mono text-[.74rem] uppercase tracking-[.18em] text-crimson">
+            AIR Talks
           </span>
-          {dateDisplay && (
-            <>
-              <span className="text-border">/</span>
-              <span className="hidden truncate font-mono text-[.7rem] uppercase tracking-wider text-text3 sm:inline">
-                {dateDisplay}
-              </span>
-            </>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="hidden font-mono text-[.68rem] text-text3 sm:inline">ESC para cerrar</span>
-          <button
-            ref={closeBtnRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar ventana"
-            className="flex size-8 items-center justify-center rounded-full border border-border text-text transition-colors hover:border-crimson hover:bg-crimson/10 hover:text-crimson"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </header>
-
-      {/* Título y navegación por pestañas */}
-      <div className="flex shrink-0 flex-col gap-3 border-b border-border bg-bg2/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-        <div className="min-w-0 flex-1">
-          <h2
-            id="talk-dialog-title"
-            className="truncate font-display text-[clamp(1.15rem,2.2vw,1.5rem)] font-extrabold uppercase leading-tight tracking-tight text-text"
-          >
+          <span className="text-white/20 hidden sm:inline">/</span>
+          <h2 className="truncate font-display text-[1.1rem] font-bold text-white max-w-[40ch]">
             {talk.title}
           </h2>
-          <p className="truncate font-mono text-[.78rem] text-text2">{talk.subtitle}</p>
         </div>
 
-        {/* Selector de pestañas */}
-        <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card p-1">
+        {/* Selector de modo central: Slides / Fotos / Memoria */}
+        <nav className="flex items-center gap-6 font-mono text-[.78rem] uppercase tracking-wider">
           {slides.length > 0 && (
             <button
               type="button"
               onClick={() => setActiveTab("slides")}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3.5 py-1.5 font-mono text-[.72rem] font-semibold uppercase tracking-wider transition-all",
+                "pb-1 transition-all",
                 activeTab === "slides"
-                  ? "bg-crimson text-white shadow-sm"
-                  : "text-text2 hover:text-text",
+                  ? "text-white border-b-2 border-crimson font-semibold"
+                  : "text-white/60 hover:text-white border-b-2 border-transparent",
               )}
             >
-              <Presentation size={14} />
-              <span>Slides ({slides.length})</span>
+              Slides ({slides.length})
             </button>
           )}
 
@@ -133,14 +88,13 @@ function TalkFloatingWindowContent({
               type="button"
               onClick={() => setActiveTab("gallery")}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3.5 py-1.5 font-mono text-[.72rem] font-semibold uppercase tracking-wider transition-all",
+                "pb-1 transition-all",
                 activeTab === "gallery"
-                  ? "bg-crimson text-white shadow-sm"
-                  : "text-text2 hover:text-text",
+                  ? "text-white border-b-2 border-crimson font-semibold"
+                  : "text-white/60 hover:text-white border-b-2 border-transparent",
               )}
             >
-              <Camera size={14} />
-              <span>Fotos & Video ({talk.media.length})</span>
+              Fotos & Video ({talk.media.length})
             </button>
           )}
 
@@ -148,27 +102,41 @@ function TalkFloatingWindowContent({
             type="button"
             onClick={() => setActiveTab("overview")}
             className={cn(
-              "flex items-center gap-2 rounded-full px-3.5 py-1.5 font-mono text-[.72rem] font-semibold uppercase tracking-wider transition-all",
+              "pb-1 transition-all",
               activeTab === "overview"
-                ? "bg-crimson text-white shadow-sm"
-                : "text-text2 hover:text-text",
+                ? "text-white border-b-2 border-crimson font-semibold"
+                : "text-white/60 hover:text-white border-b-2 border-transparent",
             )}
           >
-            <FileText size={14} />
-            <span>Resumen</span>
+            Memoria
+          </button>
+        </nav>
+
+        {/* Botón de cierre y atajo */}
+        <div className="flex items-center gap-4">
+          <span className="hidden font-mono text-[.7rem] text-white/40 md:inline">ESC para salir</span>
+          <button
+            ref={closeBtnRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar visor"
+            className="flex size-9 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-white hover:bg-white/10 hover:text-white"
+          >
+            <X size={18} />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Cuerpo principal interactivo con scroll interno */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-        {/* TAB 1: SLIDES EMBEBIDAS */}
+      {/* Área central inmersiva */}
+      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-4 sm:p-8">
+        {/* VISTA 1: DIAPOSITIVAS INTERACTIVAS (FULL STAGE) */}
         {activeTab === "slides" && (
-          <div className="flex h-full flex-col">
+          <div className="flex h-full w-full max-w-6xl flex-col items-center justify-center">
+            {/* Selector de diapositivas si hay múltiples mazos */}
             {slides.length > 1 && (
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-[.7rem] uppercase tracking-wider text-text3">
-                  Presentaciones:
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <span className="font-mono text-[.74rem] uppercase tracking-wider text-white/50">
+                  Presentación:
                 </span>
                 {slides.map((s, idx) => (
                   <button
@@ -176,10 +144,10 @@ function TalkFloatingWindowContent({
                     type="button"
                     onClick={() => setActiveSlideIndex(idx)}
                     className={cn(
-                      "rounded-full border px-3 py-1 font-mono text-[.72rem] font-medium transition-all",
+                      "rounded-full px-4 py-1.5 font-mono text-[.76rem] transition-all",
                       idx === activeSlideIndex
-                        ? "border-crimson bg-crimson/10 text-crimson-text"
-                        : "border-border text-text2 hover:border-border-h",
+                        ? "bg-white text-black font-semibold"
+                        : "border border-white/20 text-white/70 hover:border-white/60 hover:text-white",
                     )}
                   >
                     {s.title}
@@ -189,9 +157,9 @@ function TalkFloatingWindowContent({
             )}
 
             {currentSlide ? (
-              <div className="flex flex-1 flex-col">
-                {/* Visor 16:9 con Google Slides embebidas */}
-                <div className="relative aspect-[16/9] w-full flex-1 overflow-hidden rounded-xl border border-border bg-black shadow-inner">
+              <div className="flex h-full w-full flex-col">
+                {/* Pantalla 16:9 amplia */}
+                <div className="relative aspect-[16/9] w-full flex-1 overflow-hidden bg-black shadow-2xl border border-white/10">
                   <iframe
                     src={currentSlide.embedUrl}
                     title={currentSlide.title}
@@ -201,45 +169,44 @@ function TalkFloatingWindowContent({
                   />
                 </div>
 
-                {/* Acciones de pie para slides */}
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <div className="flex items-center gap-2 text-text2">
+                {/* Barra inferior del visor de slides */}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-4 font-mono text-[.78rem] text-white/60">
+                  <div className="flex items-center gap-2 text-white/90">
                     <Presentation size={15} className="text-crimson" />
-                    <span className="font-mono text-[.78rem] font-medium">{currentSlide.title}</span>
+                    <span>{currentSlide.title}</span>
                   </div>
 
                   <a
                     href={currentSlide.openUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-mono text-[.72rem] font-semibold uppercase tracking-wider text-text transition-colors hover:border-crimson hover:text-crimson-text"
+                    className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors underline underline-offset-4 decoration-white/30 hover:decoration-white"
                   >
-                    Abrir en Google Slides <ExternalLink size={13} />
+                    <span>Abrir en Google Slides a pantalla completa</span>
+                    <ExternalLink size={13} />
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="flex h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center">
-                <Presentation size={32} className="text-text3 mb-3" />
-                <p className="font-mono text-[.82rem] text-text2">
-                  No hay diapositivas digitalizadas cargadas para esta charla.
-                </p>
+              <div className="flex h-64 flex-col items-center justify-center text-center font-mono text-white/60">
+                <p>No hay diapositivas disponibles para esta sesión.</p>
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 2: ÁLBUM FOTOGRÁFICO Y VIDEOS */}
+        {/* VISTA 2: ÁLBUM FOTOGRÁFICO & VIDEO */}
         {activeTab === "gallery" && (
-          <div className="flex flex-col gap-6">
+          <div className="flex h-full w-full max-w-5xl flex-col items-center justify-between gap-6">
             {currentMedia && (
-              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-black">
+              <div className="relative aspect-[16/10] w-full max-h-[68vh] overflow-hidden bg-black">
                 {currentMedia.type === "video" ? (
                   <video
                     key={currentMedia.src}
                     src={currentMedia.src}
                     poster={currentMedia.poster}
                     controls
+                    autoPlay
                     playsInline
                     className="h-full w-full object-contain"
                   />
@@ -247,9 +214,9 @@ function TalkFloatingWindowContent({
                   <Image
                     key={currentMedia.src}
                     src={currentMedia.src}
-                    alt={`Foto de ${talk.title}`}
+                    alt={talk.title}
                     fill
-                    sizes="(min-width: 1024px) 960px, 100vw"
+                    sizes="(min-width: 1024px) 1100px, 100vw"
                     className="object-contain"
                     priority
                   />
@@ -257,24 +224,20 @@ function TalkFloatingWindowContent({
               </div>
             )}
 
-            {/* Tira de miniaturas interactivas */}
+            {/* Tira de miniaturas cinematográfica */}
             {talk.media && talk.media.length > 1 && (
-              <div>
-                <div className="mb-2 font-mono text-[.7rem] uppercase tracking-wider text-text3">
-                  Archivo fotográfico ({talk.media.length} capturas)
-                </div>
-                <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5 md:grid-cols-6">
+              <div className="w-full">
+                <div className="grid grid-cols-5 gap-3 sm:grid-cols-6 md:grid-cols-7">
                   {talk.media.map((m, idx) => (
                     <button
                       key={m.src}
                       type="button"
                       onClick={() => setActiveMediaIndex(idx)}
-                      aria-label={`Ver captura ${idx + 1}`}
                       className={cn(
-                        "relative aspect-square overflow-hidden rounded-lg border-2 transition-all",
+                        "relative aspect-[16/10] overflow-hidden border transition-all",
                         idx === activeMediaIndex
-                          ? "border-crimson shadow-md ring-2 ring-crimson/30"
-                          : "border-border opacity-70 hover:opacity-100",
+                          ? "border-crimson opacity-100 ring-2 ring-crimson"
+                          : "border-white/20 opacity-50 hover:opacity-90",
                       )}
                     >
                       <Image src={thumbOf(m)} alt="" fill sizes="140px" className="object-cover" />
@@ -291,14 +254,14 @@ function TalkFloatingWindowContent({
           </div>
         )}
 
-        {/* TAB 3: RESUMEN Y NARRATIVA TÉCNICA */}
+        {/* VISTA 3: MEMORIA Y CRÓNICA TÉCNICA */}
         {activeTab === "overview" && (
-          <div className="flex flex-col gap-8 max-w-3xl">
-            {/* Tarjeta de orador */}
-            {talk.speaker ? (
-              <div className="flex flex-col gap-4 rounded-xl border border-border bg-bg2/50 p-5 sm:flex-row sm:items-center sm:gap-6">
-                {talk.speaker.avatar ? (
-                  <div className="relative size-16 shrink-0 overflow-hidden rounded-full border-2 border-crimson">
+          <div className="flex w-full max-w-3xl flex-col gap-8 py-6">
+            {/* Orador */}
+            {talk.speaker && (
+              <div className="flex items-center gap-6 border-b border-white/10 pb-6">
+                {talk.speaker.avatar && (
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-full border border-crimson">
                     <Image
                       src={talk.speaker.avatar}
                       alt={talk.speaker.name}
@@ -306,100 +269,58 @@ function TalkFloatingWindowContent({
                       className="object-cover"
                     />
                   </div>
-                ) : (
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full border border-border bg-card text-text3">
-                    <User size={24} />
-                  </div>
                 )}
-                <div className="min-w-0 flex-1">
-                  <span className="font-mono text-[.68rem] font-semibold uppercase tracking-[.16em] text-crimson-text">
-                    Orador Invitado
-                  </span>
-                  <h3 className="font-display text-[1.2rem] font-bold text-text">
+                <div>
+                  <h3 className="font-display text-[1.4rem] font-bold text-white">
                     {talk.speaker.name}
                   </h3>
-                  <p className="font-mono text-[.78rem] text-text2">{talk.speaker.role}</p>
+                  <p className="font-mono text-[.82rem] text-crimson mt-0.5">
+                    {talk.speaker.role}
+                  </p>
                   {talk.speaker.affiliation && (
-                    <p className="font-mono text-[.72rem] text-text3">{talk.speaker.affiliation}</p>
+                    <p className="font-mono text-[.76rem] text-white/50 mt-1">
+                      {talk.speaker.affiliation}
+                    </p>
                   )}
                 </div>
-                {talk.speaker.linkedin && (
-                  <a
-                    href={talk.speaker.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-mono text-[.72rem] font-semibold uppercase tracking-wider text-text transition-colors hover:border-crimson hover:text-crimson-text"
-                  >
-                    LinkedIn <ExternalLink size={12} />
-                  </a>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-bg2/40 p-4">
-                <User size={18} className="text-text3" />
-                <span className="font-mono text-[.8rem] text-text2">{talk.details}</span>
               </div>
             )}
 
-            {/* Bitácora / Abstract narrativo */}
+            {/* Crónica */}
             <div>
-              <h4 className="mb-3 font-mono text-[.74rem] font-semibold uppercase tracking-[.18em] text-crimson-text">
-                Qué pasó en este encuentro
+              <h4 className="font-mono text-[.76rem] uppercase tracking-wider text-crimson mb-3">
+                Resumen de la sesión
               </h4>
-              <p className="text-[1rem] leading-[1.8] text-text2">{talk.abstract}</p>
+              <p className="text-[1.1rem] leading-[1.85] text-white/80">
+                {talk.abstract}
+              </p>
             </div>
 
-            {/* Enlaces y recursos */}
+            {/* Documentos */}
             {talk.links && talk.links.length > 0 && (
-              <div>
-                <h4 className="mb-3 font-mono text-[.74rem] font-semibold uppercase tracking-[.18em] text-text3">
-                  Recursos & Enlaces
+              <div className="border-t border-white/10 pt-6">
+                <h4 className="font-mono text-[.74rem] uppercase tracking-wider text-white/50 mb-3">
+                  Documentos y Enlaces
                 </h4>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-4">
                   {talk.links.map((link) => (
                     <a
                       key={link.label}
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 font-mono text-[.74rem] font-semibold uppercase tracking-wider text-text transition-colors hover:border-crimson hover:text-crimson-text"
+                      className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 font-mono text-[.76rem] uppercase tracking-wider text-white hover:border-crimson hover:text-crimson transition-colors"
                     >
-                      {link.label} <ExternalLink size={13} />
+                      <span>{link.label}</span>
+                      <ExternalLink size={13} />
                     </a>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* CTA directo */}
-            {talk.cta && (
-              <div className="pt-2">
-                <a
-                  href={talk.cta.url}
-                  {...(talk.cta.url.startsWith("mailto:")
-                    ? {}
-                    : { target: "_blank", rel: "noopener noreferrer" })}
-                  className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
-                >
-                  {talk.cta.label} <ArrowRight size={14} />
-                </a>
-              </div>
-            )}
           </div>
         )}
-      </div>
-
-      {/* Barra inferior de estado del laboratorio */}
-      <footer className="flex shrink-0 items-center justify-between border-t border-border bg-bg/90 px-6 py-3 font-mono text-[.68rem] text-text3">
-        <div className="flex items-center gap-2">
-          <Layers size={13} />
-          <span>AIR Club · Inteligencia Artificial y Robótica UdeSA</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Calendar size={13} />
-          <span>{dateDisplay}</span>
-        </div>
-      </footer>
+      </main>
     </div>
   );
 }
@@ -410,7 +331,6 @@ export function TalkFloatingWindow({
   initialTab = "slides",
   onClose,
 }: TalkFloatingWindowProps) {
-  // Manejo de overflow y tecla Escape
   useEffect(() => {
     if (!isOpen) return;
     const prevOverflow = document.documentElement.style.overflow;
@@ -435,18 +355,10 @@ export function TalkFloatingWindow({
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="talk-dialog-title"
-      className="fixed inset-0 z-[1200] flex items-center justify-center p-3 sm:p-6 md:p-10 animate-fade-in"
+      aria-label={talk.title}
+      className="fixed inset-0 z-[1200] flex items-center justify-center animate-fade-in"
     >
-      {/* Fondo oscuro con desenfoque de laboratorio */}
-      <div
-        className="absolute inset-0 bg-black/65 backdrop-blur-md transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Contenido con key para inicialización de estado limpia y sin cascadas */}
-      <TalkFloatingWindowContent
+      <TalkViewerContent
         key={`${talk.slug}:${initialTab}`}
         talk={talk}
         initialTab={initialTab}

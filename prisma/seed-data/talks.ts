@@ -52,7 +52,7 @@ export const talks: SeedTalk[] = [
       name: "Tadeo Casiraghi",
       role: "Investigador LINAR y Docente UdeSA",
       affiliation: "Laboratorio de Inteligencia Artificial y Robótica (LINAR)",
-      avatar: "/talks/primer-encuentro/tadeo.jpg",
+      avatar: "/talks/primer-encuentro/tadeo-portrait.png",
       linkedin: "https://www.linkedin.com/in/tadeo-casiraghi/",
     },
     abstract:

@@ -343,15 +343,15 @@ body {
 }
 
 .arm-canvas-container {
-  height: calc(var(--hero-h) * 0.78);
-  width: calc(var(--hero-h) * 0.40);
-  max-width: 200px;
-  min-width: 70px;
+  height: calc(var(--hero-h) * 0.86);
+  width: calc(var(--hero-h) * 0.44);
+  max-width: 250px;
+  min-width: 80px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  margin: 0 clamp(-14px, -1.4vw, -2px);
-  margin-bottom: 0;
+  margin: 0 clamp(-12px, -1.2vw, -2px);
+  margin-bottom: calc(var(--hero-h) * 0.01);
   position: relative;
   touch-action: pan-y;
 }
