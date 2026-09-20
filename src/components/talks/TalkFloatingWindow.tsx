@@ -52,22 +52,27 @@ function TalkViewerContent({
   const currentMedia = talk.media?.[activeMediaIndex] ?? talk.media?.[0];
 
   return (
-    <div className="relative z-10 flex h-screen w-screen flex-col bg-[#0b0306] text-white">
-      {/* Barra superior de proyección tipo Screening Room */}
-      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-4 sm:px-10">
-        {/* Título de la sesión */}
-        <div className="flex min-w-0 items-baseline gap-4">
-          <span className="font-mono text-[.74rem] uppercase tracking-[.18em] text-crimson">
+    <div className="flex flex-col h-full max-h-[92vh] w-full overflow-hidden">
+      {/* Barra superior estilo ventana de laboratorio */}
+      <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-3.5 sm:px-6 bg-[#12060a]">
+        {/* Controles y Título */}
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="hidden sm:flex items-center gap-1.5 pr-2">
+            <span className="size-2.5 rounded-full bg-crimson" />
+            <span className="size-2.5 rounded-full bg-white/20" />
+            <span className="size-2.5 rounded-full bg-white/20" />
+          </div>
+          <span className="font-mono text-[.74rem] uppercase tracking-[.18em] text-crimson font-semibold">
             AIR Talks
           </span>
           <span className="text-white/20 hidden sm:inline">/</span>
-          <h2 className="truncate font-display text-[1.1rem] font-bold text-white max-w-[40ch]">
+          <h2 className="truncate font-display text-[.92rem] sm:text-[1.02rem] font-bold text-white max-w-[28ch] md:max-w-[40ch]">
             {talk.title}
           </h2>
         </div>
 
         {/* Selector de modo central: Slides / Fotos / Memoria */}
-        <nav className="flex items-center gap-6 font-mono text-[.78rem] uppercase tracking-wider">
+        <nav className="flex items-center gap-4 sm:gap-6 font-mono text-[.76rem] uppercase tracking-wider">
           {slides.length > 0 && (
             <button
               type="button"
@@ -94,7 +99,7 @@ function TalkViewerContent({
                   : "text-white/60 hover:text-white border-b-2 border-transparent",
               )}
             >
-              Fotos & Video ({talk.media.length})
+              Fotos ({talk.media.length})
             </button>
           )}
 
@@ -112,31 +117,31 @@ function TalkViewerContent({
           </button>
         </nav>
 
-        {/* Botón de cierre y atajo */}
-        <div className="flex items-center gap-4">
-          <span className="hidden font-mono text-[.7rem] text-white/40 md:inline">ESC para salir</span>
+        {/* Botón de cierre */}
+        <div className="flex items-center gap-3">
+          <span className="hidden font-mono text-[.68rem] text-white/40 md:inline">ESC</span>
           <button
             ref={closeBtnRef}
             type="button"
             onClick={onClose}
-            aria-label="Cerrar visor"
-            className="flex size-9 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-white hover:bg-white/10 hover:text-white"
+            aria-label="Cerrar ventana"
+            className="flex size-8 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-white hover:bg-white/10 hover:text-white"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
       </header>
 
-      {/* Área central inmersiva */}
-      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-4 sm:p-8">
-        {/* VISTA 1: DIAPOSITIVAS INTERACTIVAS (FULL STAGE) */}
+      {/* Área de contenido interactivo */}
+      <main className="flex flex-1 flex-col items-center justify-center overflow-y-auto p-4 sm:p-6 bg-[#0c0407]">
+        {/* VISTA 1: DIAPOSITIVAS INTERACTIVAS */}
         {activeTab === "slides" && (
-          <div className="flex h-full w-full max-w-6xl flex-col items-center justify-center">
+          <div className="flex h-full w-full max-w-4xl flex-col items-center justify-center">
             {/* Selector de diapositivas si hay múltiples mazos */}
             {slides.length > 1 && (
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <span className="font-mono text-[.74rem] uppercase tracking-wider text-white/50">
-                  Presentación:
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="font-mono text-[.72rem] uppercase tracking-wider text-white/50">
+                  Deck:
                 </span>
                 {slides.map((s, idx) => (
                   <button
@@ -144,9 +149,9 @@ function TalkViewerContent({
                     type="button"
                     onClick={() => setActiveSlideIndex(idx)}
                     className={cn(
-                      "rounded-full px-4 py-1.5 font-mono text-[.76rem] transition-all",
+                      "rounded-full px-3.5 py-1 font-mono text-[.72rem] transition-all",
                       idx === activeSlideIndex
-                        ? "bg-white text-black font-semibold"
+                        ? "bg-white text-black font-semibold shadow-sm"
                         : "border border-white/20 text-white/70 hover:border-white/60 hover:text-white",
                     )}
                   >
@@ -157,9 +162,9 @@ function TalkViewerContent({
             )}
 
             {currentSlide ? (
-              <div className="flex h-full w-full flex-col">
-                {/* Pantalla 16:9 amplia */}
-                <div className="relative aspect-[16/9] w-full flex-1 overflow-hidden bg-black shadow-2xl border border-white/10">
+              <div className="flex w-full flex-col">
+                {/* Pantalla 16:9 ajustada a la ventana */}
+                <div className="relative aspect-[16/9] w-full max-h-[58vh] overflow-hidden rounded-xl bg-black shadow-xl border border-white/15">
                   <iframe
                     src={currentSlide.embedUrl}
                     title={currentSlide.title}
@@ -170,9 +175,9 @@ function TalkViewerContent({
                 </div>
 
                 {/* Barra inferior del visor de slides */}
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-4 font-mono text-[.78rem] text-white/60">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 font-mono text-[.74rem] text-white/60">
                   <div className="flex items-center gap-2 text-white/90">
-                    <Presentation size={15} className="text-crimson" />
+                    <Presentation size={14} className="text-crimson" />
                     <span>{currentSlide.title}</span>
                   </div>
 
@@ -180,15 +185,15 @@ function TalkViewerContent({
                     href={currentSlide.openUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors underline underline-offset-4 decoration-white/30 hover:decoration-white"
+                    className="inline-flex items-center gap-1.5 text-white/80 hover:text-white transition-colors underline underline-offset-4 decoration-white/30 hover:decoration-white"
                   >
                     <span>Abrir en Google Slides a pantalla completa</span>
-                    <ExternalLink size={13} />
+                    <ExternalLink size={12} />
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="flex h-64 flex-col items-center justify-center text-center font-mono text-white/60">
+              <div className="flex h-48 flex-col items-center justify-center text-center font-mono text-white/60">
                 <p>No hay diapositivas disponibles para esta sesión.</p>
               </div>
             )}
@@ -197,9 +202,9 @@ function TalkViewerContent({
 
         {/* VISTA 2: ÁLBUM FOTOGRÁFICO & VIDEO */}
         {activeTab === "gallery" && (
-          <div className="flex h-full w-full max-w-5xl flex-col items-center justify-between gap-6">
+          <div className="flex h-full w-full max-w-4xl flex-col items-center justify-between gap-4">
             {currentMedia && (
-              <div className="relative aspect-[16/10] w-full max-h-[68vh] overflow-hidden bg-black">
+              <div className="relative aspect-[16/10] w-full max-h-[54vh] overflow-hidden rounded-xl bg-black border border-white/15">
                 {currentMedia.type === "video" ? (
                   <video
                     key={currentMedia.src}
@@ -216,7 +221,7 @@ function TalkViewerContent({
                     src={currentMedia.src}
                     alt={talk.title}
                     fill
-                    sizes="(min-width: 1024px) 1100px, 100vw"
+                    sizes="(min-width: 1024px) 1000px, 100vw"
                     className="object-contain"
                     priority
                   />
@@ -224,23 +229,23 @@ function TalkViewerContent({
               </div>
             )}
 
-            {/* Tira de miniaturas cinematográfica */}
+            {/* Tira de miniaturas */}
             {talk.media && talk.media.length > 1 && (
               <div className="w-full">
-                <div className="grid grid-cols-5 gap-3 sm:grid-cols-6 md:grid-cols-7">
+                <div className="flex gap-2.5 overflow-x-auto justify-center py-1">
                   {talk.media.map((m, idx) => (
                     <button
                       key={m.src}
                       type="button"
                       onClick={() => setActiveMediaIndex(idx)}
                       className={cn(
-                        "relative aspect-[16/10] overflow-hidden border transition-all",
+                        "relative h-14 w-22 shrink-0 overflow-hidden rounded-md border transition-all",
                         idx === activeMediaIndex
                           ? "border-crimson opacity-100 ring-2 ring-crimson"
                           : "border-white/20 opacity-50 hover:opacity-90",
                       )}
                     >
-                      <Image src={thumbOf(m)} alt="" fill sizes="140px" className="object-cover" />
+                      <Image src={thumbOf(m)} alt="" fill sizes="100px" className="object-cover" />
                       {m.type === "video" && (
                         <span className="absolute inset-0 flex items-center justify-center bg-black/40">
                           <Play size={16} className="fill-white text-white" />
@@ -356,14 +361,23 @@ export function TalkFloatingWindow({
       role="dialog"
       aria-modal="true"
       aria-label={talk.title}
-      className="fixed inset-0 z-[1200] flex items-center justify-center animate-fade-in"
+      className="fixed inset-0 z-[1200] flex items-center justify-center p-3 sm:p-6 md:p-8 animate-fade-in"
     >
-      <TalkViewerContent
-        key={`${talk.slug}:${initialTab}`}
-        talk={talk}
-        initialTab={initialTab}
-        onClose={onClose}
+      {/* Backdrop con desenfoque que cierra al hacer clic fuera */}
+      <div
+        className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+        onClick={onClose}
       />
+
+      {/* Ventana flotante de laboratorio */}
+      <div className="relative z-10 flex w-full max-w-5xl max-h-[92vh] flex-col rounded-2xl border border-white/15 bg-[#0c0407] text-white shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden">
+        <TalkViewerContent
+          key={`${talk.slug}:${initialTab}`}
+          talk={talk}
+          initialTab={initialTab}
+          onClose={onClose}
+        />
+      </div>
     </div>
   );
 }

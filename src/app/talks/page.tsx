@@ -24,14 +24,22 @@ export default async function TalksPage() {
 
   return (
     <>
-      <header className="mx-auto max-w-7xl px-6 pb-4 pt-32 sm:px-8 md:px-12 md:pb-6 md:pt-36">
-        <h1 className="border-b border-border/80 pb-6 font-display text-[clamp(3rem,8vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tight text-text">
-          AIR <span className="text-crimson">Talks</span>
-        </h1>
-        <p className="mt-5 max-w-[78ch] text-[1.05rem] leading-[1.8] text-text2">
-          El espacio abierto de divulgación técnica del club: tesistas presentan avances, estudiantes comparten proyectos,
-          investigadores invitados debaten el estado del arte y empresas muestran cómo aplican la IA y la robótica en la industria.
-        </p>
+      <header className="relative w-full overflow-hidden border-b border-border/80 pt-28 sm:pt-32 md:pt-36">
+        <div className="w-full px-4 sm:px-8 md:px-12">
+          {/* Masthead monumental desbordado */}
+          <div className="overflow-hidden">
+            <h1 className="font-display font-black uppercase tracking-tight text-text select-none text-[clamp(3.5rem,10.8vw,10.8rem)] leading-[0.88] whitespace-nowrap">
+              AIR <span className="text-crimson">TALKS</span>
+            </h1>
+          </div>
+
+          {/* Bajada concisa sin subtítulos de más */}
+          <div className="mx-auto max-w-7xl px-2 py-5 sm:py-6">
+            <p className="max-w-[68ch] text-[1.05rem] leading-[1.7] text-text2">
+              Divulgación técnica y discusión abierta: avances de tesis, robótica autónoma e investigadores invitados.
+            </p>
+          </div>
+        </div>
       </header>
 
       <TalksHub

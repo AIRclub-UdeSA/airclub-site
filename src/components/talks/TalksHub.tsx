@@ -41,20 +41,8 @@ export function TalksHub({ talks, nextSlug, latestPastSlug }: TalksHubProps) {
         onOpenTalk={handleOpenTalk}
       />
 
-      {/* 2. Línea de Tiempo de Charlas */}
+      {/* 2. Slideshow y Cronograma de Sesiones */}
       <section className="overflow-hidden pb-12 pt-6">
-        <div className="mx-auto max-w-7xl px-6 pb-6 sm:px-8 md:px-12">
-          <div className="flex items-center justify-between border-b border-border/80 pb-4">
-            <div className="flex items-center gap-2 font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-crimson-text">
-              <span className="size-2 rounded-full bg-crimson shadow-[0_0_8px_rgba(164,12,76,0.8)]" />
-              <span>Cronograma Completo</span>
-            </div>
-            <span className="font-mono text-[.7rem] uppercase tracking-wider text-text3">
-              Deslizá para explorar el historial
-            </span>
-          </div>
-        </div>
-
         <TalksTimeline talks={talks} nextSlug={nextSlug} onOpenTalk={handleOpenTalk} />
       </section>
 
