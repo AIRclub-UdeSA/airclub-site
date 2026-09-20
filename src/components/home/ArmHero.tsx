@@ -44,16 +44,13 @@ export function ArmHero() {
 
   return (
     <section className="arm-gate-screen select-none" aria-label="Pantalla de bienvenida AIR Club">
-      <div className="relative arm-stage-row">
+      <div className="arm-stage-row">
         <span className="hero-letter">A</span>
-        {/* Espaciador tipográfico para mantener el kerning exacto del logo AIR */}
-        <div className="arm-canvas-container pointer-events-none" />
-        <span className="hero-letter">R</span>
-
-        {/* Escenario 3D interactivo que abarca el ancho de la pantalla pero respeta la altura exacta del stage sin tapar el botón */}
-        <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-auto flex items-end justify-center">
+        {/* El brazo robótico 3D interactivo formando la 'I' del logo AIR */}
+        <div className="arm-canvas-container">
           <RobotArm3D isHovered={isHovered} isClicked={isClicked} />
         </div>
+        <span className="hero-letter">R</span>
       </div>
 
       {/* Gate Action: Botón de entrada al club estilo Flying Papers */}
