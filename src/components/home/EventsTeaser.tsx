@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, ArrowRight, MapPin } from "lucide-react";
 import { getUpcomingEvents } from "@/lib/events";
-import { formatEventDate, formatDaysUntil } from "@/lib/dates";
+import { formatEventDate } from "@/lib/dates";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
 export async function EventsTeaser() {
@@ -38,7 +38,6 @@ export async function EventsTeaser() {
         /* Caso destacado: Evento principal en panel editorial split */
         <RevealOnScroll>
           {upcoming.map((event) => {
-            const daysUntil = formatDaysUntil(event.startsAt);
             const targetHref = event.externalUrl || `/eventos/${event.slug}`;
             const isExternal = Boolean(event.externalUrl);
 
@@ -50,11 +49,6 @@ export async function EventsTeaser() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
                   {/* Lado izquierdo: Fecha monumental y estado */}
                   <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-border/80 pb-6 lg:pb-0 lg:pr-8">
-                    <div className="flex items-center gap-2 mb-4 font-mono text-[.74rem] uppercase tracking-[.18em] font-semibold text-crimson">
-                      <span className="h-2 w-2 rounded-full bg-crimson animate-pulse" />
-                      <span>{daysUntil || "Convocatoria Activa"}</span>
-                    </div>
-
                     <div className="mb-4">
                       <span className="font-display text-[clamp(2.4rem,4.5vw,3.6rem)] font-black text-text leading-none tracking-tight block">
                         {event.startsAt.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }).toUpperCase()}
@@ -121,7 +115,6 @@ export async function EventsTeaser() {
           {/* Tarjeta principal / destacada */}
           {(() => {
             const primary = upcoming[0];
-            const daysUntil = formatDaysUntil(primary.startsAt);
             const targetHref = primary.externalUrl || `/eventos/${primary.slug}`;
             const isExternal = Boolean(primary.externalUrl);
 
@@ -130,18 +123,12 @@ export async function EventsTeaser() {
                 <RevealOnScroll className="h-full">
                   <div className="group h-full border border-border/80 hover:border-crimson/80 bg-card/40 dark:bg-card/20 p-8 sm:p-10 flex flex-col justify-between transition-colors">
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-6">
-                        <div className="flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.18em] font-semibold text-crimson">
-                          <span className="h-2 w-2 rounded-full bg-crimson animate-pulse" />
-                          <span>{daysUntil || "Convocatoria Activa"}</span>
+                      {primary.location && (
+                        <div className="flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.14em] text-text3 mb-4">
+                          <MapPin className="h-3.5 w-3.5 text-crimson" />
+                          <span>{primary.location}</span>
                         </div>
-                        {primary.location && (
-                          <div className="flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.14em] text-text3">
-                            <MapPin className="h-3.5 w-3.5 text-crimson" />
-                            <span>{primary.location}</span>
-                          </div>
-                        )}
-                      </div>
+                      )}
 
                       <div className="mb-5">
                         <span className="font-display text-[clamp(2.2rem,4vw,3.2rem)] font-black text-text leading-none tracking-tight block mb-1.5">
@@ -197,7 +184,6 @@ export async function EventsTeaser() {
           {/* Tarjetas secundarias apiladas en columna lateral */}
           <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
             {upcoming.slice(1).map((event, idx) => {
-              const daysUntil = formatDaysUntil(event.startsAt);
               const targetHref = event.externalUrl || `/eventos/${event.slug}`;
               const isExternal = Boolean(event.externalUrl);
 
@@ -205,17 +191,12 @@ export async function EventsTeaser() {
                 <RevealOnScroll key={event.slug} delay={(idx + 1) as 1 | 2 | 3} className="h-full">
                   <div className="group h-full border border-border/80 hover:border-crimson/80 bg-card/30 dark:bg-card/15 p-6 sm:p-7 flex flex-col justify-between transition-colors">
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-4">
-                        <span className="font-mono text-[.7rem] uppercase tracking-[.18em] font-semibold text-crimson flex items-center gap-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-crimson animate-pulse" />
-                          {daysUntil || "Próximamente"}
-                        </span>
-                        {event.location && (
-                          <span className="font-mono text-[.68rem] uppercase tracking-[.12em] text-text3">
-                            {event.location}
-                          </span>
-                        )}
-                      </div>
+                      {event.location && (
+                        <div className="flex items-center gap-1.5 font-mono text-[.72rem] uppercase tracking-[.14em] text-text3 mb-3">
+                          <MapPin className="h-3 w-3 text-crimson" />
+                          <span>{event.location}</span>
+                        </div>
+                      )}
 
                       {event.tagline && (
                         <span className="font-mono text-[.72rem] uppercase tracking-[.16em] text-mauve font-semibold mb-1 block">

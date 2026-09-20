@@ -84,11 +84,6 @@ export function CountdownStrip({ event }: { event: EventItem }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 xl:gap-16 items-center">
           {/* Lado izquierdo: Título, descripción y botones oficiales */}
           <div className="lg:col-span-6 xl:col-span-6">
-            <div className="flex items-center gap-2 mb-4 font-mono text-[.74rem] uppercase tracking-[.18em] font-semibold text-[#f0357f]">
-              <span className="h-2 w-2 rounded-full bg-[#f0357f] animate-pulse" />
-              <span>Desafío Nacional</span>
-            </div>
-
             <h2 className="font-display text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#f5e8ec] leading-[0.94] uppercase mb-5">
               Challenge JAR 2026,
               <br />
