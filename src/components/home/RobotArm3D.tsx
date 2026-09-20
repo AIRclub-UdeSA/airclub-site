@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -14,10 +14,44 @@ const CHROME = "#f0f2f6";
 const ACCENT_GLOW = "#ff2a6d";
 const BALL_LIME = "#d4f434"; // Lima tenis fluorescente de alta visibilidad
 
-const FLOOR_Y = -0.915; // Altura física del suelo considerando el radio de la pelota (0.065)
+const FLOOR_Y = -0.921; // Altura física del centro de la pelota en reposo sobre el piso
 const BALL_RADIUS = 0.065;
 
-type BallState = "waiting" | "dropping" | "floor" | "reaching" | "grabbed" | "dragged" | "thrown";
+type BallState = "waiting" | "dropping" | "reaching" | "grabbed" | "dragged" | "thrown";
+
+function solve2D(targetX: number, targetY: number) {
+  const L1 = 0.72;
+  const L2 = 0.62;
+  const dx = targetX;
+  const dy = targetY - (-0.62);
+  const D = Math.hypot(dx, dy);
+  const clampedD = THREE.MathUtils.clamp(D, 0.25, L1 + L2 - 0.02);
+
+  const cosElbow = (clampedD * clampedD - L1 * L1 - L2 * L2) / (2 * L1 * L2);
+  const elAngle = Math.acos(THREE.MathUtils.clamp(cosElbow, -1, 1));
+
+  const alpha = Math.atan2(dx, dy);
+  const cosBeta = (L1 * L1 + clampedD * clampedD - L2 * L2) / (2 * L1 * clampedD);
+  const beta = Math.acos(THREE.MathUtils.clamp(cosBeta, -1, 1));
+
+  let shZ: number;
+  let elZ: number;
+  let wristZ: number;
+
+  if (dx >= 0) {
+    shZ = -(alpha + beta);
+    elZ = elAngle;
+    wristZ = -Math.PI - (shZ + elZ);
+  } else {
+    shZ = -(alpha - beta);
+    elZ = -elAngle;
+    wristZ = Math.PI - (shZ + elZ);
+  }
+
+  wristZ = Math.atan2(Math.sin(wristZ), Math.cos(wristZ));
+
+  return { targetShoulderZ: shZ, targetElbowZ: elZ, targetWristZ: wristZ };
+}
 
 function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClicked: boolean }) {
   // Referencias mecánicas del brazo robótico
@@ -32,24 +66,20 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
   const ballMeshRef = useRef<THREE.Mesh>(null);
   const shadowMeshRef = useRef<THREE.Mesh>(null);
 
-  const ballPos = useRef(new THREE.Vector3(0.65, 2.3, 0.1));
+  const ballPos = useRef(new THREE.Vector3(0.65, 1.8, 0.28));
   const ballVel = useRef(new THREE.Vector3(0, 0, 0));
   const ballState = useRef<BallState>("waiting");
-  const [, setIsBallActive] = useState(false);
-  const [, setIsCursorGrabbing] = useState(false);
-
-  // Historial del puntero para cálculo de inercia y tiro
+  const reachTimer = useRef(0);
+  const isDragging = useRef(false);
   const dragHistory = useRef<{ x: number; y: number; t: number }[]>([]);
-  const holdTimer = useRef(0);
 
-  // Iniciar la caída de la pelota tras ~2.6 segundos de contemplación del Hero
+  // Iniciar la caída de la pelota tras ~2.0 segundos de contemplación del Hero
   useEffect(() => {
     const timeout = setTimeout(() => {
-      ballPos.current.set(0.65, 2.2, 0.1);
+      ballPos.current.set(0.65, 1.8, 0.28);
       ballVel.current.set(-0.25, -0.6, 0);
       ballState.current = "dropping";
-      setIsBallActive(true);
-    }, 2600);
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, []);
@@ -57,26 +87,33 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
   // Handlers para arrastrar y lanzar la pelota con el cursor
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+    isDragging.current = true;
     ballState.current = "dragged";
     ballVel.current.set(0, 0, 0);
-    setIsCursorGrabbing(true);
-    dragHistory.current = [];
+    dragHistory.current = [
+      { x: ballPos.current.x, y: ballPos.current.y, t: performance.now() }
+    ];
+    if (typeof document !== "undefined") {
+      document.body.style.cursor = "grabbing";
+    }
   }, []);
 
   const handlePointerUp = useCallback(() => {
+    if (typeof document !== "undefined") {
+      document.body.style.cursor = "default";
+    }
     if (ballState.current === "dragged") {
-      setIsCursorGrabbing(false);
-      // Calcular velocidad de lanzamiento desde el historial reciente
-      const history = dragHistory.current;
-      if (history.length >= 2) {
-        const oldest = history[0];
-        const latest = history[history.length - 1];
-        const dt = Math.max(latest.t - oldest.t, 0.016);
-        const vx = (latest.x - oldest.x) / dt;
-        const vy = (latest.y - oldest.y) / dt;
+      isDragging.current = false;
+      const h = dragHistory.current;
+      if (h.length >= 2) {
+        const first = h[0];
+        const last = h[h.length - 1];
+        const dt = Math.max((last.t - first.t) / 1000, 0.016);
+        const vx = (last.x - first.x) / dt;
+        const vy = (last.y - first.y) / dt;
         ballVel.current.set(
-          THREE.MathUtils.clamp(vx * 0.75, -8, 8),
-          THREE.MathUtils.clamp(vy * 0.75, -6, 9),
+          THREE.MathUtils.clamp(vx * 1.05, -12, 12),
+          THREE.MathUtils.clamp(vy * 1.05, -8, 14),
           0
         );
       } else {
@@ -85,6 +122,16 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
       ballState.current = "thrown";
     }
   }, []);
+
+  useEffect(() => {
+    const onWindowPointerUp = () => {
+      if (isDragging.current) {
+        handlePointerUp();
+      }
+    };
+    window.addEventListener("pointerup", onWindowPointerUp);
+    return () => window.removeEventListener("pointerup", onWindowPointerUp);
+  }, [handlePointerUp]);
 
   // Loop de simulación física, cinemática y renderizado
   useFrame((state, rawDelta) => {
@@ -96,112 +143,86 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
     // 1. SIMULACIÓN FÍSICA DE LA PELOTA
     if (ballState.current === "dropping" || ballState.current === "thrown") {
       // Gravedad
-      ballVel.current.y -= 11.8 * delta;
+      ballVel.current.y -= 12.0 * delta;
       ballPos.current.x += ballVel.current.x * delta;
       ballPos.current.y += ballVel.current.y * delta;
-      ballPos.current.z = 0.1;
+      ballPos.current.z = 0.28;
 
       // Colisión contra el suelo
       if (ballPos.current.y <= FLOOR_Y) {
         ballPos.current.y = FLOOR_Y;
-        if (Math.abs(ballVel.current.y) > 0.45) {
-          ballVel.current.y = -ballVel.current.y * 0.60; // Rebote elástico
-          ballVel.current.x *= 0.85; // Fricción en el suelo
+        if (Math.abs(ballVel.current.y) > 0.35) {
+          ballVel.current.y = -ballVel.current.y * 0.65; // Rebote elástico
+          ballVel.current.x *= 0.82; // Fricción al impactar
         } else {
           ballVel.current.y = 0;
-          ballVel.current.x *= 0.90; // Fricción por rodamiento
-          if (Math.abs(ballVel.current.x) < 0.05) {
+          ballVel.current.x *= 0.92; // Fricción por rodamiento
+          if (Math.abs(ballVel.current.x) < 0.03) {
             ballVel.current.x = 0;
+            // Asegurar que la pelota repose fuera del radio de la base para un alcance visual óptimo
+            if (Math.abs(ballPos.current.x) < 0.38) {
+              ballPos.current.x = ballPos.current.x >= 0 ? 0.46 : -0.46;
+            }
             ballState.current = "reaching";
+            reachTimer.current = 0;
           }
         }
       }
 
       // Rebote contra los laterales del escenario
-      const BOUNDARY_X = 1.75;
-      if (ballPos.current.x > BOUNDARY_X) {
-        ballPos.current.x = BOUNDARY_X;
-        ballVel.current.x = -Math.abs(ballVel.current.x) * 0.65;
-      } else if (ballPos.current.x < -BOUNDARY_X) {
-        ballPos.current.x = -BOUNDARY_X;
-        ballVel.current.x = Math.abs(ballVel.current.x) * 0.65;
+      const boundX = Math.min(state.viewport.width / 2 - 0.2, 2.2);
+      if (ballPos.current.x > boundX) {
+        ballPos.current.x = boundX;
+        ballVel.current.x = -Math.abs(ballVel.current.x) * 0.70;
+      } else if (ballPos.current.x < -boundX) {
+        ballPos.current.x = -boundX;
+        ballVel.current.x = Math.abs(ballVel.current.x) * 0.70;
       }
     } else if (ballState.current === "dragged") {
-      // Movimiento directo guiado por el cursor
-      const worldX = THREE.MathUtils.clamp((state.pointer.x * state.viewport.width) / 2, -1.8, 1.8);
-      const worldY = THREE.MathUtils.clamp((state.pointer.y * state.viewport.height) / 2, FLOOR_Y, 1.6);
-      ballPos.current.x = THREE.MathUtils.lerp(ballPos.current.x, worldX, delta * 28);
-      ballPos.current.y = THREE.MathUtils.lerp(ballPos.current.y, worldY, delta * 28);
-      ballPos.current.z = 0.1;
+      // Movimiento guiado en tiempo real por el cursor
+      const halfW = state.viewport.width / 2;
+      const halfH = state.viewport.height / 2;
+      const worldX = THREE.MathUtils.clamp(state.pointer.x * halfW, -halfW + 0.2, halfW - 0.2);
+      const worldY = THREE.MathUtils.clamp(state.pointer.y * halfH + 0.32, FLOOR_Y, 1.8);
 
-      // Registrar historial de arrastre para inercia
-      dragHistory.current.push({ x: worldX, y: worldY, t });
-      if (dragHistory.current.length > 5) dragHistory.current.shift();
+      ballPos.current.x = worldX;
+      ballPos.current.y = worldY;
+      ballPos.current.z = 0.28;
+
+      const now = performance.now();
+      dragHistory.current.push({ x: worldX, y: worldY, t: now });
+      while (dragHistory.current.length > 0 && now - dragHistory.current[0].t > 90) {
+        dragHistory.current.shift();
+      }
     }
 
-    // 2. CÁLCULO CINEMÁTICO DIRECTO DEL BRAZO (FORWARD KINEMATICS)
-    const currentBaseY = baseRef.current?.rotation.y ?? 0;
-    const currentShoulderZ = shoulderRef.current?.rotation.z ?? 0;
-    const currentElbowZ = elbowRef.current?.rotation.z ?? 0;
-    const currentWristZ = wristRef.current?.rotation.z ?? 0;
-
-    // Cinemática directa en el plano del brazo para la punta de la pinza
-    const ex = -0.72 * Math.sin(currentShoulderZ);
-    const ey = -0.62 + 0.72 * Math.cos(currentShoulderZ);
-    const wx = ex - 0.58 * Math.sin(currentShoulderZ + currentElbowZ);
-    const wy = ey + 0.58 * Math.cos(currentShoulderZ + currentElbowZ);
-    const tipPlanarX = wx - 0.16 * Math.sin(currentShoulderZ + currentElbowZ + currentWristZ);
-    const tipPlanarY = wy + 0.16 * Math.cos(currentShoulderZ + currentElbowZ + currentWristZ);
-
-    const gripperWorldX = tipPlanarX * Math.cos(currentBaseY);
-    const gripperWorldZ = -tipPlanarX * Math.sin(currentBaseY);
-    const gripperWorldY = tipPlanarY;
-
-    // Distancia tridimensional entre la pinza y la pelota
-    const distToBall = Math.hypot(
-      gripperWorldX - ballPos.current.x,
-      gripperWorldY - ballPos.current.y,
-      gripperWorldZ - ballPos.current.z
-    );
-
-    // Detección de captura
-    if (ballState.current === "reaching" && distToBall < 0.16) {
-      ballState.current = "grabbed";
-      holdTimer.current = 0;
-    }
-
-    // Si está agarrada, la pelota sigue estrictamente la pinza
-    if (ballState.current === "grabbed") {
-      holdTimer.current += delta;
-      ballPos.current.set(gripperWorldX, gripperWorldY, gripperWorldZ);
-    }
-
-    // Actualizar mallas 3D de la pelota y su sombra proyectada en el suelo
+    // Actualizar mallas 3D de la pelota y rotación
     if (ballMeshRef.current) {
       ballMeshRef.current.position.copy(ballPos.current);
       ballMeshRef.current.visible = ballState.current !== "waiting";
-      if (ballState.current === "dragged" || ballState.current === "thrown") {
-        ballMeshRef.current.rotation.x += delta * 6;
-        ballMeshRef.current.rotation.z += delta * 4;
+      if (ballState.current === "dragged" || ballState.current === "thrown" || ballState.current === "dropping") {
+        ballMeshRef.current.rotation.z -= (ballVel.current.x !== 0 ? ballVel.current.x : 1) * delta * 4;
+        ballMeshRef.current.rotation.x += delta * 3;
       }
     }
 
+    // Sombra de contacto
     if (shadowMeshRef.current) {
       const heightAboveFloor = Math.max(ballPos.current.y - FLOOR_Y, 0);
       const shadowScale = Math.max(1 - heightAboveFloor * 0.45, 0.25);
-      const shadowOpacity = Math.max(0.24 - heightAboveFloor * 0.12, 0.04);
+      const shadowOpacity = Math.max(0.25 - heightAboveFloor * 0.12, 0.04);
       shadowMeshRef.current.position.set(ballPos.current.x, -0.985, ballPos.current.z);
       shadowMeshRef.current.scale.set(shadowScale, shadowScale, shadowScale);
       (shadowMeshRef.current.material as THREE.MeshBasicMaterial).opacity =
         ballState.current !== "waiting" ? shadowOpacity : 0;
     }
 
-    // 3. CONTROL DE ARTICULACIONES DEL BRAZO (TARGET ANGLES & CLAMPS)
+    // 2. CONTROL DE ARTICULACIONES DEL BRAZO (TARGET ANGLES & CLAMPS)
     let targetBaseY = 0;
     let targetShoulderZ = 0;
     let targetElbowZ = 0;
     let targetWristZ = 0;
-    let targetGrip = 0.18; // Separación normal de dedos
+    let targetGrip = 0.045; // Separación normal de reposo dentro del riel
 
     const idleSwayX = Math.sin(t * 1.4) * 0.03;
     const idleSwayY = Math.cos(t * 1.6) * 0.02;
@@ -213,43 +234,48 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
       targetShoulderZ = THREE.MathUtils.clamp(0.06 + ptrY * 0.20 - clickPitch + idleSwayY, -0.30, 0.40);
       targetElbowZ = THREE.MathUtils.clamp(-0.12 - ptrY * 0.25 + clickPitch * 1.1 - idleSwayY * 0.7, -0.50, 0.25);
       targetWristZ = THREE.MathUtils.clamp(0.06 + ptrY * 0.10 - clickPitch * 0.5, -0.30, 0.30);
-      targetGrip = isClicked ? 0.04 : isHovered ? 0.30 : 0.18 + Math.sin(t * 2.2) * 0.04;
+      targetGrip = isClicked ? 0.035 : isHovered ? 0.062 : 0.045 + Math.sin(t * 2.2) * 0.006;
     } else if (ballState.current === "reaching") {
-      // Brazo buscando activamente la pelota en el suelo
-      targetBaseY = THREE.MathUtils.clamp(-ballPos.current.x * 0.42, -0.72, 0.72);
+      reachTimer.current += delta;
 
-      // Cinemática inversa plana hacia la pelota
-      const dx = THREE.MathUtils.clamp(ballPos.current.x, -0.95, 0.95);
-      const dy = THREE.MathUtils.clamp(ballPos.current.y - -0.62, -0.6, 0.4);
-      const dist = Math.hypot(dx, dy);
-      const reach = THREE.MathUtils.clamp(dist, 0.25, 1.34);
-      const cosElbow = (reach * reach - 0.72 * 0.72 - 0.70 * 0.70) / (2 * 0.72 * 0.70);
-      const elbowAng = Math.acos(THREE.MathUtils.clamp(cosElbow, -1, 1));
-      const angleTarget = Math.atan2(dx, -dy);
-      const cosShoulder = (0.72 * 0.72 + reach * reach - 0.70 * 0.70) / (2 * 0.72 * reach);
-      const beta = Math.acos(THREE.MathUtils.clamp(cosShoulder, -1, 1));
+      // Base orientada suavemente hacia la pelota
+      targetBaseY = THREE.MathUtils.clamp(ballPos.current.x * 0.35, -0.60, 0.60);
 
-      targetShoulderZ = THREE.MathUtils.clamp(-(angleTarget - beta), -0.65, 0.50);
-      targetElbowZ = THREE.MathUtils.clamp(elbowAng - 0.65, -0.60, 0.65);
-      targetWristZ = THREE.MathUtils.clamp(-targetShoulderZ * 0.5, -0.35, 0.35);
-      targetGrip = 0.28; // Abrir pinza para agarrar
+      // Cinemática inversa analítica exacta hacia la pelota en el suelo
+      const ik = solve2D(ballPos.current.x, FLOOR_Y);
+      targetShoulderZ = ik.targetShoulderZ;
+      targetElbowZ = ik.targetElbowZ;
+      targetWristZ = ik.targetWristZ;
+      targetGrip = 0.065; // Abrir pinza para abarcar la pelota
+
+      if (reachTimer.current > 0.95) {
+        ballState.current = "grabbed";
+      }
     } else if (ballState.current === "grabbed") {
-      // Brazo sosteniendo y levantando la pelota con orgullo
-      targetBaseY = THREE.MathUtils.clamp(-ballPos.current.x * 0.25 + Math.sin(t * 1.5) * 0.04, -0.5, 0.5);
-      targetShoulderZ = -0.16 + Math.sin(t * 1.2) * 0.03; // Elevar ligeramente
-      targetElbowZ = 0.42 + Math.cos(t * 1.2) * 0.03;
-      targetWristZ = -0.12;
-      targetGrip = 0.045; // Pinza firmemente cerrada sobre la pelota
+      // El brazo sostiene y levanta la pelota hacia arriba con orgullo
+      targetBaseY = Math.sin(t * 1.5) * 0.08;
+      targetShoulderZ = -0.32 + Math.sin(t * 1.4) * 0.02;
+      targetElbowZ = 0.78 + Math.cos(t * 1.4) * 0.02;
+      targetWristZ = -0.28;
+      targetGrip = 0.036; // Pinza firmemente cerrada sobre la pelota
+
+      // La pelota sigue de forma exacta la punta de la pinza
+      if (wristRef.current) {
+        wristRef.current.updateWorldMatrix(true, false);
+        const tipPos = new THREE.Vector3(0, 0.22, 0);
+        wristRef.current.localToWorld(tipPos);
+        ballPos.current.copy(tipPos);
+      }
     } else if (ballState.current === "dragged" || ballState.current === "dropping" || ballState.current === "thrown") {
       // El brazo sigue con atención el vuelo o movimiento de la pelota
-      targetBaseY = THREE.MathUtils.clamp(-ballPos.current.x * 0.40, -0.70, 0.70);
-      targetShoulderZ = THREE.MathUtils.clamp(ballPos.current.y * 0.18 - 0.05, -0.40, 0.35);
-      targetElbowZ = THREE.MathUtils.clamp(-ballPos.current.y * 0.22 + 0.10, -0.45, 0.35);
-      targetWristZ = THREE.MathUtils.clamp(ballPos.current.x * 0.15, -0.25, 0.25);
-      targetGrip = 0.24; // Pinza abierta en guardia
+      targetBaseY = THREE.MathUtils.clamp(ballPos.current.x * 0.45, -0.75, 0.75);
+      targetShoulderZ = THREE.MathUtils.clamp(-ballPos.current.x * 0.35 + (ballPos.current.y - 0.2) * 0.15, -0.7, 0.7);
+      targetElbowZ = THREE.MathUtils.clamp(ballPos.current.x * 0.40 - ballPos.current.y * 0.25, -0.6, 0.8);
+      targetWristZ = THREE.MathUtils.clamp(-ballPos.current.x * 0.2, -0.4, 0.4);
+      targetGrip = 0.055;
     }
 
-    // 4. INTERPOLACIÓN FÍSICA SUAVE (LERP) PARA CADA ARTICULACIÓN
+    // 3. Interpolación suave de articulaciones
     if (baseRef.current) {
       baseRef.current.rotation.y = THREE.MathUtils.lerp(baseRef.current.rotation.y, targetBaseY, delta * 6.5);
     }
@@ -261,23 +287,28 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
     }
     if (wristRef.current) {
       wristRef.current.rotation.z = THREE.MathUtils.lerp(wristRef.current.rotation.z, targetWristZ, delta * 7.5);
-      // Mantener rotación en X neutralizada a 0 para eliminar giros extraños y gimbal lock
       wristRef.current.rotation.x = THREE.MathUtils.lerp(wristRef.current.rotation.x, 0, delta * 8);
     }
     if (leftFingerRef.current && rightFingerRef.current) {
-      leftFingerRef.current.position.x = THREE.MathUtils.lerp(leftFingerRef.current.position.x, -targetGrip, delta * 10);
-      rightFingerRef.current.position.x = THREE.MathUtils.lerp(rightFingerRef.current.position.x, targetGrip, delta * 10);
+      leftFingerRef.current.position.x = THREE.MathUtils.lerp(leftFingerRef.current.position.x, -targetGrip, delta * 12);
+      rightFingerRef.current.position.x = THREE.MathUtils.lerp(rightFingerRef.current.position.x, targetGrip, delta * 12);
     }
   });
 
   return (
     <group
       position={[0, 0, 0]}
+      onPointerDown={(e) => {
+        const p = e.point;
+        if (Math.hypot(p.x - ballPos.current.x, p.y - ballPos.current.y) < 0.65) {
+          handlePointerDown(e);
+        }
+      }}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
       {/* ===== SOMBRA DE CONTACTO DE LA PELOTA ===== */}
-      <mesh ref={shadowMeshRef} position={[0.65, -0.985, 0.1]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh ref={shadowMeshRef} position={[0.65, -0.985, 0.28]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[BALL_RADIUS * 1.1, 24]} />
         <meshBasicMaterial color="#000000" opacity={0} transparent />
       </mesh>
@@ -285,9 +316,15 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
       {/* ===== PELOTA INTERACTIVA AIR CLUB ===== */}
       <mesh
         ref={ballMeshRef}
-        position={[0.65, 2.2, 0.1]}
+        position={[0.65, 1.8, 0.28]}
         castShadow
         onPointerDown={handlePointerDown}
+        onPointerOver={() => {
+          if (typeof document !== "undefined") document.body.style.cursor = "grab";
+        }}
+        onPointerOut={() => {
+          if (typeof document !== "undefined" && !isDragging.current) document.body.style.cursor = "default";
+        }}
       >
         <sphereGeometry args={[BALL_RADIUS, 32, 32]} />
         <meshStandardMaterial
@@ -301,6 +338,20 @@ function InteractiveScene({ isHovered, isClicked }: { isHovered: boolean; isClic
         <mesh rotation={[Math.PI / 4, Math.PI / 4, 0]}>
           <torusGeometry args={[BALL_RADIUS * 0.98, 0.005, 12, 32]} />
           <meshBasicMaterial color="#ffffff" />
+        </mesh>
+
+        {/* Hit area generosa invisible para facilitar agarrar la pelota con el mouse */}
+        <mesh
+          onPointerDown={handlePointerDown}
+          onPointerOver={() => {
+            if (typeof document !== "undefined") document.body.style.cursor = "grab";
+          }}
+          onPointerOut={() => {
+            if (typeof document !== "undefined" && !isDragging.current) document.body.style.cursor = "default";
+          }}
+        >
+          <sphereGeometry args={[BALL_RADIUS * 3.5, 16, 16]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
       </mesh>
       {/* ===== SOMBRA DE CONTACTO BASE (Grounded physical shadow) ===== */}
@@ -496,23 +547,21 @@ export default function RobotArm3D({
   isClicked?: boolean;
 }) {
   return (
-    <div className="w-full h-full relative flex items-center justify-center">
-      <div className="absolute -top-[16%] -bottom-[16%] -left-[25%] -right-[25%]">
-        <Canvas
-          camera={{ position: [0, 0, 4.0], fov: 36 }}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-          dpr={[1, 2]}
-        >
-          {/* Iluminación de estudio multi-punto industrial */}
-          <ambientLight intensity={1.35} />
-          <directionalLight position={[4, 5, 4]} intensity={2.0} />
-          <directionalLight position={[-4, 3, 3]} intensity={1.3} color="#e8eeff" />
-          <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
-          <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
+    <div className="w-full h-full relative">
+      <Canvas
+        camera={{ position: [0, 0.32, 4.3], fov: 42 }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        dpr={[1, 2]}
+      >
+        {/* Iluminación de estudio multi-punto industrial */}
+        <ambientLight intensity={1.35} />
+        <directionalLight position={[4, 5, 4]} intensity={2.0} />
+        <directionalLight position={[-4, 3, 3]} intensity={1.3} color="#e8eeff" />
+        <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
+        <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
 
-          <InteractiveScene isHovered={isHovered} isClicked={isClicked} />
-        </Canvas>
-      </div>
+        <InteractiveScene isHovered={isHovered} isClicked={isClicked} />
+      </Canvas>
     </div>
   );
 }

@@ -50,8 +50,8 @@ export function ArmHero() {
         <div className="arm-canvas-container pointer-events-none" />
         <span className="hero-letter">R</span>
 
-        {/* Escenario 3D interactivo que se extiende a lo ancho de la pantalla */}
-        <div className="absolute -inset-x-28 sm:-inset-x-44 md:-inset-x-60 -inset-y-12 sm:-inset-y-20 pointer-events-auto flex items-center justify-center">
+        {/* Escenario 3D interactivo que abarca el ancho de la pantalla pero respeta la altura exacta del stage sin tapar el botón */}
+        <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-auto flex items-end justify-center">
           <RobotArm3D isHovered={isHovered} isClicked={isClicked} />
         </div>
       </div>
