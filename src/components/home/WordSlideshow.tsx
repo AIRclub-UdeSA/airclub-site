@@ -24,14 +24,14 @@ const SLIDES: WordSlide[] = [
   {
     title: "AIR TALKS",
     tagline: "Espacio abierto para que tesistas muestren sus avances, estudiantes compartan ideas y vengan invitados.",
-    href: "/eventos",
+    href: "/talks",
     bg: "#520b2f", // Rich Saturated Ruby
     accent: "#ff4d8d",
   },
   {
     title: "PROYECTOS ESTUDIANTILES",
     tagline: "Construcción de plataformas robóticas reales, chasis móviles omnidireccionales y visión por computadora.",
-    href: "/plataformas",
+    href: "/proyectos",
     bg: "#380931", // Electric Midnight Plum
     accent: "#ff5c8a",
   },

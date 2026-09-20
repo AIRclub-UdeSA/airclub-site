@@ -7,7 +7,7 @@ export function IdeaCallout() {
   return (
     <section id="portal-ideas" className="px-6 sm:px-8 md:px-12 py-16 sm:py-24 max-w-7xl mx-auto">
       <RevealOnScroll>
-        <div className="relative rounded-[40px] p-8 sm:p-14 md:p-18 overflow-hidden bg-[#f4efe9] dark:bg-[#160510] border border-black/10 dark:border-white/10 transition-colors">
+        <div className="relative rounded-card p-8 sm:p-14 md:p-18 overflow-hidden bg-card-muted/70 dark:bg-card-muted/30 border border-border/80 transition-colors">
           {/* Textura gráfica de puntos sutiles inspirada en el halftone de Caldera */}
           <div
             className="absolute right-0 top-0 bottom-0 w-1/3 opacity-15 dark:opacity-20 pointer-events-none hidden md:block"
@@ -19,12 +19,12 @@ export function IdeaCallout() {
 
           <div className="relative z-10 max-w-3xl">
             {/* Título Monumental Caldera con contraste absoluto */}
-            <h3 className="font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-black leading-[1.02] tracking-tight text-[#0d0407] dark:text-[#fffce1] mb-6">
+            <h3 className="font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-black leading-[1.02] tracking-tight text-text mb-6">
               “Tengo una idea, pero no sé por dónde empezar.”
             </h3>
 
             {/* Bajada clara y directa */}
-            <p className="font-body text-[1.08rem] sm:text-[1.22rem] leading-[1.75] text-[#0d0407]/80 dark:text-[#ddaabc]/90 mb-10 max-w-2xl">
+            <p className="font-body text-[1.08rem] sm:text-[1.22rem] leading-[1.75] text-text2 mb-10 max-w-2xl">
               Traela al club. Nosotros te ayudamos a evaluarla, pensar cómo llevarla adelante y encontrar personas que quieran sumarse. La propuesta es simple: conectar personas, intereses y proyectos reales.
             </p>
 
