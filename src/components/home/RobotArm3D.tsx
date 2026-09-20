@@ -264,7 +264,7 @@ export default function RobotArm3D({
   return (
     <div className="w-full h-full relative">
       <Canvas
-        camera={{ position: [0, -0.05, 3.25], fov: 36 }}
+        camera={{ position: [0, -0.05, 3.85], fov: 36 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
       >
