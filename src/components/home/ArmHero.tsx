@@ -46,7 +46,7 @@ export function ArmHero() {
     <section className="arm-gate-screen select-none" aria-label="Pantalla de bienvenida AIR Club">
       <div className="arm-stage-row">
         <span className="hero-letter">A</span>
-        {/* El brazo robótico 3D interactivo formando la 'I' */}
+        {/* El brazo robótico 3D interactivo formando la 'I' del logo AIR */}
         <div className="arm-canvas-container">
           <RobotArm3D isHovered={isHovered} isClicked={isClicked} />
         </div>

@@ -52,15 +52,15 @@ function ArmModel({ isHovered, isClicked }: { isHovered: boolean; isClicked: boo
       elbowRef.current.rotation.z = THREE.MathUtils.lerp(elbowRef.current.rotation.z, targetElbowZ, delta * 6);
     }
 
-    // 4. Muñeca
+    // 4. Muñeca estabilizada sin torsiones invertidas
     if (wristRef.current) {
       const targetWristZ = 0.06 + ptrY * 0.12 - clickPitch * 0.5;
       wristRef.current.rotation.z = THREE.MathUtils.lerp(wristRef.current.rotation.z, targetWristZ, delta * 7);
-      wristRef.current.rotation.x = THREE.MathUtils.lerp(wristRef.current.rotation.x, ptrX * 0.25, delta * 6);
+      wristRef.current.rotation.x = THREE.MathUtils.lerp(wristRef.current.rotation.x, 0, delta * 6);
     }
 
-    // 5. Pinza bimanual paralela
-    const gripDistance = isClicked ? 0.04 : isHovered ? 0.32 : 0.18 + Math.sin(t * 2.2) * 0.04;
+    // 5. Pinza bimanual paralela en rango mecánico seguro
+    const gripDistance = isClicked ? 0.035 : isHovered ? 0.062 : 0.045 + Math.sin(t * 2.2) * 0.006;
     if (leftFingerRef.current && rightFingerRef.current) {
       leftFingerRef.current.position.x = THREE.MathUtils.lerp(leftFingerRef.current.position.x, -gripDistance, delta * 9);
       rightFingerRef.current.position.x = THREE.MathUtils.lerp(rightFingerRef.current.position.x, gripDistance, delta * 9);
@@ -262,23 +262,21 @@ export default function RobotArm3D({
   isClicked?: boolean;
 }) {
   return (
-    <div className="w-full h-full relative flex items-center justify-center">
-      <div className="absolute -top-[16%] -bottom-[16%] -left-[25%] -right-[25%]">
-        <Canvas
-          camera={{ position: [0, 0, 4.0], fov: 36 }}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-          dpr={[1, 2]}
-        >
-          {/* Iluminación de estudio multi-punto industrial */}
-          <ambientLight intensity={1.35} />
-          <directionalLight position={[4, 5, 4]} intensity={2.0} />
-          <directionalLight position={[-4, 3, 3]} intensity={1.3} color="#e8eeff" />
-          <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
-          <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
+    <div className="w-full h-full relative">
+      <Canvas
+        camera={{ position: [0, 0.32, 4.3], fov: 42 }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        dpr={[1, 2]}
+      >
+        {/* Iluminación de estudio multi-punto industrial */}
+        <ambientLight intensity={1.35} />
+        <directionalLight position={[4, 5, 4]} intensity={2.0} />
+        <directionalLight position={[-4, 3, 3]} intensity={1.3} color="#e8eeff" />
+        <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
+        <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
 
-          <ArmModel isHovered={isHovered} isClicked={isClicked} />
-        </Canvas>
-      </div>
+        <ArmModel isHovered={isHovered} isClicked={isClicked} />
+      </Canvas>
     </div>
   );
 }

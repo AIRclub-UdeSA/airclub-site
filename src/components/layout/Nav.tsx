@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { NavHoverHighlight } from "./NavHoverHighlight";
 
@@ -22,9 +22,6 @@ export function Nav() {
   const isHome = pathname === "/";
   const [visible, setVisible] = useState(!isHome);
   const [scrolled, setScrolled] = useState(false);
-  // Se oculta al bajar y reaparece apenas se sube un poco.
-  const [hiddenByScroll, setHiddenByScroll] = useState(false);
-  const lastY = useRef(0);
   const [open, setOpen] = useState(false);
 
   // Cierra el menu mobile en cuanto cambia la ruta, ajustando el estado en el
@@ -46,12 +43,6 @@ export function Nav() {
         setVisible(true);
       }
       setScrolled(window.scrollY > 50);
-
-      const y = window.scrollY;
-      const dy = y - lastY.current;
-      lastY.current = y;
-      if (y < 80 || dy < -4) setHiddenByScroll(false);
-      else if (dy > 0) setHiddenByScroll(true);
     }
 
     function onEnter() {
@@ -67,8 +58,7 @@ export function Nav() {
     };
   }, [isHome]);
 
-  // Con el menú mobile abierto la barra no se esconde, aunque se scrollee.
-  const shown = visible && (!hiddenByScroll || open);
+  const shown = visible || open;
 
   return (
     <header
