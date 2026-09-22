@@ -1,5 +1,19 @@
 export type TalkMedia = { type: "image"; src: string } | { type: "video"; src: string; poster: string };
 
+export type TalkSlide = {
+  title: string;
+  embedUrl: string;
+  openUrl: string;
+};
+
+export type TalkSpeaker = {
+  name: string;
+  role: string;
+  affiliation?: string;
+  avatar?: string;
+  linkedin?: string;
+};
+
 export type SeedTalk = {
   slug: string;
   title: string;
@@ -7,6 +21,7 @@ export type SeedTalk = {
   /** Tercera línea: invitado/a y afiliación, o aclaración. */
   details: string;
   abstract: string;
+  speaker?: TalkSpeaker;
   /**
    * Ordena la línea de tiempo y define si la charla es pasada o próxima.
    * Sin `startsAt` la tarjeta queda siempre al final, sin importar las fechas (ej.: Call for Speakers).
@@ -18,8 +33,14 @@ export type SeedTalk = {
   dateLabel?: string;
   /** Texto grande del placeholder cuando no hay fotos (ej.: "?"). */
   placeholder?: string;
+  /** Ubicación o sala donde se realizó o realizará la charla. */
+  location?: string;
+  /** Frase o cita temática destacada de la charla. */
+  topic?: string;
   /** Fotos y videos, en orden de aparición. El primero es la portada de la tarjeta. */
   media: TalkMedia[];
+  /** Diapositivas interactivas para visualizar directamente en la ventana flotante. */
+  slides?: TalkSlide[];
   links?: { label: string; url: string }[];
   /** Botón principal (ej.: anotarse o proponer una charla). */
   cta?: { label: string; url: string };
@@ -31,6 +52,15 @@ export const talks: SeedTalk[] = [
     title: "Presentación del club y Tadeo Casiraghi",
     subtitle: "Primer AIR Talk",
     details: "Tadeo Casiraghi, profesor de la carrera e investigador del LINAR, UdeSA",
+    location: "Aula Magna · Campus Victoria, UdeSA",
+    topic: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas",
+    speaker: {
+      name: "Tadeo Casiraghi",
+      role: "Investigador LINAR y Docente UdeSA",
+      affiliation: "Laboratorio de Inteligencia Artificial y Robótica (LINAR)",
+      avatar: "/talks/primer-encuentro/tadeo-portrait.png",
+      linkedin: "https://www.linkedin.com/in/tadeo-casiraghi/",
+    },
     abstract:
       'Primer encuentro abierto del club. Contamos cómo nació AIR Club, hacia dónde vamos, los beneficios de sumarse, las AIR Talks y el Challenge JAR 2026. Además, Tadeo Casiraghi nos contó sobre su tesis doctoral, que está realizando en el LINAR: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas".',
     startsAt: new Date("2026-09-03T14:40:00-03:00"),
@@ -48,6 +78,22 @@ export const talks: SeedTalk[] = [
         poster: "/talks/primer-encuentro/poster-tadeo.jpg",
       },
       { type: "image", src: "/talks/primer-encuentro/final.jpg" },
+    ],
+    slides: [
+      {
+        title: "Presentación de AIR Club",
+        embedUrl:
+          "https://docs.google.com/presentation/d/1Syo5FU7iVK24ydYnyWQvaRk0Qdk5f-zitcf3m7jfdJE/embed?start=false&loop=false&delayms=3000",
+        openUrl:
+          "https://docs.google.com/presentation/d/1Syo5FU7iVK24ydYnyWQvaRk0Qdk5f-zitcf3m7jfdJE/edit?slide=id.p2#slide=id.p2",
+      },
+      {
+        title: "Cómo reemplazar un tobillo (Tadeo Casiraghi)",
+        embedUrl:
+          "https://docs.google.com/presentation/d/1HWIki3VXMi0qbJxlIPEmfoeptJl_mYO3ItqrH30lV9o/embed?start=false&loop=false&delayms=3000",
+        openUrl:
+          "https://docs.google.com/presentation/d/1HWIki3VXMi0qbJxlIPEmfoeptJl_mYO3ItqrH30lV9o/edit?slide=id.p#slide=id.p",
+      },
     ],
     links: [
       {
@@ -67,12 +113,16 @@ export const talks: SeedTalk[] = [
     subtitle: "Segundo AIR Talk",
     details: "Tema e invitado a confirmar",
     abstract:
-      "Estamos coordinando el tema y el invitado de esta charla. Lo vamos a anunciar por acá y en nuestras redes.",
+      "Estamos coordinando el tema y el orador invitado de este segundo encuentro. Próximamente habilitaremos el registro y la reserva de lugar.",
     startsAt: new Date("2026-10-12T00:00:00-03:00"),
     endsAt: new Date("2026-10-16T23:59:59-03:00"),
     dateLabel: "Semana del 12 al 16 de octubre",
     placeholder: "?",
     media: [],
+    cta: {
+      label: "Reservar lugar (Próximamente)",
+      url: "mailto:airclub@udesa.edu.ar?subject=Consulta RSVP - Segundo AIR Talk",
+    },
   },
   {
     slug: "tercer-air-talk",
@@ -97,8 +147,6 @@ export const talks: SeedTalk[] = [
     dateLabel: "Convocatoria abierta",
     placeholder: "+",
     media: [],
-    // PROVISORIO: hoy propone por mail al club. Más adelante se reemplaza por un formulario propio
-    // (nombre, contacto, tema y abstract de 2 líneas o link a un borrador de slides).
     cta: {
       label: "Proponer una talk",
       url: "mailto:airclub@udesa.edu.ar?subject=Propuesta de AIR Talk",
