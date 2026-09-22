@@ -29,16 +29,9 @@ export default async function EquipoPage() {
           }}
         />
         <div className="relative">
-          <div className="font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-crimson-text">
-            Quiénes lo hacemos
-          </div>
-          <h1 className="mt-2 border-b border-border/80 pb-6 font-display text-[clamp(2.4rem,12vw,3rem)] sm:text-[clamp(3rem,8vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tight text-text">
+          <h1 className="border-b border-border/80 pb-6 font-display text-[clamp(2.4rem,12vw,3rem)] sm:text-[clamp(3rem,8vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tight text-text">
             <span className="text-crimson">Equipo</span>
           </h1>
-          <p className="mt-5 max-w-[78ch] text-[1.02rem] leading-[1.8] text-text2">
-            El club lo hacemos entre todos: un equipo principal que lleva adelante los proyectos y una comunidad
-            abierta que crece con cada charla, curso y competencia.
-          </p>
         </div>
       </header>
 
@@ -65,9 +58,6 @@ export default async function EquipoPage() {
               </p>
             </div>
             <div>
-              <p className="mb-6 max-w-[46ch] text-[.98rem] leading-[1.75] text-text2">
-                Un grupo chico que sostiene todo lo que hace el club.
-              </p>
               <MembersList team={founders} />
             </div>
           </div>
