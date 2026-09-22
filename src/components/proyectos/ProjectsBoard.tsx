@@ -174,10 +174,6 @@ export function ProjectsBoard({ projects, stickers }: ProjectsBoardProps) {
             zona y hacé clic en un papel para ver de qué se trata y sumarte.
           </p>
         </div>
-        <div className="font-mono text-[.7rem] uppercase tracking-wider text-text3 leading-loose">
-          <div>Clic en un papel → Detalle</div>
-          <div>Clic en el papel abierto → Ficha técnica y reverso</div>
-        </div>
       </div>
 
       {/* Tablero físico 3D interactivo */}

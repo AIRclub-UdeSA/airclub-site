@@ -16,6 +16,8 @@ export type TimelineTalk = {
   startsAt?: string; // ISO; sin fecha = siempre al final
   dateLabel?: string;
   placeholder?: string;
+  location?: string;
+  topic?: string;
   media: TalkMedia[];
   slides?: TalkSlide[];
   links?: { label: string; url: string }[];

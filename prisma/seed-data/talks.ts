@@ -33,6 +33,10 @@ export type SeedTalk = {
   dateLabel?: string;
   /** Texto grande del placeholder cuando no hay fotos (ej.: "?"). */
   placeholder?: string;
+  /** Ubicación o sala donde se realizó o realizará la charla. */
+  location?: string;
+  /** Frase o cita temática destacada de la charla. */
+  topic?: string;
   /** Fotos y videos, en orden de aparición. El primero es la portada de la tarjeta. */
   media: TalkMedia[];
   /** Diapositivas interactivas para visualizar directamente en la ventana flotante. */
@@ -48,6 +52,8 @@ export const talks: SeedTalk[] = [
     title: "Presentación del club y Tadeo Casiraghi",
     subtitle: "Primer AIR Talk",
     details: "Tadeo Casiraghi, profesor de la carrera e investigador del LINAR, UdeSA",
+    location: "Aula Magna · Campus Victoria, UdeSA",
+    topic: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas",
     speaker: {
       name: "Tadeo Casiraghi",
       role: "Investigador LINAR y Docente UdeSA",
