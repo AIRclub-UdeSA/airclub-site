@@ -1,35 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { ArrowDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ARM_HERO_STILL } from "./arm-hero-still";
 
-// Fallback visual mientras carga el bundle 3D WebGL (mantiene proporciones exactas sin layout shift)
-function FallbackArm() {
+// Cuanto tiempo conviven la foto fija y el brazo 3D (ya montado y "congelado" en la misma pose)
+// antes de sacar la foto y soltarle la animación al brazo. Ver el flujo completo en ArmHero() más
+// abajo: no alcanza con reaccionar al primer frame porque ese frame podría tardar en llegar (WebGL
+// inicializando) o el navegador podría trabarse un instante justo después; este colchón asegura que
+// cuando la foto se va, siempre hay algo ya estable debajo, no una animación a mitad de arrancar.
+const HANDOFF_DELAY_MS = 500;
+
+// Imagen fija mientras carga el brazo 3D WebGL: es una captura del propio RobotArm3D en su pose de
+// reposo exacta (REST_POSE en RobotArm3D.tsx), no un dibujo aparte, asi que mientras el brazo esta
+// "congelado" en esa misma pose son pixel a pixel el mismo frame. Va como data URI (no como archivo
+// en /public) para que aparezca en el mismo frame que el resto del bundle, sin un request de red
+// aparte que la demore. Para regenerarla si REST_POSE cambia: activar temporalmente
+// `preserveDrawingBuffer: true` en el Canvas de RobotArm3D.tsx, forzar `frozen` y capturar el
+// canvas del brazo (sin las letras A/R de al lado) con fondo transparente, y volver a correr el
+// script que arma arm-hero-still.ts a partir de ese PNG.
+function ArmStillImage({ ready }: { ready: boolean }) {
   return (
-    <div className="w-full h-full flex items-center justify-center animate-pulse opacity-80" aria-hidden="true">
-      <svg viewBox="0 0 100 240" className="h-full w-auto max-h-full" fill="none">
-        <rect x="25" y="220" width="50" height="16" rx="4" fill="#1c1619" />
-        <rect x="35" y="200" width="30" height="22" rx="4" fill="#2a2226" />
-        <rect x="42" y="110" width="16" height="92" rx="8" fill="#a40c4c" />
-        <circle cx="50" cy="108" r="10" fill="#e0dadf" />
-        <rect x="44" y="40" width="12" height="70" rx="6" fill="#2a2226" />
-        <circle cx="50" cy="38" r="8" fill="#e0dadf" />
-        <rect x="40" y="24" width="20" height="12" rx="3" fill="#a40c4c" />
-        <path d="M42 24 L38 12 M58 24 L62 12" stroke="#1c1619" strokeWidth="4" strokeLinecap="round" />
-      </svg>
+    <div
+      aria-hidden="true"
+      className={cn(
+        "absolute inset-0 flex items-center justify-center transition-opacity duration-500 ease-out",
+        ready ? "opacity-0" : "opacity-100"
+      )}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- data URI: no aplica optimizacion de next/image */}
+      <img src={ARM_HERO_STILL} alt="" className="h-full w-auto max-h-full object-contain" />
     </div>
   );
 }
 
 const RobotArm3D = dynamic(() => import("./RobotArm3D"), {
   ssr: false,
-  loading: () => <FallbackArm />,
+  loading: () => null,
 });
 
 export function ArmHero() {
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+
+  // 1. armPainted: RobotArm3D ya montó y pintó su primer frame, congelado en la misma pose que
+  //    la foto (frozen=true mientras animationEnabled sea false) — conviven siendo indistinguibles.
+  // 2. Tras HANDOFF_DELAY_MS ahí conviviendo sin sobresaltos: se saca la foto (arm3dReady) y se
+  //    suelta la animación (animationEnabled) al mismo tiempo, así el brazo empieza a moverse
+  //    justo cuando ya no queda nada tapando el canvas.
+  const [armPainted, setArmPainted] = useState(false);
+  const [arm3dReady, setArm3dReady] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!armPainted) return;
+    const id = setTimeout(() => {
+      setArm3dReady(true);
+      setAnimationEnabled(true);
+    }, HANDOFF_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [armPainted]);
 
   const handleEnter = () => {
     setIsClicked(true);
@@ -48,7 +80,13 @@ export function ArmHero() {
         <span className="hero-letter">A</span>
         {/* El brazo robótico 3D interactivo formando la 'I' del logo AIR */}
         <div className="arm-canvas-container">
-          <RobotArm3D isHovered={isHovered} isClicked={isClicked} />
+          <ArmStillImage ready={arm3dReady} />
+          <RobotArm3D
+            isHovered={isHovered}
+            isClicked={isClicked}
+            frozen={!animationEnabled}
+            onReady={() => setArmPainted(true)}
+          />
         </div>
         <span className="hero-letter">R</span>
       </div>

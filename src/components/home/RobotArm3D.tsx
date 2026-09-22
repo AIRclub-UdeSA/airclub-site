@@ -13,7 +13,27 @@ const ALUMINUM = "#dce0e6";
 const CHROME = "#f0f2f6";
 const ACCENT_GLOW = "#ff2a6d";
 
-function ArmModel({ isHovered, isClicked }: { isHovered: boolean; isClicked: boolean }) {
+// Pose de reposo exacta (sin sway, sin puntero, sin click): es el frame que queda "congelado"
+// mientras convive con la foto fija en ArmHero, y es la misma pose con la que se genera esa foto
+// (ver arm-hero-still.ts). Al no depender de lerp ni del reloj, es 100% determinista.
+const REST_POSE = {
+  baseY: 0,
+  shoulderZ: 0.06,
+  elbowZ: -0.12,
+  wristZ: 0.06,
+  wristX: 0,
+  gripDistance: 0.045,
+};
+
+function ArmModel({
+  isHovered,
+  isClicked,
+  frozen,
+}: {
+  isHovered: boolean;
+  isClicked: boolean;
+  frozen: boolean;
+}) {
   const baseRef = useRef<THREE.Group>(null);
   const shoulderRef = useRef<THREE.Group>(null);
   const elbowRef = useRef<THREE.Group>(null);
@@ -23,6 +43,24 @@ function ArmModel({ isHovered, isClicked }: { isHovered: boolean; isClicked: boo
 
   // Animación física y respuesta interactiva al cursor
   useFrame((state, delta) => {
+    // Mientras esta "congelado" (recien montado, conviviendo con la foto fija) se fuerza la
+    // pose de reposo frame a frame en vez de dejar que el lerp la alcance gradualmente: asi el
+    // primer frame ya es exactamente igual a la foto, sin transición visible de por medio.
+    if (frozen) {
+      if (baseRef.current) baseRef.current.rotation.y = REST_POSE.baseY;
+      if (shoulderRef.current) shoulderRef.current.rotation.z = REST_POSE.shoulderZ;
+      if (elbowRef.current) elbowRef.current.rotation.z = REST_POSE.elbowZ;
+      if (wristRef.current) {
+        wristRef.current.rotation.z = REST_POSE.wristZ;
+        wristRef.current.rotation.x = REST_POSE.wristX;
+      }
+      if (leftFingerRef.current && rightFingerRef.current) {
+        leftFingerRef.current.position.x = -REST_POSE.gripDistance;
+        rightFingerRef.current.position.x = REST_POSE.gripDistance;
+      }
+      return;
+    }
+
     const t = state.clock.getElapsedTime();
     const ptrX = state.pointer.x; // -1 to 1
     const ptrY = state.pointer.y; // -1 to 1
@@ -254,12 +292,28 @@ function ArmModel({ isHovered, isClicked }: { isHovered: boolean; isClicked: boo
   );
 }
 
+// Avisa al hero cuando ya se dibujó un frame real (no alcanza con "el bundle bajó": WebGL todavia
+// tiene que crear el contexto y compilar los shaders del modelo antes de pintar algo en pantalla).
+function FirstFrameSignal({ onReady }: { onReady?: () => void }) {
+  const firedRef = useRef(false);
+  useFrame(() => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    onReady?.();
+  });
+  return null;
+}
+
 export default function RobotArm3D({
   isHovered = false,
   isClicked = false,
+  frozen = false,
+  onReady,
 }: {
   isHovered?: boolean;
   isClicked?: boolean;
+  frozen?: boolean;
+  onReady?: () => void;
 }) {
   return (
     <div className="w-full h-full relative">
@@ -275,7 +329,8 @@ export default function RobotArm3D({
         <directionalLight position={[0, 4, -4]} intensity={1.7} color="#ffffff" />
         <pointLight position={[0, -0.95, 1.2]} intensity={1.6} color={ACCENT_GLOW} distance={3.5} />
 
-        <ArmModel isHovered={isHovered} isClicked={isClicked} />
+        <ArmModel isHovered={isHovered} isClicked={isClicked} frozen={frozen} />
+        <FirstFrameSignal onReady={onReady} />
       </Canvas>
     </div>
   );
