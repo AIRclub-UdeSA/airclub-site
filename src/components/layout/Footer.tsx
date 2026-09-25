@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { getContactChannels } from "@/lib/contact";
 
 const FOOTER_LINKS = [
   { href: "/", label: "Inicio" },
@@ -12,7 +13,9 @@ const FOOTER_LINKS = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export function Footer() {
+export async function Footer() {
+  const channels = await getContactChannels();
+
   return (
     <footer className="border-t border-border bg-bg2 relative overflow-hidden px-6 sm:px-8 md:px-12 pt-16 pb-12">
       {/* Monumental poster watermark */}
@@ -67,37 +70,19 @@ export function Footer() {
               Contacto
             </h4>
             <ul className="flex flex-col gap-2.5">
-              <li>
-                <a
-                  href="mailto:airclub@udesa.edu.ar"
-                  className="font-body text-[.88rem] text-text2 hover:text-crimson-text transition-colors flex items-center gap-1"
-                >
-                  airclub@udesa.edu.ar
-                  <ArrowUpRight className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.instagram.com/AIRClub_UdeSA"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-body text-[.88rem] text-text2 hover:text-crimson-text transition-colors flex items-center gap-1"
-                >
-                  @AIRClub_UdeSA
-                  <ArrowUpRight className="h-3 w-3" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://chat.whatsapp.com/Dz7CNt3Zdt25u4hqPd2fLK?s=cl&p=i&mlu=4"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-body text-[.88rem] text-text2 hover:text-crimson-text transition-colors flex items-center gap-1"
-                >
-                  Comunidad WhatsApp
-                  <ArrowUpRight className="h-3 w-3" />
-                </a>
-              </li>
+              {channels.map((c) => (
+                <li key={c.key}>
+                  <a
+                    href={c.href}
+                    target={c.external ? "_blank" : undefined}
+                    rel={c.external ? "noopener noreferrer" : undefined}
+                    className="font-body text-[.88rem] text-text2 hover:text-crimson-text transition-colors flex items-center gap-1"
+                  >
+                    {c.value}
+                    <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
