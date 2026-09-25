@@ -7,7 +7,7 @@ import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface WordSlide {
   title: string;
-  short: string; // nombre corto para la pestaña de navegación
+  short: string; // nombre corto para el aria-label de la pestaña (las barras no muestran texto)
   tagline: string;
   href: string;
   isExternal?: boolean;
@@ -77,14 +77,10 @@ export function WordSlideshow() {
   // `current` recorre 0..N: N es el clon de la diapositiva 0 (loop hacia adelante sin salto visible)
   const [current, setCurrent] = useState(0);
   const [enableTransition, setEnableTransition] = useState(true);
-  const [hovered, setHovered] = useState(false); // mouse encima
-  const [keyboardFocus, setKeyboardFocus] = useState(false); // foco de teclado adentro (no el del clic con mouse)
-  const [touching, setTouching] = useState(false); // dedo apoyado
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, getReducedMotionServer);
 
   const activeIdx = current % N;
   const activeSlide = SLIDES[activeIdx];
-  const paused = hovered || keyboardFocus || touching;
 
   const rafs = useRef<number[]>([]);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -96,8 +92,8 @@ export function WordSlideshow() {
   }, []);
 
   // ---------- navegación ----------
-  // Avance automático: lo dispara la barra de progreso al terminar su animación (onAnimationEnd). Así la
-  // pausa (hover, foco, dedo) simplemente congela la barra y el avance retoma justo donde quedó.
+  // Avance automático: lo dispara la barra de progreso al terminar su animación (onAnimationEnd). No hay
+  // pausa: hover, clic, foco o dedo no frenan el carrusel, que avanza siempre.
   const autoAdvance = () => {
     setEnableTransition(true);
     setCurrent((c) => (c >= N ? c : c + 1));
@@ -167,12 +163,10 @@ export function WordSlideshow() {
     if (e.pointerType === "mouse") return;
     swipeStart.current = { x: e.clientX, y: e.clientY };
     swiped.current = false;
-    setTouching(true);
   };
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
     const s = swipeStart.current;
     swipeStart.current = null;
-    setTouching(false);
     if (!s) return;
     const dx = e.clientX - s.x;
     const dy = e.clientY - s.y;
@@ -184,7 +178,6 @@ export function WordSlideshow() {
   };
   const onPointerCancel = () => {
     swipeStart.current = null;
-    setTouching(false);
   };
   // si el gesto fue un swipe, el "click" que cae sobre un enlace no tiene que navegar
   const onClickCapture = (e: React.MouseEvent) => {
@@ -203,11 +196,6 @@ export function WordSlideshow() {
       className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out border-y border-white/10 my-16 select-none"
       style={{ backgroundColor: activeSlide.bg }}
       onKeyDown={onKeyDown}
-      onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
-      onPointerLeave={(e) => e.pointerType === "mouse" && setHovered(false)}
-      // el foco por clic de mouse (en una flecha o pestaña) NO pausa: si no, tras un clic quedaría trabado
-      onFocusCapture={(e) => setKeyboardFocus(e.target.matches(":focus-visible"))}
-      onBlurCapture={() => setKeyboardFocus(false)}
     >
       {/* Resplandor ambiental dinámico superior derecho */}
       <div
@@ -231,8 +219,8 @@ export function WordSlideshow() {
       >
         <div
           className="flex w-full"
-          // se anuncia a lectores de pantalla solo cuando no rota sola (pausado): si no, hablaría sin parar
-          aria-live={paused || reducedMotion ? "polite" : "off"}
+          // se anuncia a lectores de pantalla solo cuando no rota sola (movimiento reducido): si no, hablaría sin parar
+          aria-live={reducedMotion ? "polite" : "off"}
           style={{
             transform: `translateX(-${current * 100}%)`,
             transition:
@@ -311,10 +299,12 @@ export function WordSlideshow() {
 
       {/* ===== Controles: pestañas grandes (cada una es un blanco de clic de 44px de alto y ocupa todo su
           ancho, en vez de puntitos de 6px) + flechas. El segmento activo se llena como barra de progreso del
-          avance automático; al pasar el mouse se congela y retoma donde quedó. ===== */}
+          avance automático. ===== */}
       <div className="absolute inset-x-0 bottom-3 sm:bottom-5 px-6 sm:px-12 md:px-20">
-        <div className="max-w-6xl mx-auto flex items-end gap-2 sm:gap-4">
-          <div role="group" aria-label="Elegir diapositiva" className="flex flex-1 gap-1.5 sm:gap-3">
+        {/* Las pestañas siguen el ancho del contenido (max-w-6xl). Reservan lugar a la derecha para las flechas
+            salvo en pantallas muy anchas (2xl), donde las flechas caen fuera de ese ancho. */}
+        <div className="max-w-6xl mx-auto pr-[6.5rem] sm:pr-28 2xl:pr-0">
+          <div role="group" aria-label="Elegir diapositiva" className="flex gap-1.5 sm:gap-3">
             {SLIDES.map((slide, idx) => {
               const isActive = idx === activeIdx;
               return (
@@ -326,13 +316,6 @@ export function WordSlideshow() {
                   aria-current={isActive ? "true" : undefined}
                   className="group flex-1 min-w-0 min-h-11 flex flex-col justify-end gap-2 pb-3 text-left cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
                 >
-                  <span
-                    className={`hidden md:block truncate font-mono text-[.7rem] uppercase tracking-[.14em] transition-colors ${
-                      isActive ? "text-white" : "text-white/45 group-hover:text-white/80"
-                    }`}
-                  >
-                    {slide.short}
-                  </span>
                   <span className="relative block h-[3px] w-full overflow-hidden rounded-full bg-white/20 group-hover:bg-white/35 transition-colors">
                     {isActive &&
                       (reducedMotion ? (
@@ -345,7 +328,6 @@ export function WordSlideshow() {
                           className="ws-progress-fill absolute inset-0 origin-left bg-white"
                           style={{
                             animationDuration: `${AUTO_INTERVAL}ms`,
-                            animationPlayState: paused ? "paused" : "running",
                           }}
                           onAnimationEnd={(e: AnimationEvent) => {
                             if (e.animationName === "ws-progress") autoAdvance();
@@ -357,25 +339,27 @@ export function WordSlideshow() {
               );
             })}
           </div>
+        </div>
 
-          <div className="flex shrink-0 gap-2 pb-1">
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Diapositiva anterior"
-              className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Diapositiva siguiente"
-              className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+        {/* Flechas pegadas al borde derecho de la ventana (con el mismo margen lateral de la sección), no al
+            borde del contenido: en monitores anchos quedan lo más a la derecha posible */}
+        <div className="absolute bottom-1 right-6 sm:right-12 md:right-20 flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Diapositiva anterior"
+            className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Diapositiva siguiente"
+            className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </section>
