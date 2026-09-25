@@ -31,7 +31,7 @@ export function CallForSpeakers() {
               Convocatoria Abierta
             </div>
             <h2 className="mt-2 font-display text-[clamp(1.5rem,2.6vw,2.2rem)] font-bold leading-[1.15] tracking-tight text-text">
-              ¿Querés dar una <span className="text-crimson font-medium">charla</span> en AIR Club?
+              ¿Querés dar una <span className="text-crimson font-medium">charla</span> en el AIR Club?
             </h2>
             <p className="mt-4 text-[.95rem] sm:text-[1rem] leading-[1.7] text-text2 max-w-[50ch]">
               Las AIR Talks son un espacio abierto y horizontal. Buscamos divulgar ciencia y tecnología sin rodeos:
