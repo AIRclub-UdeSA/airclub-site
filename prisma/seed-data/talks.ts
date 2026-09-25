@@ -131,9 +131,9 @@ export const talks: SeedTalk[] = [
     details: "Tema e invitado a confirmar",
     abstract:
       "Estamos coordinando el tema y el invitado de esta charla. Lo vamos a anunciar por acá y en nuestras redes.",
-    startsAt: new Date("2026-10-26T00:00:00-03:00"),
-    endsAt: new Date("2026-10-30T23:59:59-03:00"),
-    dateLabel: "Semana del 26 al 30 de octubre",
+    startsAt: new Date("2026-10-29T00:00:00-03:00"),
+    endsAt: new Date("2026-10-29T23:59:59-03:00"),
+    dateLabel: "29 de Octubre de 2026",
     placeholder: "?",
     media: [],
   },
