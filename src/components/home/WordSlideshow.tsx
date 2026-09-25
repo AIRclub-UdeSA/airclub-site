@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
-import type { AnimationEvent, KeyboardEvent, PointerEvent } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface WordSlide {
   title: string;
@@ -92,12 +92,17 @@ export function WordSlideshow() {
   }, []);
 
   // ---------- navegación ----------
-  // Avance automático: lo dispara la barra de progreso al terminar su animación (onAnimationEnd). No hay
+  // Avance automático: un timer que se reinicia con cada cambio de diapositiva (también a mano). No hay
   // pausa: hover, clic, foco o dedo no frenan el carrusel, que avanza siempre.
-  const autoAdvance = () => {
-    setEnableTransition(true);
-    setCurrent((c) => (c >= N ? c : c + 1));
-  };
+  useEffect(() => {
+    if (reducedMotion) return;
+    const t = setTimeout(() => {
+      setEnableTransition(true);
+      setCurrent((c) => (c >= N ? c : c + 1));
+    }, AUTO_INTERVAL);
+    return () => clearTimeout(t);
+    // activeIdx (no current): al resetear del clon N a 0 el conteo no se reinicia
+  }, [activeIdx, reducedMotion]);
 
   const next = useCallback(() => {
     if (current >= N) return; // ya en el clon del final: el reseteo a 0 está por ocurrir
@@ -297,70 +302,50 @@ export function WordSlideshow() {
         </div>
       </div>
 
-      {/* ===== Controles: pestañas grandes (cada una es un blanco de clic de 44px de alto y ocupa todo su
-          ancho, en vez de puntitos de 6px) + flechas. El segmento activo se llena como barra de progreso del
-          avance automático. ===== */}
-      <div className="absolute inset-x-0 bottom-3 sm:bottom-5 px-6 sm:px-12 md:px-20">
-        {/* Las pestañas siguen el ancho del contenido (max-w-6xl). Reservan lugar a la derecha para las flechas
-            salvo en pantallas muy anchas (2xl), donde las flechas caen fuera de ese ancho. */}
-        <div className="max-w-6xl mx-auto pr-[6.5rem] sm:pr-28 2xl:pr-0">
-          <div role="group" aria-label="Elegir diapositiva" className="flex gap-1.5 sm:gap-3">
-            {SLIDES.map((slide, idx) => {
-              const isActive = idx === activeIdx;
-              return (
-                <button
-                  key={slide.title}
-                  type="button"
-                  onClick={() => goTo(idx)}
-                  aria-label={`Ir a ${slide.short} (${idx + 1} de ${N})`}
-                  aria-current={isActive ? "true" : undefined}
-                  className="group flex-1 min-w-0 min-h-11 flex flex-col justify-end gap-2 pb-3 text-left cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-                >
-                  <span className="relative block h-[3px] w-full overflow-hidden rounded-full bg-white/20 group-hover:bg-white/35 transition-colors">
-                    {isActive &&
-                      (reducedMotion ? (
-                        // sin movimiento: no hay avance automático, el activo solo se marca lleno
-                        <span className="absolute inset-0 bg-white" />
-                      ) : (
-                        <span
-                          // la key NO incluye el clon: al resetear de N a 0 la barra sigue sin reiniciarse
-                          key={activeIdx}
-                          className="ws-progress-fill absolute inset-0 origin-left bg-white"
-                          style={{
-                            animationDuration: `${AUTO_INTERVAL}ms`,
-                          }}
-                          onAnimationEnd={(e: AnimationEvent) => {
-                            if (e.animationName === "ws-progress") autoAdvance();
-                          }}
-                        />
-                      ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Flechas pegadas al borde derecho de la ventana (con el mismo margen lateral de la sección), no al
-            borde del contenido: en monitores anchos quedan lo más a la derecha posible */}
-        <div className="absolute bottom-1 right-6 sm:right-12 md:right-20 flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={prev}
-            aria-label="Diapositiva anterior"
-            className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={next}
-            aria-label="Diapositiva siguiente"
-            className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
+      {/* Circulitos abajo al centro, sin fondo. El de la diapositiva activa es siempre una barrita que muestra el
+          progreso hacia la próxima (con o sin mouse encima); los demás son círculos. Cada botón mide 44 px de alto y
+          24 de ancho (44 el activo) aunque el punto se vea chico */}
+      <div
+        role="group"
+        aria-label="Elegir diapositiva"
+        className="absolute inset-x-0 bottom-4 sm:bottom-6 z-10 flex items-center justify-center"
+      >
+        {SLIDES.map((slide, idx) => {
+          const isActive = idx === activeIdx;
+          return (
+            <button
+              key={slide.title}
+              type="button"
+              onClick={() => goTo(idx)}
+              aria-label={`Ir a ${slide.short} (${idx + 1} de ${N})`}
+              aria-current={isActive ? "true" : undefined}
+              className={`group/dot grid h-11 cursor-pointer place-items-center transition-[width] duration-300 focus-visible:outline-none ${
+                isActive ? "w-11" : "w-6"
+              }`}
+            >
+              <span
+                className={`relative block overflow-hidden rounded-full transition-all duration-300 group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-white group-focus-visible/dot:ring-offset-4 group-focus-visible/dot:ring-offset-transparent ${
+                  isActive
+                    ? "h-1.5 w-9 bg-white/25"
+                    : "size-2 bg-white/40 group-hover/dot:bg-white/75"
+                }`}
+              >
+                {isActive &&
+                  (reducedMotion ? (
+                    // sin movimiento no hay avance automático: la barra se ve llena
+                    <span className="absolute inset-0 bg-white" />
+                  ) : (
+                    <span
+                      // la key NO incluye el clon: al resetear de N a 0 el llenado sigue sin reiniciarse
+                      key={activeIdx}
+                      className="ws-progress-fill absolute inset-0 origin-left bg-white"
+                      style={{ animationDuration: `${AUTO_INTERVAL}ms` }}
+                    />
+                  ))}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

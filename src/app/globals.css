@@ -425,7 +425,7 @@ html.dark .page-hero {
 }
 
 /* Barra de progreso del carrusel de la landing (WordSlideshow): se llena durante el tiempo de cada
-   diapositiva; la duración se pone inline. Al terminar (animationend) avanza la diapositiva. */
+   diapositiva; la duración se pone inline. Es solo visual: el avance lo dispara un timer en el componente. */
 @keyframes ws-progress {
   from {
     transform: scaleX(0);
