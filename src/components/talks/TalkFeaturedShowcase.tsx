@@ -157,9 +157,17 @@ export function TalkFeaturedShowcase({
                       poster={activeMedia.poster}
                       autoPlay
                       muted
-                      loop={mediaList.length <= 1 || reducedMotion}
+                      loop={isHovered || mediaList.length <= 1 || reducedMotion}
                       playsInline
-                      onEnded={() => setEndedVideoIndex(currentMediaIndex)}
+                      onEnded={(e) => {
+                        if (isHovered) {
+                          const v = e.currentTarget;
+                          v.currentTime = 0;
+                          v.play().catch(() => {});
+                        } else {
+                          setEndedVideoIndex(currentMediaIndex);
+                        }
+                      }}
                       onError={() => setEndedVideoIndex(currentMediaIndex)}
                       className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                     />
