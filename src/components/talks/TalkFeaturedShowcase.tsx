@@ -62,23 +62,44 @@ export function TalkFeaturedShowcase({
   onOpenTalk,
 }: TalkFeaturedShowcaseProps) {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [endedVideoIndex, setEndedVideoIndex] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
 
   const mediaList = latestPastTalk?.media ?? [];
 
-  // Rotación automática cada 4.5 segundos, pausando en hover o con reduced-motion
+  const activeMedia = mediaList[currentMediaIndex] ?? mediaList[0];
+  const isVideo = activeMedia?.type === "video";
+  const videoEnded = endedVideoIndex === currentMediaIndex;
+
+  function goTo(index: number) {
+    setEndedVideoIndex(null);
+    setCurrentMediaIndex(index);
+  }
+
+  const canRotate = mediaList.length > 1 && !isHovered && !reducedMotion;
+
+  // Las fotos duran 4.5 s. Se reinicia al cambiar de medio (también a mano).
   useEffect(() => {
-    if (mediaList.length <= 1 || isHovered || reducedMotion) return;
-    const interval = setInterval(() => {
+    if (!canRotate || isVideo) return;
+    const timeout = setTimeout(() => {
       setCurrentMediaIndex((prev) => (prev + 1) % mediaList.length);
     }, 4500);
-    return () => clearInterval(interval);
-  }, [mediaList.length, isHovered, reducedMotion]);
+    return () => clearTimeout(timeout);
+  }, [canRotate, isVideo, currentMediaIndex, mediaList.length]);
+
+  // Los videos duran lo que duran: se pasa al siguiente cuando terminan
+  // (si el mouse está encima, recién al salir).
+  useEffect(() => {
+    if (!canRotate || !isVideo || !videoEnded) return;
+    const raf = requestAnimationFrame(() => {
+      setEndedVideoIndex(null);
+      setCurrentMediaIndex((prev) => (prev + 1) % mediaList.length);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [canRotate, isVideo, videoEnded, mediaList.length]);
 
   if (!latestPastTalk) return null;
-
-  const activeMedia = mediaList[currentMediaIndex] ?? mediaList[0];
 
   return (
     <section className="relative overflow-hidden my-6 sm:my-10 bg-[#0e0407] text-[#f5e8ec] py-10 sm:py-14 md:py-18 shadow-2xl">
@@ -136,31 +157,38 @@ export function TalkFeaturedShowcase({
                       poster={activeMedia.poster}
                       autoPlay
                       muted
-                      loop
+                      loop={mediaList.length <= 1 || reducedMotion}
                       playsInline
+                      onEnded={() => setEndedVideoIndex(currentMediaIndex)}
+                      onError={() => setEndedVideoIndex(currentMediaIndex)}
                       className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                     />
                   )
                 )}
 
-                {/* Indicadores sutiles de progreso si hay más de 1 medio */}
+                {/* Indicadores: cada botón mide 36 px de alto y 28 de ancho aunque el punto se vea chico */}
                 {mediaList.length > 1 && (
-                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 border border-white/15 backdrop-blur-sm">
+                  <div className="absolute top-3 right-3 z-10 flex items-center rounded-full bg-black/60 px-1 border border-white/15 backdrop-blur-sm">
                     {mediaList.map((_, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setCurrentMediaIndex(idx);
+                          goTo(idx);
                         }}
                         aria-label={`Ver foto/video ${idx + 1}`}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          idx === currentMediaIndex
-                            ? "w-4 bg-crimson"
-                            : "w-1.5 bg-white/40 hover:bg-white/70"
-                        }`}
-                      />
+                        aria-current={idx === currentMediaIndex}
+                        className="group/dot flex h-9 min-w-7 cursor-pointer items-center justify-center px-1 focus-visible:outline-none"
+                      >
+                        <span
+                          className={`h-2 rounded-full transition-all duration-300 group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-white ${
+                            idx === currentMediaIndex
+                              ? "w-5 bg-crimson"
+                              : "w-2 bg-white/45 group-hover/dot:bg-white/80"
+                          }`}
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
