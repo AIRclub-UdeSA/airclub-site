@@ -20,7 +20,7 @@ export function IdeaCallout() {
           <div className="relative z-10 max-w-3xl">
             {/* Título Monumental Caldera con contraste absoluto */}
             <h3 className="font-display text-[clamp(2.2rem,4.6vw,3.8rem)] font-black leading-[1.02] tracking-tight text-text mb-6">
-              “Tengo una idea, pero no sé por dónde empezar.”
+              “Tengo una idea, pero no sé por dónde empezar”
             </h3>
 
             {/* Bajada clara y directa */}

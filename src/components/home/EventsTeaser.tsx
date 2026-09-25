@@ -4,17 +4,49 @@ import { getUpcomingEvents } from "@/lib/events";
 import { formatEventDate } from "@/lib/dates";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
+// Las dos formas de proponer una actividad van al mismo correo del club, con una plantilla para que la
+// persona solo complete los datos (la de charla es la misma que ya usa /talks en CallForSpeakers).
+const PROPOSAL_EMAIL = "airclub@udesa.edu.ar";
+const mailto = (subject: string, lines: string[]) =>
+  `mailto:${PROPOSAL_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\r\n"))}`;
+
+const PROPOSALS = [
+  {
+    title: "Charla",
+    desc: "Tesis, proyectos en desarrollo o casos de la industria.",
+    href: mailto("Propuesta de AIR Talk", [
+      "Hola AIR Club, me gustaría proponer una charla sobre:",
+      "- Tema:",
+      "- Breve abstract o link a borrador de slides:",
+      "- Nombre y afiliación:",
+    ]),
+  },
+  {
+    title: "Workshop",
+    desc: "Contanos qué te gustaría aprender.",
+    href: mailto("Propuesta de workshop", [
+      "Hola AIR Club, me gustaría proponer un workshop sobre:",
+      "- Tema:",
+      "- Qué se arma o se aprende (2 líneas):",
+      "- ¿Lo darías vos o querés que lo dé otra persona?:",
+      "- Materiales o requisitos previos (si hay):",
+      "- Nombre y afiliación:",
+    ]),
+  },
+];
+
 export async function EventsTeaser() {
   const upcoming = await getUpcomingEvents({ take: 3 });
 
   return (
-    <section id="actividades" className="px-6 sm:px-8 md:px-12 py-20 sm:py-32 max-w-7xl mx-auto">
+    <>
+    <section id="actividades" className="px-6 sm:px-8 md:px-12 pt-20 sm:pt-32 pb-12 max-w-7xl mx-auto">
       {/* Encabezado minimalista sin micro-etiquetas ni textos sobrantes */}
       <div className="mb-10 sm:mb-14">
         <RevealOnScroll>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border/80">
             <h2 className="font-display text-[clamp(2.4rem,5vw,3.8rem)] font-black leading-[0.95] tracking-tight text-text uppercase">
-              Próximas <span className="text-crimson">actividades.</span>
+              Próximas <span className="text-crimson">actividades</span>
             </h2>
             <Link
               href="/eventos"
@@ -245,20 +277,48 @@ export async function EventsTeaser() {
           </div>
         </div>
       )}
-
-      {/* Footer de la sección: Proponer evento */}
-      <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-border/80">
-        <span className="font-mono text-[.76rem] uppercase tracking-[.16em] text-text3">
-          ¿Querés proponer un workshop o charla técnica?
-        </span>
-        <Link
-          href="/contacto"
-          className="group inline-flex items-center gap-1.5 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:text-crimson transition-colors"
-        >
-          <span>Proponer actividad</span>
-          <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1 text-crimson" />
-        </Link>
-      </div>
     </section>
+
+    {/* Banda "Proponer actividad": ocupa TODO el ancho de la ventana (fuera del contenedor angosto de la
+        sección), con esquinas rectas y el mismo borde fino y resplandores difusos que el carrusel de la landing
+        (WordSlideshow). Fondo rubí #520b2f y rosa de acento #ff4d8d: los de la diapositiva "AIR TALKS". El
+        contenido se alinea con la grilla del resto de la sección (max-w-7xl + mismos paddings). */}
+    <div className="relative w-full overflow-hidden border-y border-white/10 bg-[#520b2f] mb-20 sm:mb-32">
+      <div className="pointer-events-none absolute -right-20 -top-24 h-[420px] w-[420px] rounded-full bg-[#ff4d8d] opacity-30 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-24 -left-20 h-[380px] w-[380px] rounded-full bg-[#ff2a6d] opacity-20 blur-[120px]" />
+
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:px-8 sm:py-16 md:px-12 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-6">
+          <div className="font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-[#ff4d8d]">
+            Convocatoria abierta
+          </div>
+          <h2 className="mt-3 font-display text-[clamp(1.7rem,3.1vw,2.7rem)] font-black uppercase leading-[0.95] tracking-tight text-white">
+            Proponé una charla o un workshop
+          </h2>
+          <p className="mt-5 max-w-[40ch] font-body text-[1.02rem] leading-relaxed text-white/75">
+            Escribinos con el tema y 2 líneas de qué trata.
+          </p>
+        </div>
+
+        <div className="lg:col-span-6 flex flex-col divide-y divide-white/15 border-y border-white/15">
+          {PROPOSALS.map((item) => (
+            <a
+              key={item.title}
+              href={item.href}
+              className="group flex min-h-[88px] items-center gap-5 py-5 transition-colors hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90 sm:px-2"
+            >
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-[1.25rem] font-bold leading-tight text-white">{item.title}</h3>
+                <p className="mt-1 text-[.9rem] leading-relaxed text-white/65">{item.desc}</p>
+              </div>
+              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 text-white transition-colors group-hover:border-[#ff4d8d] group-hover:bg-[#ff4d8d]">
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+    </>
   );
 }

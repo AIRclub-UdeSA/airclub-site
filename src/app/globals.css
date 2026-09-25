@@ -343,7 +343,10 @@ body {
 }
 
 .arm-canvas-container {
-  height: calc(var(--hero-h) * 0.94);
+  /* Alto del espaciador como variable: la foto fija de ArmHero se dimensiona y centra en funcion de
+     este valor (ver ArmStillImage), asi que tiene que ser una sola fuente de verdad. */
+  --arm-h: calc(var(--hero-h) * 0.94);
+  height: var(--arm-h);
   width: calc(var(--hero-h) * 0.45);
   max-width: 250px;
   min-width: 80px;
@@ -419,4 +422,18 @@ html.dark .page-hero {
   .scroll-hint {
     display: none;
   }
+}
+
+/* Barra de progreso del carrusel de la landing (WordSlideshow): se llena durante el tiempo de cada
+   diapositiva; la duración y la pausa se ponen inline. Al terminar (animationend) avanza la diapositiva. */
+@keyframes ws-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.ws-progress-fill {
+  animation: ws-progress 3400ms linear forwards;
 }
