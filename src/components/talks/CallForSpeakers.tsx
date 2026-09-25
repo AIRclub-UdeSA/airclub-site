@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const TRACKS = [
   {
@@ -39,14 +39,13 @@ export function CallForSpeakers() {
             </p>
 
             {/* Acción de contacto directo */}
-            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
               <a
                 href="mailto:airclub@udesa.edu.ar?subject=Propuesta de AIR Talk&body=Hola AIR Club, me gustaría proponer una charla sobre:%0D%0A- Tema:%0D%0A- Breve abstract o link a borrador de slides:%0D%0A- Nombre y afiliación:"
-                className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
+                className="group inline-flex shrink-0 items-center gap-3 whitespace-nowrap rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
               >
-                <Mail size={14} />
                 <span>Proponer una charla</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
               </a>
               <span className="font-mono text-[.72rem] text-text3">
                 Escribinos con tema y 2 líneas de abstract.
