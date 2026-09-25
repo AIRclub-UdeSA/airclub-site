@@ -64,6 +64,7 @@ export const talks: SeedTalk[] = [
     abstract:
       'Primer encuentro abierto del club. Contamos cómo nació AIR Club, hacia dónde vamos, los beneficios de sumarse, las AIR Talks y el Challenge JAR 2026. Además, Tadeo Casiraghi nos contó sobre su tesis doctoral, que está realizando en el LINAR: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas".',
     startsAt: new Date("2026-09-03T14:40:00-03:00"),
+    dateLabel: "3 de Septiembre de 2026",
     media: [
       { type: "image", src: "/talks/primer-encuentro/presentacion.jpg" },
       {
