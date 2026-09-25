@@ -2,41 +2,20 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowRight, MapPin } from "lucide-react";
 import { getUpcomingEvents } from "@/lib/events";
 import { formatEventDate } from "@/lib/dates";
+import { getContactReason } from "@/lib/contact";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
-// Las dos formas de proponer una actividad van al mismo correo del club, con una plantilla para que la
-// persona solo complete los datos (la de charla es la misma que ya usa /talks en CallForSpeakers).
-const PROPOSAL_EMAIL = "airclub@udesa.edu.ar";
-const mailto = (subject: string, lines: string[]) =>
-  `mailto:${PROPOSAL_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\r\n"))}`;
-
-const PROPOSALS = [
-  {
-    title: "Charla",
-    desc: "Tesis, proyectos en desarrollo o casos de la industria.",
-    href: mailto("Propuesta de AIR Talk", [
-      "Hola AIR Club, me gustaría proponer una charla sobre:",
-      "- Tema:",
-      "- Breve abstract o link a borrador de slides:",
-      "- Nombre y afiliación:",
-    ]),
-  },
-  {
-    title: "Workshop",
-    desc: "Contanos qué te gustaría aprender.",
-    href: mailto("Propuesta de workshop", [
-      "Hola AIR Club, me gustaría proponer un workshop sobre:",
-      "- Tema:",
-      "- Qué se arma o se aprende (2 líneas):",
-      "- ¿Lo darías vos o querés que lo dé otra persona?:",
-      "- Materiales o requisitos previos (si hay):",
-      "- Nombre y afiliación:",
-    ]),
-  },
-];
-
 export async function EventsTeaser() {
-  const upcoming = await getUpcomingEvents({ take: 3 });
+  const [upcoming, talk, workshop] = await Promise.all([
+    getUpcomingEvents({ take: 3 }),
+    getContactReason("charla"),
+    getContactReason("workshop"),
+  ]);
+  // Las dos formas de proponer una actividad salen del mismo correo del club, con plantilla para completar.
+  const PROPOSALS = [
+    { title: "Charla", desc: "Tesis, proyectos en desarrollo o casos de la industria.", href: talk.href },
+    { title: "Workshop", desc: "Contanos qué te gustaría aprender.", href: workshop.href },
+  ];
 
   return (
     <>

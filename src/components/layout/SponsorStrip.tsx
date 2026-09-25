@@ -1,6 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
+import { getContactReason } from "@/lib/contact";
 
-export function SponsorStrip() {
+export async function SponsorStrip() {
+  const sponsors = await getContactReason("sponsors");
+
   return (
     <section className="border-t border-border/80 bg-surface/20">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 py-16 sm:py-20 flex flex-col md:flex-row md:items-center justify-between gap-8">
@@ -14,7 +17,7 @@ export function SponsorStrip() {
         </div>
         <div className="shrink-0">
           <a
-            href="mailto:airclub@udesa.edu.ar?subject=Sponsorship AIR Club UdeSA"
+            href={sponsors.href}
             className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-text bg-text px-7 py-3 font-mono text-[.8rem] font-semibold uppercase tracking-[.1em] text-bg transition-all hover:bg-crimson hover:border-crimson"
           >
             <span>Contactar al club</span>

@@ -4,6 +4,7 @@ import { getCollaborators, getFounders } from "@/lib/team";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { MembersList } from "@/components/equipo/MembersList";
 import { JoinSection } from "@/components/equipo/JoinSection";
+import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -16,7 +17,12 @@ const sectionTitle =
   "border-b border-border/80 pb-6 font-display text-[clamp(1.1rem,5.3vw,3rem)] sm:text-[clamp(1.9rem,3.6vw,3rem)] font-black uppercase leading-[0.98] tracking-tight text-text";
 
 export default async function EquipoPage() {
-  const [founders, collaborators] = await Promise.all([getFounders(), getCollaborators()]);
+  const [founders, collaborators, community, team] = await Promise.all([
+    getFounders(),
+    getCollaborators(),
+    getContactReason("comunidad"),
+    getContactReason("equipo"),
+  ]);
 
   return (
     <>
@@ -81,7 +87,7 @@ export default async function EquipoPage() {
         </RevealOnScroll>
       </section>
 
-      <JoinSection />
+      <JoinSection communityHref={community.href} teamHref={team.href} />
     </>
   );
 }
