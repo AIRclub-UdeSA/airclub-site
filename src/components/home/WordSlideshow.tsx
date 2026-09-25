@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
-import type { AnimationEvent, KeyboardEvent, PointerEvent } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface WordSlide {
   title: string;
-  short: string; // nombre corto para la pestaña de navegación
+  short: string; // nombre corto para el aria-label de la pestaña (las barras no muestran texto)
   tagline: string;
   href: string;
   isExternal?: boolean;
@@ -77,14 +77,10 @@ export function WordSlideshow() {
   // `current` recorre 0..N: N es el clon de la diapositiva 0 (loop hacia adelante sin salto visible)
   const [current, setCurrent] = useState(0);
   const [enableTransition, setEnableTransition] = useState(true);
-  const [hovered, setHovered] = useState(false); // mouse encima
-  const [keyboardFocus, setKeyboardFocus] = useState(false); // foco de teclado adentro (no el del clic con mouse)
-  const [touching, setTouching] = useState(false); // dedo apoyado
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, getReducedMotionServer);
 
   const activeIdx = current % N;
   const activeSlide = SLIDES[activeIdx];
-  const paused = hovered || keyboardFocus || touching;
 
   const rafs = useRef<number[]>([]);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -96,12 +92,17 @@ export function WordSlideshow() {
   }, []);
 
   // ---------- navegación ----------
-  // Avance automático: lo dispara la barra de progreso al terminar su animación (onAnimationEnd). Así la
-  // pausa (hover, foco, dedo) simplemente congela la barra y el avance retoma justo donde quedó.
-  const autoAdvance = () => {
-    setEnableTransition(true);
-    setCurrent((c) => (c >= N ? c : c + 1));
-  };
+  // Avance automático: un timer que se reinicia con cada cambio de diapositiva (también a mano). No hay
+  // pausa: hover, clic, foco o dedo no frenan el carrusel, que avanza siempre.
+  useEffect(() => {
+    if (reducedMotion) return;
+    const t = setTimeout(() => {
+      setEnableTransition(true);
+      setCurrent((c) => (c >= N ? c : c + 1));
+    }, AUTO_INTERVAL);
+    return () => clearTimeout(t);
+    // activeIdx (no current): al resetear del clon N a 0 el conteo no se reinicia
+  }, [activeIdx, reducedMotion]);
 
   const next = useCallback(() => {
     if (current >= N) return; // ya en el clon del final: el reseteo a 0 está por ocurrir
@@ -167,12 +168,10 @@ export function WordSlideshow() {
     if (e.pointerType === "mouse") return;
     swipeStart.current = { x: e.clientX, y: e.clientY };
     swiped.current = false;
-    setTouching(true);
   };
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
     const s = swipeStart.current;
     swipeStart.current = null;
-    setTouching(false);
     if (!s) return;
     const dx = e.clientX - s.x;
     const dy = e.clientY - s.y;
@@ -184,7 +183,6 @@ export function WordSlideshow() {
   };
   const onPointerCancel = () => {
     swipeStart.current = null;
-    setTouching(false);
   };
   // si el gesto fue un swipe, el "click" que cae sobre un enlace no tiene que navegar
   const onClickCapture = (e: React.MouseEvent) => {
@@ -203,11 +201,6 @@ export function WordSlideshow() {
       className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out border-y border-white/10 my-16 select-none"
       style={{ backgroundColor: activeSlide.bg }}
       onKeyDown={onKeyDown}
-      onPointerEnter={(e) => e.pointerType === "mouse" && setHovered(true)}
-      onPointerLeave={(e) => e.pointerType === "mouse" && setHovered(false)}
-      // el foco por clic de mouse (en una flecha o pestaña) NO pausa: si no, tras un clic quedaría trabado
-      onFocusCapture={(e) => setKeyboardFocus(e.target.matches(":focus-visible"))}
-      onBlurCapture={() => setKeyboardFocus(false)}
     >
       {/* Resplandor ambiental dinámico superior derecho */}
       <div
@@ -231,8 +224,8 @@ export function WordSlideshow() {
       >
         <div
           className="flex w-full"
-          // se anuncia a lectores de pantalla solo cuando no rota sola (pausado): si no, hablaría sin parar
-          aria-live={paused || reducedMotion ? "polite" : "off"}
+          // se anuncia a lectores de pantalla solo cuando no rota sola (movimiento reducido): si no, hablaría sin parar
+          aria-live={reducedMotion ? "polite" : "off"}
           style={{
             transform: `translateX(-${current * 100}%)`,
             transition:
@@ -309,74 +302,50 @@ export function WordSlideshow() {
         </div>
       </div>
 
-      {/* ===== Controles: pestañas grandes (cada una es un blanco de clic de 44px de alto y ocupa todo su
-          ancho, en vez de puntitos de 6px) + flechas. El segmento activo se llena como barra de progreso del
-          avance automático; al pasar el mouse se congela y retoma donde quedó. ===== */}
-      <div className="absolute inset-x-0 bottom-3 sm:bottom-5 px-6 sm:px-12 md:px-20">
-        <div className="max-w-6xl mx-auto flex items-end gap-2 sm:gap-4">
-          <div role="group" aria-label="Elegir diapositiva" className="flex flex-1 gap-1.5 sm:gap-3">
-            {SLIDES.map((slide, idx) => {
-              const isActive = idx === activeIdx;
-              return (
-                <button
-                  key={slide.title}
-                  type="button"
-                  onClick={() => goTo(idx)}
-                  aria-label={`Ir a ${slide.short} (${idx + 1} de ${N})`}
-                  aria-current={isActive ? "true" : undefined}
-                  className="group flex-1 min-w-0 min-h-11 flex flex-col justify-end gap-2 pb-3 text-left cursor-pointer rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-                >
-                  <span
-                    className={`hidden md:block truncate font-mono text-[.7rem] uppercase tracking-[.14em] transition-colors ${
-                      isActive ? "text-white" : "text-white/45 group-hover:text-white/80"
-                    }`}
-                  >
-                    {slide.short}
-                  </span>
-                  <span className="relative block h-[3px] w-full overflow-hidden rounded-full bg-white/20 group-hover:bg-white/35 transition-colors">
-                    {isActive &&
-                      (reducedMotion ? (
-                        // sin movimiento: no hay avance automático, el activo solo se marca lleno
-                        <span className="absolute inset-0 bg-white" />
-                      ) : (
-                        <span
-                          // la key NO incluye el clon: al resetear de N a 0 la barra sigue sin reiniciarse
-                          key={activeIdx}
-                          className="ws-progress-fill absolute inset-0 origin-left bg-white"
-                          style={{
-                            animationDuration: `${AUTO_INTERVAL}ms`,
-                            animationPlayState: paused ? "paused" : "running",
-                          }}
-                          onAnimationEnd={(e: AnimationEvent) => {
-                            if (e.animationName === "ws-progress") autoAdvance();
-                          }}
-                        />
-                      ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex shrink-0 gap-2 pb-1">
+      {/* Circulitos abajo al centro, sin fondo. El de la diapositiva activa es siempre una barrita que muestra el
+          progreso hacia la próxima (con o sin mouse encima); los demás son círculos. Cada botón mide 44 px de alto y
+          24 de ancho (44 el activo) aunque el punto se vea chico */}
+      <div
+        role="group"
+        aria-label="Elegir diapositiva"
+        className="absolute inset-x-0 bottom-4 sm:bottom-6 z-10 flex items-center justify-center"
+      >
+        {SLIDES.map((slide, idx) => {
+          const isActive = idx === activeIdx;
+          return (
             <button
+              key={slide.title}
               type="button"
-              onClick={prev}
-              aria-label="Diapositiva anterior"
-              className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
+              onClick={() => goTo(idx)}
+              aria-label={`Ir a ${slide.short} (${idx + 1} de ${N})`}
+              aria-current={isActive ? "true" : undefined}
+              className={`group/dot grid h-11 cursor-pointer place-items-center transition-[width] duration-300 focus-visible:outline-none ${
+                isActive ? "w-11" : "w-6"
+              }`}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <span
+                className={`relative block overflow-hidden rounded-full transition-all duration-300 group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-white group-focus-visible/dot:ring-offset-4 group-focus-visible/dot:ring-offset-transparent ${
+                  isActive
+                    ? "h-1.5 w-9 bg-white/25"
+                    : "size-2 bg-white/40 group-hover/dot:bg-white/75"
+                }`}
+              >
+                {isActive &&
+                  (reducedMotion ? (
+                    // sin movimiento no hay avance automático: la barra se ve llena
+                    <span className="absolute inset-0 bg-white" />
+                  ) : (
+                    <span
+                      // la key NO incluye el clon: al resetear de N a 0 el llenado sigue sin reiniciarse
+                      key={activeIdx}
+                      className="ws-progress-fill absolute inset-0 origin-left bg-white"
+                      style={{ animationDuration: `${AUTO_INTERVAL}ms` }}
+                    />
+                  ))}
+              </span>
             </button>
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Diapositiva siguiente"
-              className="grid size-11 place-items-center rounded-full border border-white/25 text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/90"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </section>
   );
