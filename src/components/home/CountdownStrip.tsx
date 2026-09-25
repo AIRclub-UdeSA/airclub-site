@@ -87,7 +87,7 @@ export function CountdownStrip({ event }: { event: EventItem }) {
             <h2 className="font-display text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#f5e8ec] leading-[0.94] uppercase mb-5">
               Challenge JAR 2026,
               <br />
-              <span className="text-[#f0357f]">Rosario.</span>
+              <span className="text-[#f0357f]">Rosario</span>
             </h2>
 
             <p className="font-body text-[1rem] sm:text-[1.08rem] text-[#f5e8ec]/85 leading-[1.75] mb-8 max-w-lg">
