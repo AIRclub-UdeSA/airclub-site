@@ -343,7 +343,10 @@ body {
 }
 
 .arm-canvas-container {
-  height: calc(var(--hero-h) * 0.94);
+  /* Alto del espaciador como variable: la foto fija de ArmHero se dimensiona y centra en funcion de
+     este valor (ver ArmStillImage), asi que tiene que ser una sola fuente de verdad. */
+  --arm-h: calc(var(--hero-h) * 0.94);
+  height: var(--arm-h);
   width: calc(var(--hero-h) * 0.45);
   max-width: 250px;
   min-width: 80px;
