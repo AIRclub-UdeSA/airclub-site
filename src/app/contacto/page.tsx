@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowUpRight, AtSign, Camera, MessageCircle, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Briefcase, Camera, Mail, MessageCircle, type LucideIcon } from "lucide-react";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { getContactChannels, getContactReasons, type ContactChannel } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
@@ -11,17 +11,16 @@ export const metadata: Metadata = buildMetadata({
 });
 
 const CHANNEL_ICONS: Record<ContactChannel["key"], LucideIcon> = {
-  email: AtSign,
+  email: Mail,
   instagram: Camera,
   whatsapp: MessageCircle,
+  linkedin: Briefcase,
 };
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
 export default async function ContactoPage() {
   const [channels, reasons] = await Promise.all([getContactChannels(), getContactReasons()]);
-  const email = channels.find((c) => c.key === "email");
-  const social = channels.filter((c) => c.key !== "email");
 
   return (
     <>
@@ -40,18 +39,8 @@ export default async function ContactoPage() {
                 canal indicado, o escribinos directo.
               </p>
 
-              {email && (
-                <a
-                  href={email.href}
-                  className="mt-10 block break-words font-display text-[clamp(1.1rem,2.05vw,1.6rem)] font-extrabold leading-[1.1] tracking-tight text-text transition-colors hover:text-crimson-text"
-                >
-                  {email.value}
-                </a>
-              )}
-              {email && <p className="mt-2 font-mono text-[.72rem] text-text3">{email.note}</p>}
-
               <ul className="mt-10 flex flex-col divide-y divide-border/60 border-y border-border/60">
-                {social.map((c) => {
+                {channels.map((c) => {
                   const Icon = CHANNEL_ICONS[c.key];
                   return (
                     <li key={c.key}>

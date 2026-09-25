@@ -4,7 +4,7 @@ export const COMMUNITY_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSeJj7cS6SaCPaBr4a6dfJzeFF9W6BRWYxfLe0BEcGepSIvJBw/viewform";
 
 export type SeedContactChannel = {
-  key: "email" | "instagram" | "whatsapp";
+  key: "email" | "instagram" | "whatsapp" | "linkedin";
   label: string;
   /** Lo que se muestra como texto del enlace. */
   value: string;
@@ -48,6 +48,14 @@ export const channels: SeedContactChannel[] = [
     href: "https://chat.whatsapp.com/Dz7CNt3Zdt25u4hqPd2fLK?s=cl&p=i&mlu=4",
     external: true,
     note: "El grupo para el día a día del club y coordinar rápido.",
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    value: "AIR Club UdeSA",
+    href: "https://www.linkedin.com/company/air-club-udesa/",
+    external: true,
+    note: "Actividad del club y contacto profesional.",
   },
 ];
 
