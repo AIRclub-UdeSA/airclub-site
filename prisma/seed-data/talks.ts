@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "./contact";
+
 export type TalkMedia = { type: "image"; src: string } | { type: "video"; src: string; poster: string };
 
 export type TalkSlide = {
@@ -122,7 +124,7 @@ export const talks: SeedTalk[] = [
     media: [],
     cta: {
       label: "Reservar lugar (Próximamente)",
-      url: "mailto:airclub@udesa.edu.ar?subject=Consulta RSVP - Segundo AIR Talk",
+      url: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Consulta RSVP - Segundo AIR Talk")}`,
     },
   },
   {
@@ -150,7 +152,7 @@ export const talks: SeedTalk[] = [
     media: [],
     cta: {
       label: "Proponer una talk",
-      url: "mailto:airclub@udesa.edu.ar?subject=Propuesta de AIR Talk",
+      url: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Propuesta de AIR Talk")}`,
     },
   },
 ];

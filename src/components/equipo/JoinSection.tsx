@@ -9,9 +9,6 @@ const ShaderGradientBg = dynamic(
   { ssr: false }
 );
 
-const COMMUNITY_FORM =
-  "https://docs.google.com/forms/d/e/1FAIpQLSeJj7cS6SaCPaBr4a6dfJzeFF9W6BRWYxfLe0BEcGepSIvJBw/viewform";
-
 const COMMUNITY_BENEFITS = [
   "Te llegan las novedades y todo lo nuevo del club",
   "Acceso a charlas, cursos y workshops",
@@ -19,7 +16,7 @@ const COMMUNITY_BENEFITS = [
   "Canal directo para hablar con nosotros y proponer ideas",
 ];
 
-export function JoinSection() {
+export function JoinSection({ communityHref, teamHref }: { communityHref: string; teamHref: string }) {
   return (
     <section className="relative overflow-hidden border-y border-white/10 bg-[#0e0407] py-16 text-[#f5e8ec] sm:py-24">
       {/* Fondo inmersivo 3D ShaderGradient en paleta carmesí/vino, igual que la cuenta regresiva del Challenge JAR 2026. */}
@@ -47,7 +44,7 @@ export function JoinSection() {
             </ul>
 
             <a
-              href={COMMUNITY_FORM}
+              href={communityHref}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-9 inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.75rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
@@ -69,7 +66,7 @@ export function JoinSection() {
             </p>
 
             <a
-              href="mailto:airclub@udesa.edu.ar?subject=Quiero sumarme al equipo principal&body=Hola AIR Club, ya soy parte de la comunidad y me gustaría sumarme al equipo principal. Esto es lo que me gustaría hacer:"
+              href={teamHref}
               className="mt-7 inline-flex items-center gap-2 rounded-full border-[1.5px] border-[#f5e8ec] px-6 py-3.5 font-mono text-[.75rem] font-semibold uppercase tracking-[.14em] text-[#f5e8ec] transition-all hover:bg-[#f5e8ec] hover:text-[#0e0407]"
             >
               <Mail size={14} />
