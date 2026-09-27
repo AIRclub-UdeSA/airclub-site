@@ -1,6 +1,8 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 
+export type { Prisma } from "../../generated/prisma/client";
+
 // Pooled connection (Supavisor) — safe for serverless/many short-lived connections.
 // The unpooled DIRECT_URL is only used by `prisma migrate` (see prisma7.config.ts).
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });

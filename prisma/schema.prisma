@@ -20,6 +20,40 @@ enum RobotSpecGroup {
   SOFTWARE
 }
 
+enum AdminRole {
+  ADMIN // acceso total, incluida la gestion de personas autorizadas
+  EDITOR // acceso solo a las secciones listadas en AdminUser.sections
+}
+
+// Personas con acceso a /admin. Loguearse con Google restringido a @udesa.edu.ar no alcanza
+// por si solo: hace falta ademas estar cargado aca. Ver src/lib/admin/permissions.ts.
+model AdminUser {
+  id        String      @id @default(cuid())
+  email     String      @unique
+  role      AdminRole
+  sections  String[] // ids de seccion (ej: "talks"); ADMIN ignora este campo, ve todo
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  auditLogs AuditLog[]
+}
+
+// Registro de cada accion de escritura hecha desde /admin. Se escribe en la misma
+// transaccion que el cambio que audita (ver Etapa 3 de PLAN-ADMIN.md).
+model AuditLog {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+  section     String // ej: "talks"
+  entityId    String // id del registro afectado
+  action      String // ej: "create" | "update" | "delete" | "publish"
+  before      Json?
+  after       Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([section, entityId])
+  @@index([adminUserId])
+}
+
 enum TalkMediaType {
   IMAGE
   VIDEO
