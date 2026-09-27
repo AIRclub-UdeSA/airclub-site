@@ -20,6 +20,11 @@ enum RobotSpecGroup {
   SOFTWARE
 }
 
+enum TalkMediaType {
+  IMAGE
+  VIDEO
+}
+
 model Event {
   id                   String              @id @default(cuid())
   slug                 String              @unique
@@ -93,6 +98,70 @@ model RobotLink {
   order   Int    @default(0)
 
   @@index([robotId])
+}
+
+model Talk {
+  id                 String      @id @default(cuid())
+  slug               String      @unique
+  title              String
+  subtitle           String
+  details            String      @db.Text
+  abstract           String      @db.Text
+  speakerName        String?
+  speakerRole        String?
+  speakerAffiliation String?
+  speakerAvatar      String?
+  speakerLinkedin    String?
+  startsAt           DateTime?
+  endsAt             DateTime?
+  dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
+  placeholder        String? // texto grande del placeholder cuando no hay fotos (ej.: "?")
+  location           String?
+  topic              String?
+  recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
+  ctaLabel           String?
+  ctaUrl             String?
+  order              Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  media              TalkMedia[]
+  slides             TalkSlide[]
+  links              TalkLink[]
+}
+
+model TalkMedia {
+  id     String        @id @default(cuid())
+  talkId String
+  talk   Talk          @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  type   TalkMediaType
+  src    String
+  poster String? // solo para videos
+  order  Int           @default(0)
+
+  @@index([talkId])
+}
+
+model TalkSlide {
+  id       String @id @default(cuid())
+  talkId   String
+  talk     Talk   @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  title    String
+  embedUrl String
+  openUrl  String
+  order    Int    @default(0)
+
+  @@index([talkId])
+}
+
+model TalkLink {
+  id     String @id @default(cuid())
+  talkId String
+  talk   Talk   @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  label  String
+  url    String
+  order  Int    @default(0)
+
+  @@index([talkId])
 }
 
 model TeamMember {

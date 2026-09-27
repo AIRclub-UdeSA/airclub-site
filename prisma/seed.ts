@@ -4,9 +4,19 @@ import { PrismaClient } from "../generated/prisma/client";
 import { events } from "./seed-data/events";
 import { robots } from "./seed-data/robots";
 import { collaborators, founders } from "./seed-data/team";
+import { talks } from "./seed-data/talks";
 
 const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+
+function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: number) {
+  return {
+    type: m.type === "image" ? ("IMAGE" as const) : ("VIDEO" as const),
+    src: m.src,
+    poster: m.type === "video" ? m.poster : undefined,
+    order,
+  };
+}
 
 async function main() {
   for (const event of events) {
@@ -52,7 +62,39 @@ async function main() {
     })),
   });
 
-  console.log(`Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas.`);
+  for (const [i, talk] of talks.entries()) {
+    const { speaker, media, slides, links, cta, ...talkData } = talk;
+    const data = {
+      ...talkData,
+      speakerName: speaker?.name,
+      speakerRole: speaker?.role,
+      speakerAffiliation: speaker?.affiliation,
+      speakerAvatar: speaker?.avatar,
+      speakerLinkedin: speaker?.linkedin,
+      ctaLabel: cta?.label,
+      ctaUrl: cta?.url,
+      order: i,
+    };
+    await prisma.talk.upsert({
+      where: { slug: talk.slug },
+      create: {
+        ...data,
+        media: { create: media.map((m, j) => toTalkMediaRow(m, j)) },
+        slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
+        links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+      },
+      update: {
+        ...data,
+        media: { deleteMany: {}, create: media.map((m, j) => toTalkMediaRow(m, j)) },
+        slides: { deleteMany: {}, create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
+        links: { deleteMany: {}, create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+      },
+    });
+  }
+
+  console.log(
+    `Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas, ${talks.length} charlas.`,
+  );
 }
 
 main()
