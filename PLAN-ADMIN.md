@@ -117,8 +117,10 @@ auditoría.
 
 ## Etapa 2 — Conectar la base de datos real
 
-- [ ] `npx prisma migrate dev --name init` contra la base de Supabase real.
-- [ ] `npm run db:seed` para cargar eventos/robots/equipo actuales.
+- [x] `npx prisma migrate dev --name init` contra la base de Supabase real — migración
+      `20260927143209_init`, commiteada en `feat/conectar-supabase` (contra `v2`).
+- [x] `npm run db:seed` para cargar eventos/robots/equipo actuales — 2 eventos, 1 robot, 11
+      personas.
 - [ ] Agregar a `TeamMember` en `prisma/schema.prisma` las columnas `linkedin`,
       `linkedinPhoto`, `github` (ver `prisma/seed-data/team.ts` y el comentario en
       `prisma/seed.ts`) + nueva migración.
