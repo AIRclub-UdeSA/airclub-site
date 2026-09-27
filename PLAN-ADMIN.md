@@ -121,12 +121,23 @@ auditoría.
       `20260927143209_init`, commiteada en `feat/conectar-supabase` (contra `v2`).
 - [x] `npm run db:seed` para cargar eventos/robots/equipo actuales — 2 eventos, 1 robot, 11
       personas.
-- [ ] Agregar a `TeamMember` en `prisma/schema.prisma` las columnas `linkedin`,
-      `linkedinPhoto`, `github` (ver `prisma/seed-data/team.ts` y el comentario en
-      `prisma/seed.ts`) + nueva migración.
+- [x] Agregar a `TeamMember` en `prisma/schema.prisma` las columnas `linkedin`,
+      `linkedinPhoto`, `github` + migración `20260927151020_add_team_member_links`, seed
+      actualizado para persistirlas y re-corrido contra la base real. Commiteado en
+      `feat/conectar-supabase`.
 - [ ] Migrar `src/lib/events.ts`, `src/lib/robots.ts` y `src/lib/team.ts` de los arrays de
       `seed-data` a queries reales de Prisma, sin cambiar firmas.
-- [ ] Abrir PR contra `v2` para validar el preview deploy de Vercel contra datos reales.
+      **Decisión (2026-09-27): solo `team.ts` se migra ahora.** `/eventos`, `/plataformas`
+      (robots) y `/proyectos` todavía no tienen su rediseño de `v2` terminado ni definido, así
+      que no tiene sentido conectarlos a la base todavía — el schema de `Event`/`Robot` ya
+      está migrado y sembrado, pero `src/lib` sigue leyendo de `seed-data` a propósito hasta
+      que se resuelva el diseño de cada subpágina. Queda anotado en los issues
+      [#4](https://github.com/AIRclub-UdeSA/airclub-site/issues/4#issuecomment-5857052610) y
+      [#7](https://github.com/AIRclub-UdeSA/airclub-site/issues/7#issuecomment-5857053616).
+      `/contacto` tampoco se migra: por decisión ya tomada en #19/PR #20, se queda como config
+      centralizada en `src/lib/contact.ts`, no va a la base.
+- [ ] Abrir PR contra `v2` para validar el preview deploy de Vercel contra datos reales (una
+      vez migrado `team.ts`).
 
 ## Etapa 3 — Issue #21, Fase 0: fundación del panel de admin
 
