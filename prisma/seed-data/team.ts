@@ -16,7 +16,7 @@ export const founders: SeedTeamMember[] = [
     name: "Juan Kaplan",
     links: {
       linkedin: "https://www.linkedin.com/in/juan-kaplan/",
-      linkedinPhoto: "/equipo/linkedin/juan.jpg",
+      linkedinPhoto: "/equipo/linkedin/juan.jpeg",
       github: "https://github.com/juan-kaplan",
     },
   },
@@ -24,7 +24,7 @@ export const founders: SeedTeamMember[] = [
     name: "Lucio Luque Materazzi",
     links: {
       linkedin: "https://www.linkedin.com/in/lucio-luque-materazzi",
-      linkedinPhoto: "/equipo/linkedin/lucio.jpg",
+      linkedinPhoto: "/equipo/linkedin/lucio.jpeg",
       github: "https://github.com/LucioLuque",
     },
   },
@@ -32,7 +32,7 @@ export const founders: SeedTeamMember[] = [
     name: "Camila Guerrero",
     links: {
       linkedin: "https://www.linkedin.com/in/camila-guerrero-ia/",
-      linkedinPhoto: "/equipo/linkedin/camila.jpg",
+      linkedinPhoto: "/equipo/linkedin/camila.png",
       github: "https://github.com/cguerreroudesa",
     },
   },
@@ -40,7 +40,7 @@ export const founders: SeedTeamMember[] = [
     name: "Zoe Velazquez",
     links: {
       linkedin: "https://www.linkedin.com/in/zoe-velazquez-zorzi/",
-      linkedinPhoto: "/equipo/linkedin/zoe.jpg",
+      linkedinPhoto: "/equipo/linkedin/zoe.jpeg",
       github: "https://github.com/Zoevelazquez0430",
     },
   },
@@ -56,7 +56,7 @@ export const founders: SeedTeamMember[] = [
     name: "Teo Kaucher",
     links: {
       linkedin: "https://www.linkedin.com/in/teo-manuel-kaucher/",
-      linkedinPhoto: "/equipo/linkedin/teo.jpg",
+      linkedinPhoto: "/equipo/linkedin/teo.jpeg",
       github: "https://github.com/teomk",
     },
   },
@@ -82,7 +82,7 @@ export const collaborators: SeedTeamMember[] = [
     name: "Martina Grunewald",
     links: {
       linkedin: "https://www.linkedin.com/in/martina-grunewald/",
-      linkedinPhoto: "/equipo/linkedin/martina.jpg",
+      linkedinPhoto: "/equipo/linkedin/martina.jpeg",
       github: "https://github.com/mgrunewald",
     },
   },
@@ -90,7 +90,7 @@ export const collaborators: SeedTeamMember[] = [
     name: "Lisandro Morales Arce",
     links: {
       linkedin: "https://www.linkedin.com/in/lisandro-morales-arce/",
-      linkedinPhoto: "/equipo/linkedin/lisandro.jpg",
+      linkedinPhoto: "/equipo/linkedin/lisandro.png",
       github: "https://github.com/TatoMorales",
     },
   },
@@ -98,7 +98,7 @@ export const collaborators: SeedTeamMember[] = [
     name: "Manuela Gomez Pazos",
     links: {
       linkedin: "https://www.linkedin.com/in/manuelagomezpazos/",
-      linkedinPhoto: "/equipo/linkedin/manuela.jpg",
+      linkedinPhoto: "/equipo/linkedin/manuela.jpeg",
       github: "https://github.com/mgomezpazos",
     },
   },
