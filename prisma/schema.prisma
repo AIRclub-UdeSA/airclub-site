@@ -21,22 +21,22 @@ enum RobotSpecGroup {
 }
 
 model Event {
-  id                   String    @id @default(cuid())
-  slug                 String    @unique
+  id                   String              @id @default(cuid())
+  slug                 String              @unique
   title                String
   tagline              String?
-  description          String    @db.Text
+  description          String              @db.Text
   location             String?
   startsAt             DateTime
   endsAt               DateTime?
-  status               EventStatus @default(PUBLISHED)
+  status               EventStatus         @default(PUBLISHED)
   externalUrl          String? // e.g. JAR site link, or a Google Form until RSVP ships
-  rsvpEnabled          Boolean     @default(false) // stays false until the RSVP feature (deferred) ships
+  rsvpEnabled          Boolean             @default(false) // stays false until the RSVP feature (deferred) ships
   capacity             Int?
-  featuredForCountdown Boolean     @default(false)
+  featuredForCountdown Boolean             @default(false)
   imageUrl             String?
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
   registrations        EventRegistration[]
 
   @@index([startsAt])
@@ -56,18 +56,18 @@ model EventRegistration {
 }
 
 model Robot {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String      @id @default(cuid())
+  slug        String      @unique
   name        String
   status      String // free text badge, e.g. "En desarrollo activo"
   category    String?
   tags        String[]
-  description String   @db.Text
+  description String      @db.Text
   imageUrl    String
   imageAlt    String
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   specs       RobotSpec[]
   links       RobotLink[]
 }
@@ -96,13 +96,16 @@ model RobotLink {
 }
 
 model TeamMember {
-  id        String   @id @default(cuid())
-  name      String
-  role      String? // nullable: current roster has no roles yet
-  photoUrl  String? // nullable: currently one group photo, not per-person
-  bio       String?  @db.Text
-  order     Int      @default(0)
-  active    Boolean  @default(true) // soft-remove without losing history
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  role          String? // nullable: current roster has no roles yet
+  photoUrl      String? // nullable: currently one group photo, not per-person
+  bio           String?  @db.Text
+  linkedin      String? // perfil publico de LinkedIn
+  linkedinPhoto String? // foto de LinkedIn: no se puede traer automaticamente, se sube a mano (URL o ruta)
+  github        String? // perfil publico de GitHub
+  order         Int      @default(0)
+  active        Boolean  @default(true) // soft-remove without losing history
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

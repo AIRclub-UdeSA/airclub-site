@@ -34,15 +34,22 @@ async function main() {
     });
   }
 
-  // El grupo (Fundador / Colaborador) se guarda en `role`. Los links y la foto de LinkedIn (`links`) todavía no tienen
-  // columna en TeamMember, así que por ahora no se persisten en la base.
+  // El grupo (Fundador / Colaborador) se guarda en `role`.
   const people = [
     ...founders.map((m) => ({ ...m, role: m.role ?? "Fundador" })),
     ...collaborators.map((m) => ({ ...m, role: m.role ?? "Colaborador" })),
   ];
   await prisma.teamMember.deleteMany({});
   await prisma.teamMember.createMany({
-    data: people.map(({ name, role, photoUrl }, i) => ({ name, role, photoUrl, order: i })),
+    data: people.map(({ name, role, photoUrl, links }, i) => ({
+      name,
+      role,
+      photoUrl,
+      linkedin: links?.linkedin,
+      linkedinPhoto: links?.linkedinPhoto,
+      github: links?.github,
+      order: i,
+    })),
   });
 
   console.log(`Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas.`);
