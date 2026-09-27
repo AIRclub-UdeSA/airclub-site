@@ -4,9 +4,19 @@ import { PrismaClient } from "../generated/prisma/client";
 import { events } from "./seed-data/events";
 import { robots } from "./seed-data/robots";
 import { collaborators, founders } from "./seed-data/team";
+import { talks } from "./seed-data/talks";
 
 const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+
+function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: number) {
+  return {
+    type: m.type === "image" ? ("IMAGE" as const) : ("VIDEO" as const),
+    src: m.src,
+    poster: m.type === "video" ? m.poster : undefined,
+    order,
+  };
+}
 
 async function main() {
   for (const event of events) {
@@ -34,18 +44,57 @@ async function main() {
     });
   }
 
-  // El grupo (Fundador / Colaborador) se guarda en `role`. Los links y la foto de LinkedIn (`links`) todavía no tienen
-  // columna en TeamMember, así que por ahora no se persisten en la base.
+  // El grupo (Fundador / Colaborador) se guarda en `role`.
   const people = [
     ...founders.map((m) => ({ ...m, role: m.role ?? "Fundador" })),
     ...collaborators.map((m) => ({ ...m, role: m.role ?? "Colaborador" })),
   ];
   await prisma.teamMember.deleteMany({});
   await prisma.teamMember.createMany({
-    data: people.map(({ name, role, photoUrl }, i) => ({ name, role, photoUrl, order: i })),
+    data: people.map(({ name, role, photoUrl, links }, i) => ({
+      name,
+      role,
+      photoUrl,
+      linkedin: links?.linkedin,
+      linkedinPhoto: links?.linkedinPhoto,
+      github: links?.github,
+      order: i,
+    })),
   });
 
-  console.log(`Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas.`);
+  for (const [i, talk] of talks.entries()) {
+    const { speaker, media, slides, links, cta, ...talkData } = talk;
+    const data = {
+      ...talkData,
+      speakerName: speaker?.name,
+      speakerRole: speaker?.role,
+      speakerAffiliation: speaker?.affiliation,
+      speakerAvatar: speaker?.avatar,
+      speakerLinkedin: speaker?.linkedin,
+      ctaLabel: cta?.label,
+      ctaUrl: cta?.url,
+      order: i,
+    };
+    await prisma.talk.upsert({
+      where: { slug: talk.slug },
+      create: {
+        ...data,
+        media: { create: media.map((m, j) => toTalkMediaRow(m, j)) },
+        slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
+        links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+      },
+      update: {
+        ...data,
+        media: { deleteMany: {}, create: media.map((m, j) => toTalkMediaRow(m, j)) },
+        slides: { deleteMany: {}, create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
+        links: { deleteMany: {}, create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+      },
+    });
+  }
+
+  console.log(
+    `Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas, ${talks.length} charlas.`,
+  );
 }
 
 main()

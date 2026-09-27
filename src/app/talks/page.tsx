@@ -11,8 +11,10 @@ export const metadata: Metadata = buildMetadata({
   path: "/talks",
 });
 
-// Recalcula cada hora qué charlas son pasadas y cuál es la próxima (si no, quedaría fijo al último deploy).
-export const revalidate = 3600;
+// Se renderiza en cada request (no estática): el contenido sale de la base y puede cambiar en
+// cualquier momento, y ademas next build no tiene acceso a una base real (usa credenciales
+// dummy en CI para no exponer secretos).
+export const dynamic = "force-dynamic";
 
 export default async function TalksPage() {
   const { talks, nextSlug, latestPastSlug } = await getTalksTimeline();
