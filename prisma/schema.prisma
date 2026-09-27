@@ -167,7 +167,10 @@ model TalkLink {
 model TeamMember {
   id            String   @id @default(cuid())
   name          String
-  role          String? // nullable: current roster has no roles yet
+  role          String? // nullable: current roster has no roles yet. CAUTION: getFounders()/getCollaborators()
+  // in src/lib/team.ts currently filter on this exact string ("Fundador"/"Colaborador") to
+  // group people — setting a real per-person role here will silently drop that person from
+  // both lists until team.ts gets a dedicated group field.
   photoUrl      String? // nullable: currently one group photo, not per-person
   bio           String?  @db.Text
   linkedin      String? // perfil publico de LinkedIn

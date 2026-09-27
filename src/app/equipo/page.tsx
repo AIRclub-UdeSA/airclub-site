@@ -13,6 +13,9 @@ export const metadata: Metadata = buildMetadata({
   path: "/equipo",
 });
 
+// Recalcula cada hora para reflejar cambios en la base sin esperar a un redeploy (igual que /talks).
+export const revalidate = 3600;
+
 const sectionTitle =
   "border-b border-border/80 pb-6 font-display text-[clamp(1.1rem,5.3vw,3rem)] sm:text-[clamp(1.9rem,3.6vw,3rem)] font-black uppercase leading-[0.98] tracking-tight text-text";
 
