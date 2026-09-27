@@ -97,11 +97,19 @@ auditoría.
       migrate`). Nota: en proyectos nuevos de Supabase ambas pasan por el pooler
       (`*.pooler.supabase.com`), ya no por `db.<ref>.supabase.co` directo — se ajustó el
       comentario del `.env.example` para reflejarlo.
-- [ ] Crear *Team* de Vercel (no cuenta personal) con GitHub → New Project → importar
-      `AIRclub-UdeSA/airclub-site`.
-- [ ] Vercel: Project Settings → Git → Production Branch → `v2` (**no** `main`).
-- [ ] Vercel: cargar `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SITE_URL` en Environment
+- [x] Crear *Team* de Vercel (plan Hobby, no "commercial/Pro" — sitio no comercial) con
+      GitHub → New Project → importar `AIRclub-UdeSA/airclub-site`.
+- [x] Vercel: Settings → Environments → Production → Branch Tracking → `v2` (**no**
+      `main`). Nota: en la UI actual de Vercel esto vive en "Environments", no en "Git"
+      como decía la guía original. Hizo falta un deploy manual ("Deployments → Create
+      Deployment", pegando `v2`) para que el nuevo Production Branch tuviera algo que
+      servir, y un segundo deploy después de que el Framework Preset se autocorrigiera de
+      "Other" a "Next.js" (el primer deploy había quedado con la config vieja, detectada
+      cuando el import todavía apuntaba a `main`).
+- [x] Vercel: cargar `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SITE_URL` en Environment
       Variables, aplicadas a Production y Preview.
+- [x] Confirmado: `https://airclub-site.vercel.app` sirve el sitio de `v2` (hero del brazo,
+      botón "Entrar al club") en Production.
 - [x] Actualizar `.env` local con los valores reales de Supabase (reemplazando los de
       relleno).
 - [ ] (No bloqueante) Preguntar en IT de UdeSA por un subdominio `airclub.udesa.edu.ar`; si
