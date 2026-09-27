@@ -114,6 +114,19 @@ auditoría.
       relleno).
 - [ ] (No bloqueante) Preguntar en IT de UdeSA por un subdominio `airclub.udesa.edu.ar`; si
       no, evaluar Cloudflare Registrar o Namecheap más adelante.
+- [x] **Migración de cuentas de Lucio a `airclub@udesa.edu.ar`** (2026-09-27): tanto Supabase
+      como Vercel se habían creado con la cuenta personal de Lucio — se migraron a la cuenta del
+      club para no depender de una sola persona (ídem razonamiento de por qué Organization/Team
+      y no proyecto suelto). En Supabase fue trivial: `Organization Settings → Team → Invite
+      member` con `airclub@` como Owner, sin recrear nada. En Vercel el plan Hobby no permite
+      invitar un segundo miembro sin pagar Pro, así que se recreó el proyecto desde cero con una
+      cuenta de GitHub nueva creada para `airclub@`: repo público pero igual hace falta permiso
+      de **escritura** (no solo lectura) sobre el repo para que Vercel lo pueda "linkear" —
+      resuelto agregando esa cuenta a un GitHub Team (`club`) con permiso `push` sobre
+      `airclub-site` puntual, no toda la org. Mismo gotcha de siempre con la rama `main` vs `v2`
+      al reimportar. Dominio nuevo: `airclub-site-chi.vercel.app` (el nombre `airclub-site` sin
+      sufijo no se reclama solo al borrar el proyecto viejo). Proyecto viejo de la cuenta
+      personal ya borrado.
 
 ## Etapa 2 — Conectar la base de datos real
 
