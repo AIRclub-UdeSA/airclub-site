@@ -89,17 +89,20 @@ auditoría.
 
 ## Etapa 1 — Desbloqueo: cuentas externas (solo Lucio puede crearlas)
 
-- [ ] Crear *Organization* de Supabase (no cuenta personal) y proyecto nuevo, con password
+- [x] Crear *Organization* de Supabase (no cuenta personal) y proyecto nuevo, con password
       guardada en un lugar durable. Región: São Paulo si está disponible, si no la más
       cercana en US.
-- [ ] Guardar las dos connection strings (Project Settings → Database → Connection string):
-      pooled (puerto 6543, `?pgbouncer=true`) y directa (puerto 5432).
+- [x] Guardar las dos connection strings (panel "Get connected" → tab ORM): pooled, modo
+      transacción (puerto 6543) y pooled, modo sesión (puerto 5432, la usa `prisma
+      migrate`). Nota: en proyectos nuevos de Supabase ambas pasan por el pooler
+      (`*.pooler.supabase.com`), ya no por `db.<ref>.supabase.co` directo — se ajustó el
+      comentario del `.env.example` para reflejarlo.
 - [ ] Crear *Team* de Vercel (no cuenta personal) con GitHub → New Project → importar
       `AIRclub-UdeSA/airclub-site`.
 - [ ] Vercel: Project Settings → Git → Production Branch → `v2` (**no** `main`).
 - [ ] Vercel: cargar `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_SITE_URL` en Environment
       Variables, aplicadas a Production y Preview.
-- [ ] Actualizar `.env` local con los valores reales de Supabase (reemplazando los de
+- [x] Actualizar `.env` local con los valores reales de Supabase (reemplazando los de
       relleno).
 - [ ] (No bloqueante) Preguntar en IT de UdeSA por un subdominio `airclub.udesa.edu.ar`; si
       no, evaluar Cloudflare Registrar o Namecheap más adelante.
