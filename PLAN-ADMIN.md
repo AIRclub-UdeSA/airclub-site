@@ -155,18 +155,40 @@ auditoría.
 
 Se implementa junto con el piloto de `/talks` (Etapa 4).
 
-- [ ] Habilitar Supabase Auth con Google, restringido a `@udesa.edu.ar`.
-- [ ] Modelo Prisma para personas autorizadas (rol `admin`/`editor` + secciones permitidas).
-- [ ] Verificación de permisos en el servidor para cada acción de escritura (no solo ocultar
-      botones).
-- [ ] Layout de `/admin` con navegación filtrada por permisos.
+- [x] ~~Habilitar Supabase Auth con Google, restringido a `@udesa.edu.ar`~~ **Cambio de
+      decisión (2026-09-27)**: se usa NextAuth.js (Auth.js v5) con proveedor de Google en vez
+      de Supabase Auth, para no agregar `supabase-js` al proyecto — la Etapa 1 ya desactivó a
+      propósito el Data API de Supabase porque toda la app usa Prisma directo. La sesión es
+      JWT (sin adapter de base para NextAuth); la autorización real vive en el modelo
+      `AdminUser` de abajo, no en Supabase. Login restringido a `@udesa.edu.ar` verificado en
+      el callback `signIn` de `src/auth.ts`. Falta: crear las credenciales OAuth en Google
+      Cloud Console (`AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`) — solo Lucio puede, es cuenta
+      externa como en la Etapa 1 — y cargarlas en `.env` local y en Vercel (Production +
+      Preview), con el redirect URI `/api/auth/callback/google` en cada dominio.
+- [x] Modelo Prisma para personas autorizadas (rol `ADMIN`/`EDITOR` + `sections: String[]`,
+      modelo `AdminUser`) + migración `20260927221143_add_admin_auth_and_audit_log`. Loguearse
+      con Google no alcanza por sí solo: además hay que estar cargado acá. Bootstrap inicial
+      (Lucio como `ADMIN`) hecho directo en la base, no en seed-data commiteado — a diferencia
+      del contenido público, esta es una lista de acceso, no contenido del sitio.
+- [x] Verificación de permisos en el servidor para cada acción de escritura (no solo ocultar
+      botones): `src/lib/admin/permissions.ts` (`requireAdminSession`/`requireSectionAccess`),
+      usada en el layout y de nuevo dentro de cada server action.
+- [x] Layout de `/admin` con navegación filtrada por permisos (`src/app/admin/(panel)/layout.tsx`).
+      Hoy solo lista "Inicio" y, para `ADMIN`, "Usuarios" — el resto de los items se agregan a
+      medida que se construye cada sección (empezando por `/admin/talks` en la Etapa 4).
 - [ ] Componentes reutilizables: lista, formulario, subida de imágenes a Supabase Storage,
       selector de fecha, confirmación de borrado.
 - [ ] Borrador/publicado por elemento + revalidación de la página pública al guardar.
-- [ ] Modelo de logs de auditoría (persona, fecha, sección, elemento, acción, valor
-      anterior/nuevo), escrito en la misma transacción que cada cambio.
+- [x] Modelo de logs de auditoría (`AuditLog`: persona, fecha, sección, elemento, acción, valor
+      anterior/nuevo), escrito en la misma transacción que cada cambio — implementado y en uso
+      desde `/admin/usuarios` (ver ítem siguiente); falta que las secciones de contenido
+      (Etapa 4) también escriban ahí.
 - [ ] Vista `/admin/logs` (solo `admin`, con filtros) + historial por elemento.
-- [ ] Gestión de usuarios y permisos (solo `admin`).
+- [x] Gestión de usuarios y permisos (solo `admin`): `/admin/usuarios` — alta/baja/cambio de
+      rol, con las salvaguardas de seguridad discutidas: chequeo de rol server-side en cada
+      acción (nunca solo en el cliente), dominio `@udesa.edu.ar` validado de nuevo en el
+      servidor, bloqueo explícito de sacar a la última persona `ADMIN` (para no quedar sin
+      nadie que pueda arreglar el panel), y cada alta/baja/cambio queda en `AuditLog`.
 - [ ] Bucket de Supabase Storage para imágenes/archivos, con validación de tipo/tamaño y
       optimización.
 
