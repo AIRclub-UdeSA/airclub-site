@@ -144,7 +144,12 @@ auditoría.
       fotos y videos cortos van a Supabase Storage, la grabación completa (opcional) siempre
       por link externo a YouTube, nunca a Storage. Verificado con `npm run dev` que `/talks`
       se ve igual.
-- [ ] Abrir PR contra `v2` para validar el preview deploy de Vercel contra datos reales.
+- [x] Abrir PR contra `v2` para validar el preview deploy de Vercel contra datos reales:
+      [PR #24](https://github.com/AIRclub-UdeSA/airclub-site/pull/24) (`feat/conectar-supabase`,
+      incluye también las fotos de equipo). Revisión de código propia antes de abrirlo: 4
+      hallazgos (inconsistencia de rutas de fotos entre ramas, PNGs sin comprimir, fragilidad
+      de `role` para agrupar founders/collaborators, falta de `revalidate` en `/equipo`),
+      los 3 primeros corregidos, el de `role` documentado con comentario.
 
 ## Etapa 3 — Issue #21, Fase 0: fundación del panel de admin
 
