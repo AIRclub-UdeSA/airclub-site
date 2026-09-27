@@ -48,7 +48,7 @@ export const founders: SeedTeamMember[] = [
     name: "Francesca Ragonesi",
     links: {
       linkedin: "https://www.linkedin.com/in/francesca-ragonesi-14a961290/",
-      linkedinPhoto: "/equipo/linkedin/francesca.jpg",
+      linkedinPhoto: "/equipo/linkedin/francesca.png",
       github: "https://github.com/fragonesi",
     },
   },
