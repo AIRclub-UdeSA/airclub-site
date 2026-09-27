@@ -32,7 +32,7 @@ export const founders: SeedTeamMember[] = [
     name: "Camila Guerrero",
     links: {
       linkedin: "https://www.linkedin.com/in/camila-guerrero-ia/",
-      linkedinPhoto: "/equipo/linkedin/camila.png",
+      linkedinPhoto: "/equipo/linkedin/camila.jpeg",
       github: "https://github.com/cguerreroudesa",
     },
   },
@@ -48,7 +48,7 @@ export const founders: SeedTeamMember[] = [
     name: "Francesca Ragonesi",
     links: {
       linkedin: "https://www.linkedin.com/in/francesca-ragonesi-14a961290/",
-      linkedinPhoto: "/equipo/linkedin/francesca.png",
+      linkedinPhoto: "/equipo/linkedin/francesca.jpeg",
       github: "https://github.com/fragonesi",
     },
   },
@@ -90,7 +90,7 @@ export const collaborators: SeedTeamMember[] = [
     name: "Lisandro Morales Arce",
     links: {
       linkedin: "https://www.linkedin.com/in/lisandro-morales-arce/",
-      linkedinPhoto: "/equipo/linkedin/lisandro.png",
+      linkedinPhoto: "/equipo/linkedin/lisandro.jpeg",
       github: "https://github.com/TatoMorales",
     },
   },
