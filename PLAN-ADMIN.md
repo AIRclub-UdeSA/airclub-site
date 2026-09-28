@@ -17,6 +17,27 @@
 > una vez por el clasificador de seguridad del entorno de Claude Code al intentar escribir
 > directo contra la base sin ese paso.
 
+## Pendiente (no bloqueante): separar base de datos de desarrollo
+
+Anotado el 2026-09-28 a pedido de Lucio, todavía sin arrancar — antes de tocarlo, confirmar
+que sigue queriéndose así.
+
+- [ ] Crear un segundo proyecto de Supabase, plan gratis, solo para desarrollo (ej.
+      `airclub-site-dev`), misma organización `AIRclub-UdeSA` en Supabase.
+- [ ] Sacar su `DATABASE_URL`/`DIRECT_URL` (Project Settings → Database → Connection string,
+      igual que se hizo con el proyecto real) y reemplazar esos dos valores en el `.env` local
+      (el de Vercel Production/Preview sigue apuntando al proyecto real, sin tocar).
+- [ ] Correr `npx prisma migrate deploy` contra la base nueva para aplicar todas las
+      migraciones existentes, y `npm run db:seed` para tener contenido de arranque.
+- [ ] Bootstrapear a Lucio como `ADMIN` en `AdminUser` de esa base nueva (mismo paso manual que
+      se hizo en la real), para poder loguearse en `/admin` en local.
+- [ ] Actualizar `README.md`/`CONTEXTO.md` dejando explícito cuál `.env` apunta a cuál base,
+      para que no se repita la confusión de la advertencia de arriba.
+
+**Nota:** Vercel Preview (los PRs) hoy también apunta a la base real — separarlo es un paso
+más (Vercel permite variables de entorno distintas por Preview), pero es secundario y no
+está pedido todavía.
+
 ## Contexto
 
 Los issues [#21](https://github.com/AIRclub-UdeSA/airclub-site/issues/21) ("Panel de
