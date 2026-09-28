@@ -184,10 +184,14 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       Vercel (Production + Preview) junto con `AUTH_SECRET`. **Login probado de punta a punta en
       local (2026-09-27)**: Google restringido a udesa.edu.ar + chequeo de `AdminUser` +
       `/admin` mostrando el rol correctamente.
-- [ ] (Pendiente, agregado por pedido explícito del usuario) Botón de login visible en el nav
-      general del sitio — hoy el login solo se dispara entrando directo a `/admin/login`. Sirve
-      sobre todo para que los admins tengan una forma de llegar a `/admin` sin escribir la URL a
-      mano; no habilita ninguna funcionalidad nueva para quien no sea admin.
+- [x] (Pedido explícito del usuario) Botón de login visible en el nav general del sitio
+      (`src/components/layout/Nav.tsx`): ícono de persona en desktop y mobile. Sin sesión, el
+      click abre un menú con "Continuar con Google" que dispara el login directo (server
+      action `signInAction`), sin pasar por `/admin/login`. Con sesión, el ícono muestra la
+      foto de perfil de Google y el menú ofrece "Cerrar sesión" y, si tiene permisos, un acceso
+      directo a "Panel de admin". No habilita ninguna funcionalidad nueva para quien no sea
+      admin — solo mantiene la sesión activa. Requirió agregar `lh3.googleusercontent.com` a
+      `images.remotePatterns` en `next.config.ts` para poder mostrar la foto de perfil.
 - [x] Modelo Prisma para personas autorizadas (rol `ADMIN`/`EDITOR` + `sections: String[]`,
       modelo `AdminUser`) + migración `20260927221143_add_admin_auth_and_audit_log`. Loguearse
       con Google no alcanza por sí solo: además hay que estar cargado acá. Bootstrap inicial
