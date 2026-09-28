@@ -1,57 +1,57 @@
 import { prisma } from "@/lib/prisma";
 import { requireSectionAccess } from "@/lib/admin/permissions";
-import { formatEventDate } from "@/lib/dates";
-
-function formatTalkDate(talk: { startsAt: Date | null; dateLabel: string | null }): string {
-  // dateLabel es el texto curado a mano para cuando el día/horario exacto no está cerrado
-  // (ej. "Semana del 12 al 16 de octubre") — más preciso que formatear el startsAt crudo.
-  if (talk.dateLabel) return talk.dateLabel;
-  if (talk.startsAt) return formatEventDate(talk.startsAt);
-  return "Sin fecha";
-}
+import { TalksManager } from "./TalksManager";
+import type { EditingTalk } from "./TalkForm";
 
 export default async function AdminTalksPage() {
   await requireSectionAccess("talks");
 
-  const talks = await prisma.talk.findMany({
+  const rows = await prisma.talk.findMany({
     orderBy: { order: "asc" },
-    include: { _count: { select: { media: true, slides: true, links: true } } },
+    include: {
+      media: { orderBy: { order: "asc" } },
+      slides: { orderBy: { order: "asc" } },
+      links: { orderBy: { order: "asc" } },
+    },
   });
+
+  const talks: EditingTalk[] = rows.map((talk) => ({
+    id: talk.id,
+    slug: talk.slug,
+    title: talk.title,
+    subtitle: talk.subtitle,
+    abstract: talk.abstract,
+    topic: talk.topic,
+    location: talk.location,
+    speakerName: talk.speakerName,
+    speakerRole: talk.speakerRole,
+    speakerAffiliation: talk.speakerAffiliation,
+    speakerAvatar: talk.speakerAvatar,
+    speakerLinkedin: talk.speakerLinkedin,
+    startsAt: talk.startsAt,
+    endsAt: talk.endsAt,
+    dateLabel: talk.dateLabel,
+    recordingUrl: talk.recordingUrl,
+    ctaLabel: talk.ctaLabel,
+    ctaUrl: talk.ctaUrl,
+    confirmed: talk.confirmed,
+    status: talk.status,
+    media: talk.media.map((m) => ({ type: m.type, src: m.src, poster: m.poster ?? "" })),
+    slides: talk.slides.map((s) => ({ title: s.title, embedUrl: s.embedUrl, openUrl: s.openUrl })),
+    links: talk.links.map((l) => ({ label: l.label, url: l.url })),
+  }));
 
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="font-display text-xl font-bold text-text">Charlas</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Borrador no aparece en /talks. &ldquo;A confirmar&rdquo; son charlas con fecha aún sin cerrar.
+          Borrador no aparece en /talks. &ldquo;A confirmar&rdquo; son charlas con fecha aún sin cerrar. Los cambios se ven en el sitio sin
+          redeploy.
         </p>
       </div>
 
-      {talks.length === 0 ? (
-        <p className="text-sm text-text3">Todavía no hay charlas cargadas.</p>
-      ) : (
-        <ul className="divide-y divide-border/60 border-y border-border/60">
-          {talks.map((talk) => (
-            <li key={talk.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <div>
-                <p className="font-medium text-text">{talk.title}</p>
-                <p className="font-mono text-xs text-text3">
-                  {talk.slug} · {formatTalkDate(talk)} · {talk._count.media} media · {talk._count.slides} slides ·{" "}
-                  {talk._count.links} links
-                </p>
-              </div>
-              <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-wide">
-                <span className={talk.status === "PUBLISHED" ? "text-text2" : "text-crimson-text"}>
-                  {talk.status === "PUBLISHED" ? "Publicada" : "Borrador"}
-                </span>
-                <span className={talk.confirmed ? "text-text2" : "text-crimson-text"}>
-                  {talk.confirmed ? "Confirmada" : "A confirmar"}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TalksManager talks={talks} />
     </div>
   );
 }
