@@ -25,9 +25,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </Link>
           ))}
           {admin.role === "ADMIN" && (
-            <Link href="/admin/usuarios" className="text-sm font-medium text-text2 hover:text-crimson">
-              Usuarios
-            </Link>
+            <>
+              <Link href="/admin/usuarios" className="text-sm font-medium text-text2 hover:text-crimson">
+                Usuarios
+              </Link>
+              <Link href="/admin/logs" className="text-sm font-medium text-text2 hover:text-crimson">
+                Logs
+              </Link>
+            </>
           )}
           <span className="text-sm text-text3">{admin.email}</span>
           <form action={signOutAction}>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import { formatEventDate } from "@/lib/dates";
 import { deleteTalk, toggleConfirmed, type ActionState } from "./actions";
@@ -83,7 +84,7 @@ const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
 
 type FormSeed = { kind: "blank" } | { kind: "template" } | { kind: "edit"; talk: EditingTalk };
 
-export function TalksManager({ talks }: { talks: EditingTalk[] }) {
+export function TalksManager({ talks, showLogsLink }: { talks: EditingTalk[]; showLogsLink: boolean }) {
   const [seed, setSeed] = useState<FormSeed>({ kind: "blank" });
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +133,11 @@ export function TalksManager({ talks }: { talks: EditingTalk[] }) {
                 <button type="button" onClick={() => startEditing(talk)} className="text-sm font-medium text-text2 hover:text-crimson-text">
                   Editar
                 </button>
+                {showLogsLink && (
+                  <Link href={`/admin/logs?entityId=${talk.id}`} className="text-sm font-medium text-text2 hover:text-crimson-text">
+                    Historial
+                  </Link>
+                )}
                 <RemoveTalkButton id={talk.id} title={talk.title} />
               </div>
             </li>

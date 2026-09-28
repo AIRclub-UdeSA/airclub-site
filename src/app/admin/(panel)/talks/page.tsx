@@ -4,7 +4,7 @@ import { TalksManager } from "./TalksManager";
 import type { EditingTalk } from "./TalkForm";
 
 export default async function AdminTalksPage() {
-  await requireSectionAccess("talks");
+  const admin = await requireSectionAccess("talks");
 
   const rows = await prisma.talk.findMany({
     orderBy: { order: "asc" },
@@ -51,7 +51,7 @@ export default async function AdminTalksPage() {
         </p>
       </div>
 
-      <TalksManager talks={talks} />
+      <TalksManager talks={talks} showLogsLink={admin.role === "ADMIN"} />
     </div>
   );
 }
