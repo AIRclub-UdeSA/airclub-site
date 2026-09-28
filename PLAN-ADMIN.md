@@ -261,13 +261,23 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       "Charlas" agregada al nav de `/admin`, gateada con `requireSectionAccess("talks")`.
       Probado con sesión de admin inyectada vía cookie firmada con `AUTH_SECRET` (no hay
       forma de automatizar el login real de Google en este entorno).
-- [ ] "Nueva charla a confirmar" + flujo de confirmación + carga de material en charla
-      pasada. **Esto es lo que falta de verdad** — el bloque grande de trabajo de esta etapa,
-      todavía sin empezar.
-- [ ] Permiso por sección (`talks`) verificado en servidor + logging de cada acción. El
-      mecanismo ya existe (`requireSectionAccess` en `src/lib/admin/permissions.ts`, probado en
-      `/admin/usuarios`) — falta solo *usarlo* en las páginas de `/admin/talks` que se
-      construyan.
+- [x] "Nueva charla a confirmar" + flujo de confirmación + carga de material en charla
+      pasada (2026-09-28). CRUD completo en `/admin/talks`: crear (nueva charla queda "a
+      confirmar" por default), editar los campos de la lista de arriba, reordenar
+      media/slides/links con ↑/↓ (la primera foto/video es la portada), toggle de un click
+      "Marcar confirmada"/"Marcar a confirmar" desde la lista sin abrir el formulario, y
+      borrado con `confirm()`. Formulario único reutilizado para crear/editar, mismo patrón
+      que `/admin/usuarios` (`key` para resetear el form, vuelve a blanco al guardar).
+      **Límite conocido**: fotos/videos/slides se cargan pegando una URL ya alojada (igual que
+      `TeamMember.photoUrl` hoy) — no hay botón de subida directa a Supabase Storage todavía,
+      porque no hay bucket ni credenciales configuradas (ítem de Storage de Etapa 3, más abajo,
+      sigue sin empezar y requiere que Lucio cree esas credenciales, como el resto de cuentas
+      externas de Etapa 1).
+- [x] Permiso por sección (`talks`) verificado en servidor + logging de cada acción
+      (2026-09-28). Las 4 acciones (`createTalk`/`updateTalk`/`deleteTalk`/`toggleConfirmed`)
+      llaman a `requireSectionAccess("talks")` y escriben en `AuditLog` (antes/después) dentro
+      de la misma transacción — confirmado consultando la base real tras probar las 4 acciones
+      de punta a punta.
 - [ ] Prueba real con una persona no técnica del club (criterio de aceptación del issue). No se
       puede hacer hasta que exista la feature.
 
