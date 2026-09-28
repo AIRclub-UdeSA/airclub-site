@@ -134,12 +134,16 @@ model RobotLink {
   @@index([robotId])
 }
 
+enum TalkStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model Talk {
   id                 String      @id @default(cuid())
   slug               String      @unique
   title              String
   subtitle           String
-  details            String      @db.Text
   abstract           String      @db.Text
   speakerName        String?
   speakerRole        String?
@@ -149,12 +153,13 @@ model Talk {
   startsAt           DateTime?
   endsAt             DateTime?
   dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
-  placeholder        String? // texto grande del placeholder cuando no hay fotos (ej.: "?")
   location           String?
   topic              String?
   recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
   ctaLabel           String?
   ctaUrl             String?
+  status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
+  confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
   order              Int         @default(0)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt

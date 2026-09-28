@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { TimelineTalk } from "./TalksTimeline";
 import { cn } from "@/lib/utils";
+import { getYoutubeEmbedUrl } from "@/lib/youtube";
 
 export type FloatingWindowTab = "slides" | "gallery" | "overview";
 
@@ -300,6 +301,34 @@ function TalkViewerContent({
                 {talk.abstract}
               </p>
             </div>
+
+            {/* Grabación completa */}
+            {talk.recordingUrl && (
+              <div className="border-t border-white/10 pt-6">
+                <h4 className="font-mono text-[.74rem] uppercase tracking-wider text-white/50 mb-3">Grabación completa</h4>
+                {getYoutubeEmbedUrl(talk.recordingUrl) ? (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10">
+                    <iframe
+                      src={getYoutubeEmbedUrl(talk.recordingUrl)!}
+                      title="Grabación de la charla"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={talk.recordingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 border border-white/20 px-5 py-2.5 font-mono text-[.76rem] uppercase tracking-wider text-white hover:border-crimson hover:text-crimson transition-colors"
+                  >
+                    <span>Ver grabación</span>
+                    <ExternalLink size={13} />
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Documentos */}
             {talk.links && talk.links.length > 0 && (
