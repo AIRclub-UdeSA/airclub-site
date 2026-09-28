@@ -174,10 +174,20 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       propósito el Data API de Supabase porque toda la app usa Prisma directo. La sesión es
       JWT (sin adapter de base para NextAuth); la autorización real vive en el modelo
       `AdminUser` de abajo, no en Supabase. Login restringido a `@udesa.edu.ar` verificado en
-      el callback `signIn` de `src/auth.ts`. Falta: crear las credenciales OAuth en Google
-      Cloud Console (`AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET`) — solo Lucio puede, es cuenta
-      externa como en la Etapa 1 — y cargarlas en `.env` local y en Vercel (Production +
-      Preview), con el redirect URI `/api/auth/callback/google` en cada dominio.
+      el callback `signIn` de `src/auth.ts`. Credenciales OAuth creadas en Google Cloud Console
+      logueado con `airclub@udesa.edu.ar` (proyecto `airclub-site`, pantalla de consentimiento
+      tipo **Interno** — Google restringe el login a `@udesa.edu.ar` a nivel de su propia
+      pantalla de login, sin cartel de "app no verificada" ni límite de test users, gracias a
+      que esa cuenta pertenece a la organización de Google Workspace `udesa.edu.ar`), con las
+      dos redirect URIs (`localhost:3000` y `airclub-site-chi.vercel.app`) `/api/auth/callback/google`.
+      `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` cargados en `.env` local; falta cargarlos también en
+      Vercel (Production + Preview) junto con `AUTH_SECRET`. **Login probado de punta a punta en
+      local (2026-09-27)**: Google restringido a udesa.edu.ar + chequeo de `AdminUser` +
+      `/admin` mostrando el rol correctamente.
+- [ ] (Pendiente, agregado por pedido explícito del usuario) Botón de login visible en el nav
+      general del sitio — hoy el login solo se dispara entrando directo a `/admin/login`. Sirve
+      sobre todo para que los admins tengan una forma de llegar a `/admin` sin escribir la URL a
+      mano; no habilita ninguna funcionalidad nueva para quien no sea admin.
 - [x] Modelo Prisma para personas autorizadas (rol `ADMIN`/`EDITOR` + `sections: String[]`,
       modelo `AdminUser`) + migración `20260927221143_add_admin_auth_and_audit_log`. Loguearse
       con Google no alcanza por sí solo: además hay que estar cargado acá. Bootstrap inicial
