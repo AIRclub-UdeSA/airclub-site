@@ -3,6 +3,20 @@
 > Documento vivo. Se va actualizando a medida que se resuelve cada paso — tildar los
 > checkboxes en el mismo commit/PR donde se resuelve ese paso, no de una sola vez al final.
 
+> ⚠️ **No hay base de datos separada para desarrollo.** `localhost:3000` (o cualquier
+> `.env` local) y el sitio en vivo (`airclub-site-chi.vercel.app`) apuntan al mismo proyecto
+> de Supabase — un solo `DATABASE_URL`. Cualquier charla/usuario/lo-que-sea que se cree,
+> edite o borre en `/admin` desde una corrida local **queda publicado en el sitio real al
+> instante** (`/talks` es `force-dynamic`, sin caché). Probar features de admin localmente
+> significa probarlas contra producción. Pasó el 2026-09-28: se probó el CRUD de
+> `/admin/talks` en local y sin querer se sobreescribió `segundo-air-talk` con datos de
+> prueba — se pudo restaurar exacto porque `AuditLog` guarda el "antes" de cada `update`,
+> pero no siempre va a ser tan fácil de deshacer. Antes de cargar contenido real, es buena
+> idea probar con datos obviamente falsos primero, y las escrituras "irreversibles" (borrar,
+> generar SQL directo) requieren confirmación explícita antes de correrse — quedó bloqueado
+> una vez por el clasificador de seguridad del entorno de Claude Code al intentar escribir
+> directo contra la base sin ese paso.
+
 ## Contexto
 
 Los issues [#21](https://github.com/AIRclub-UdeSA/airclub-site/issues/21) ("Panel de
@@ -273,6 +287,19 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       porque no hay bucket ni credenciales configuradas (ítem de Storage de Etapa 3, más abajo,
       sigue sin empezar y requiere que Lucio cree esas credenciales, como el resto de cuentas
       externas de Etapa 1).
+
+      **Ronda de UX tras probarlo Lucio (2026-09-28, mismo día):** la fecha pedía el día dos
+      veces (dos `datetime-local` para empieza/termina) → ahora es un solo campo de día + hora
+      de inicio/fin, con un checkbox aparte ("dura más de un día") solo para el caso raro de
+      ventana tipo "semana del 12 al 16" (ese checkbox reveló un bug real: el campo de hora de
+      inicio se desmontaba y perdía el valor cargado, corregido). Se agregaron textos de ayuda
+      inline: qué son Rol/Afiliación del orador (con placeholders reales tomados de
+      `primer-encuentro-air-club`), cómo conseguir una URL de foto sin botón de subida
+      (imgur/Drive público, mientras no haya Storage), y qué controla realmente "Confirmada"
+      (el cartel de la línea de tiempo) vs "Visibilidad" (si aparece o no en `/talks`). Se
+      agregó un botón "Nueva charla a confirmar (plantilla)" que precarga
+      título/subtítulo/resumen genéricos — mismo patrón que `segundo-air-talk`/`tercer-air-talk`
+      — para el caso común de "todavía no hay ni orador ni tema, solo una fecha aproximada".
 - [x] Permiso por sección (`talks`) verificado en servidor + logging de cada acción
       (2026-09-28). Las 4 acciones (`createTalk`/`updateTalk`/`deleteTalk`/`toggleConfirmed`)
       llaman a `requireSectionAccess("talks")` y escriben en `AuditLog` (antes/después) dentro
