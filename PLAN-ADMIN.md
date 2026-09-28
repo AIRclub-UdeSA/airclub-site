@@ -255,9 +255,15 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       (borrador/publicado), fotos/videos (`TalkMedia`, reordenables, la primera es portada),
       slides (`TalkSlide`: título + embed + link), links de interés (`TalkLink`), grabación
       (`recordingUrl`, opcional, YouTube), botón principal (`ctaLabel`/`ctaUrl`).
-- [ ] Lista en `/admin/talks` + "nueva charla a confirmar" + flujo de confirmación + carga
-      de material en charla pasada. **Esto es lo que falta de verdad** — el bloque grande de
-      trabajo de esta etapa, todavía sin empezar.
+- [x] Lista en `/admin/talks` (solo lectura): título, slug, fecha (`dateLabel` si existe,
+      más preciso que formatear `startsAt` crudo para las charlas "a confirmar"), conteo de
+      media/slides/links, badges publicada/borrador y confirmada/a confirmar. Entrada
+      "Charlas" agregada al nav de `/admin`, gateada con `requireSectionAccess("talks")`.
+      Probado con sesión de admin inyectada vía cookie firmada con `AUTH_SECRET` (no hay
+      forma de automatizar el login real de Google en este entorno).
+- [ ] "Nueva charla a confirmar" + flujo de confirmación + carga de material en charla
+      pasada. **Esto es lo que falta de verdad** — el bloque grande de trabajo de esta etapa,
+      todavía sin empezar.
 - [ ] Permiso por sección (`talks`) verificado en servidor + logging de cada acción. El
       mecanismo ya existe (`requireSectionAccess` en `src/lib/admin/permissions.ts`, probado en
       `/admin/usuarios`) — falta solo *usarlo* en las páginas de `/admin/talks` que se
