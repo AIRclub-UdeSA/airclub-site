@@ -221,15 +221,27 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
 
 ## Etapa 4 — Issue #22: piloto `/admin/talks`
 
-- [ ] Revisar `/talks` (y el estado de #3) y confirmar la lista de campos editables.
-- [ ] Decidir manejo de videos/grabaciones (Storage vs. enlace externo YouTube/Drive).
-- [ ] Modelo Prisma `Talk`/`TalkMedia`/`TalkSlide`/`TalkLink` (uno a uno con `SeedTalk` de
-      `prisma/seed-data/talks.ts`) + migración + seed.
-- [ ] `src/lib/talks.ts` lee de Prisma sin cambiar firma.
+- [x] Modelo Prisma `Talk`/`TalkMedia`/`TalkSlide`/`TalkLink` (uno a uno con `SeedTalk` de
+      `prisma/seed-data/talks.ts`) + migración + seed. **Ya hecho en la Etapa 2** (PR #24) —
+      quedaba duplicado/sin tildar acá por error, corregido el 2026-09-27.
+- [x] `src/lib/talks.ts` lee de Prisma sin cambiar firma. **Ya hecho en la Etapa 2** (PR #24),
+      mismo error de tildado corregido.
+- [x] Decidir manejo de videos/grabaciones (Storage vs. enlace externo YouTube/Drive). **Ya
+      decidido** en la Etapa 2: fotos y videos cortos van a Supabase Storage, la grabación
+      completa (opcional) siempre por link externo a YouTube, nunca a Storage — registrado en
+      [#22](https://github.com/AIRclub-UdeSA/airclub-site/issues/22#issuecomment-5857130067).
+- [ ] Revisar `/talks` (y el estado de #3) y confirmar la lista de campos editables. **Esto sí
+      falta** — es chico, repasar qué campos de `Talk`/`TalkMedia`/`TalkSlide`/`TalkLink`
+      necesitan edición desde el panel.
 - [ ] Lista en `/admin/talks` + "nueva charla a confirmar" + flujo de confirmación + carga
-      de material en charla pasada.
-- [ ] Permiso por sección (`talks`) verificado en servidor + logging de cada acción.
-- [ ] Prueba real con una persona no técnica del club (criterio de aceptación del issue).
+      de material en charla pasada. **Esto es lo que falta de verdad** — el bloque grande de
+      trabajo de esta etapa, todavía sin empezar.
+- [ ] Permiso por sección (`talks`) verificado en servidor + logging de cada acción. El
+      mecanismo ya existe (`requireSectionAccess` en `src/lib/admin/permissions.ts`, probado en
+      `/admin/usuarios`) — falta solo *usarlo* en las páginas de `/admin/talks` que se
+      construyan.
+- [ ] Prueba real con una persona no técnica del club (criterio de aceptación del issue). No se
+      puede hacer hasta que exista la feature.
 
 ## Verificación
 
