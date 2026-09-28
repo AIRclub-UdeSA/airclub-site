@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createTalk, updateTalk, type ActionState } from "./actions";
 import { ListEditor } from "./ListEditor";
+import { UploadButton } from "./UploadButton";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
 
 const initialState: ActionState = { error: null };
@@ -83,6 +84,7 @@ export function TalkForm({
   const slugTouched = useRef(isEditing);
   const titleRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
+  const speakerAvatarRef = useRef<HTMLInputElement>(null);
   const [multiDay, setMultiDay] = useState(() => isDifferentDay(values?.startsAt ?? null, values?.endsAt ?? null));
 
   // Igual que AdminUserForm: al terminar de guardar sin error, si estaba editando vuelve al
@@ -221,8 +223,22 @@ export function TalkForm({
             />
           </label>
           <label className={labelClass}>
-            Foto (URL)
-            <input type="url" name="speakerAvatar" defaultValue={values?.speakerAvatar ?? ""} className={inputClass} />
+            Foto
+            <input
+              ref={speakerAvatarRef}
+              type="url"
+              name="speakerAvatar"
+              placeholder="https://…"
+              defaultValue={values?.speakerAvatar ?? ""}
+              className={inputClass}
+            />
+            <UploadButton
+              accept="image/*"
+              label="Subir foto"
+              onUploaded={(url) => {
+                if (speakerAvatarRef.current) speakerAvatarRef.current.value = url;
+              }}
+            />
           </label>
           <label className={labelClass}>
             LinkedIn
@@ -232,11 +248,6 @@ export function TalkForm({
         <p className="text-xs text-text3">
           Rol = el cargo/título de la persona (se ve en rojo debajo del nombre). Afiliación = a qué institución/laboratorio/empresa
           pertenece (se ve más chico, debajo del rol) — es opcional, se puede dejar vacío.
-        </p>
-        <p className="text-xs text-text3">
-          Para la foto: todavía no hay botón de subida acá (ver nota de Storage más abajo). Subila a algún lugar público — por ejemplo
-          imgur.com (sin cuenta) o un Google Drive/Fotos compartido como &ldquo;cualquiera con el link&rdquo; — y pegá acá el link directo a
-          la imagen (que termine en .jpg/.png).
         </p>
       </fieldset>
 
@@ -280,29 +291,38 @@ export function TalkForm({
                 <option value="IMAGE">Foto</option>
                 <option value="VIDEO">Video</option>
               </select>
-              <input
-                type="url"
-                required
-                placeholder="URL de la foto/video"
-                value={item.src}
-                onChange={(e) => update({ src: e.target.value })}
-                className={`${inputClass} flex-1`}
-              />
-              {item.type === "VIDEO" && (
+              <div className="flex flex-1 flex-col gap-1">
                 <input
                   type="url"
-                  placeholder="URL del poster (miniatura)"
-                  value={item.poster}
-                  onChange={(e) => update({ poster: e.target.value })}
-                  className={`${inputClass} flex-1`}
+                  required
+                  placeholder="URL de la foto/video"
+                  value={item.src}
+                  onChange={(e) => update({ src: e.target.value })}
+                  className={inputClass}
                 />
+                <UploadButton
+                  accept={item.type === "VIDEO" ? "video/*" : "image/*"}
+                  label={item.type === "VIDEO" ? "Subir video" : "Subir foto"}
+                  onUploaded={(url) => update({ src: url })}
+                />
+              </div>
+              {item.type === "VIDEO" && (
+                <div className="flex flex-1 flex-col gap-1">
+                  <input
+                    type="url"
+                    placeholder="URL del poster (miniatura)"
+                    value={item.poster}
+                    onChange={(e) => update({ poster: e.target.value })}
+                    className={inputClass}
+                  />
+                  <UploadButton accept="image/*" label="Subir poster" onUploaded={(url) => update({ poster: url })} />
+                </div>
               )}
             </>
           )}
         />
         <p className="text-xs text-text3">
-          Por ahora se pega un link ya subido a algún lado (ej. Supabase Storage cargado a mano) — todavía no hay botón de subida directa
-          acá.
+          También podés pegar directamente un link ya alojado en otro lado (ej. una imagen ya subida a Storage por otro medio).
         </p>
       </fieldset>
 

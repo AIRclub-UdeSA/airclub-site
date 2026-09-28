@@ -16,6 +16,7 @@
     "@prisma/client": "^7.10.0",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@supabase/supabase-js": "^2.117.2",
     "@types/three": "^0.186.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

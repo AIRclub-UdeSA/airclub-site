@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionAccess } from "@/lib/admin/permissions";
+import { uploadFile } from "@/lib/admin/storage";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
 
 const SECTION = "talks";
@@ -258,6 +259,13 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   return { error: null };
+}
+
+export async function uploadTalkFile(formData: FormData): Promise<{ url: string } | { error: string }> {
+  await requireSectionAccess(SECTION);
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "No se recibió ningún archivo." };
+  return uploadFile(file, "talks");
 }
 
 export async function toggleConfirmed(_prevState: ActionState, formData: FormData): Promise<ActionState> {
