@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma, type Prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
+import { ADMIN_SECTIONS } from "@/lib/admin/sections";
 
 const ALLOWED_EMAIL_DOMAIN = "@udesa.edu.ar";
+const VALID_SECTION_IDS = new Set<string>(ADMIN_SECTIONS.map((s) => s.id));
 
 export type ActionState = { error: string | null };
 
@@ -15,11 +17,11 @@ async function requireAdminRole() {
   return admin;
 }
 
-function parseSections(raw: FormDataEntryValue | null): string[] {
-  return String(raw ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+function parseSections(formData: FormData): string[] {
+  return formData
+    .getAll("sections")
+    .map((v) => String(v))
+    .filter((id) => VALID_SECTION_IDS.has(id));
 }
 
 async function countAdmins(tx: Prisma.TransactionClient) {
@@ -32,7 +34,7 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
     .trim()
     .toLowerCase();
   const role = formData.get("role") === "ADMIN" ? "ADMIN" : "EDITOR";
-  const sections = parseSections(formData.get("sections"));
+  const sections = parseSections(formData);
 
   if (!email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
     return { error: `El email tiene que terminar en ${ALLOWED_EMAIL_DOMAIN}.` };

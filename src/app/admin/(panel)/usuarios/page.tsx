@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
-import { AdminUserForm } from "./AdminUserForm";
-import { RemoveAdminUserButton } from "./RemoveAdminUserButton";
+import { UsersManager } from "./UsersManager";
 
 export default async function AdminUsuariosPage() {
   const admin = await requireAdminSession();
@@ -20,22 +19,7 @@ export default async function AdminUsuariosPage() {
         </p>
       </div>
 
-      <AdminUserForm />
-
-      <ul className="divide-y divide-border/60 border-y border-border/60">
-        {users.map((u) => (
-          <li key={u.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
-            <div>
-              <p className="font-medium text-text">{u.email}</p>
-              <p className="font-mono text-xs text-text3">
-                {u.role}
-                {u.role === "EDITOR" && u.sections.length > 0 ? ` · ${u.sections.join(", ")}` : ""}
-              </p>
-            </div>
-            <RemoveAdminUserButton id={u.id} email={u.email} />
-          </li>
-        ))}
-      </ul>
+      <UsersManager users={users} />
     </div>
   );
 }
