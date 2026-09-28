@@ -238,9 +238,16 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
 - [x] Layout de `/admin` con navegación filtrada por permisos (`src/app/admin/(panel)/layout.tsx`).
       Hoy solo lista "Inicio" y, para `ADMIN`, "Usuarios" — el resto de los items se agregan a
       medida que se construye cada sección (empezando por `/admin/talks` en la Etapa 4).
-- [ ] Componentes reutilizables: lista, formulario, subida de imágenes a Supabase Storage,
-      selector de fecha, confirmación de borrado.
-- [ ] Borrador/publicado por elemento + revalidación de la página pública al guardar.
+- [x] Componentes reutilizables: lista, formulario, subida de imágenes a Supabase Storage,
+      confirmación de borrado (2026-09-28). Resueltos construyendo `/admin/talks` (Etapa 4):
+      `ListEditor.tsx` (genérico, usado para media/slides/links), `UploadButton.tsx`, patrón de
+      `confirm()` antes de borrar. Selector de fecha quedó como `<input type="date">` +
+      hora nativos del browser, sin componente propio — alcanzó y no se armó uno a medida.
+      Sin otra sección de contenido todavía, quedan escritos para `talks` puntualmente; se
+      generalizan solo si una segunda sección los necesita distinto.
+- [x] Borrador/publicado por elemento + revalidación de la página pública al guardar
+      (2026-09-28). `Talk.status` (`DRAFT`/`PUBLISHED`) + `revalidatePath("/talks")` en cada
+      server action de escritura (Etapa 4).
 - [x] Modelo de logs de auditoría (`AuditLog`: persona, fecha, sección, elemento, acción, valor
       anterior/nuevo), escrito en la misma transacción que cada cambio — implementado y en uso
       desde `/admin/usuarios` (ver ítem siguiente); falta que las secciones de contenido
