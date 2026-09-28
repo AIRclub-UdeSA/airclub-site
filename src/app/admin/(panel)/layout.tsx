@@ -2,8 +2,10 @@ import Link from "next/link";
 import { signOutAction } from "@/lib/admin/auth-actions";
 import { requireAdminSession } from "@/lib/admin/permissions";
 
-// Etapa 4 (piloto /admin/talks) agrega mas items aca, filtrados por seccion igual que este.
-const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [{ href: "/admin", label: "Inicio", section: null }];
+const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
+  { href: "/admin", label: "Inicio", section: null },
+  { href: "/admin/talks", label: "Charlas", section: "talks" },
+];
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const admin = await requireAdminSession();
