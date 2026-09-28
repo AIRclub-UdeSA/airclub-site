@@ -255,7 +255,11 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       anterior/nuevo), escrito en la misma transacción que cada cambio — implementado y en uso
       desde `/admin/usuarios` (ver ítem siguiente); falta que las secciones de contenido
       (Etapa 4) también escriban ahí.
-- [ ] Vista `/admin/logs` (solo `admin`, con filtros) + historial por elemento.
+- [x] Vista `/admin/logs` (solo `admin`, con filtros) + historial por elemento (2026-09-28).
+      Lista de `AuditLog` (últimas 200) con filtros por sección/persona/acción (form GET
+      nativo, sin JS) y diff legible "campo: antes → después" calculado de `before`/`after`
+      en vez de mostrar el JSON crudo. Link "Logs" en el nav (solo `ADMIN`) y link "Historial"
+      por charla en `/admin/talks` que abre `/admin/logs?entityId=<id>` ya filtrado.
 - [x] Gestión de usuarios y permisos (solo `admin`): `/admin/usuarios` — alta/baja/cambio de
       rol, con las salvaguardas de seguridad discutidas: chequeo de rol server-side en cada
       acción (nunca solo en el cliente), dominio `@udesa.edu.ar` validado de nuevo en el
