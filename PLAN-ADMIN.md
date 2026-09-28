@@ -230,8 +230,14 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       acción (nunca solo en el cliente), dominio `@udesa.edu.ar` validado de nuevo en el
       servidor, bloqueo explícito de sacar a la última persona `ADMIN` (para no quedar sin
       nadie que pueda arreglar el panel), y cada alta/baja/cambio queda en `AuditLog`.
-- [ ] Bucket de Supabase Storage para imágenes/archivos, con validación de tipo/tamaño y
-      optimización.
+- [x] Bucket de Supabase Storage para imágenes/archivos, con validación de tipo/tamaño
+      (2026-09-28). Bucket público `media` en el proyecto real, creado por Lucio.
+      `src/lib/admin/storage.ts` valida tipo (jpg/png/webp/gif/mp4/webm) y tamaño (8MB
+      imagen/60MB video) antes de subir con la `service_role` key (server-side, nunca al
+      cliente). Sin optimización de imágenes todavía (no se resamplea/comprime al subir) — no
+      pedido explícitamente, queda para más adelante si hace falta. `SUPABASE_URL`/
+      `SUPABASE_SERVICE_ROLE_KEY` en `.env` local; **falta cargarlas también en Vercel**
+      (Production + Preview) para que la subida funcione en el sitio real, no solo local.
 
 ## Etapa 4 — Issue #22: piloto `/admin/talks`
 
@@ -282,11 +288,10 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       "Marcar confirmada"/"Marcar a confirmar" desde la lista sin abrir el formulario, y
       borrado con `confirm()`. Formulario único reutilizado para crear/editar, mismo patrón
       que `/admin/usuarios` (`key` para resetear el form, vuelve a blanco al guardar).
-      **Límite conocido**: fotos/videos/slides se cargan pegando una URL ya alojada (igual que
-      `TeamMember.photoUrl` hoy) — no hay botón de subida directa a Supabase Storage todavía,
-      porque no hay bucket ni credenciales configuradas (ítem de Storage de Etapa 3, más abajo,
-      sigue sin empezar y requiere que Lucio cree esas credenciales, como el resto de cuentas
-      externas de Etapa 1).
+      **Actualización (2026-09-28): ya hay subida real de archivos**, ver el ítem de Storage de
+      Etapa 3 más abajo — la foto del orador y cada foto/video/poster tienen botón de subida
+      directa a Supabase Storage, además de poder seguir pegando una URL externa. Slides y
+      links siguen siendo siempre por URL (son embeds/enlaces a algo externo, no archivos).
 
       **Ronda de UX tras probarlo Lucio (2026-09-28, mismo día):** la fecha pedía el día dos
       veces (dos `datetime-local` para empieza/termina) → ahora es un solo campo de día + hora
