@@ -147,8 +147,11 @@ auditoría.
       botón "Entrar al club") en Production.
 - [x] Actualizar `.env` local con los valores reales de Supabase (reemplazando los de
       relleno).
-- [ ] (No bloqueante) Preguntar en IT de UdeSA por un subdominio `airclub.udesa.edu.ar`; si
-      no, evaluar Cloudflare Registrar o Namecheap más adelante.
+- [x] (No bloqueante) Preguntar en IT de UdeSA por un subdominio `airclub.udesa.edu.ar`
+      (2026-09-29): **respondieron que no lo pueden dar.** El sitio sigue con la URL gratis de
+      Vercel (`airclub-site-chi.vercel.app`) hasta el cutover a `main`; si en algún momento se
+      quiere un dominio propio, las opciones que quedan son Cloudflare Registrar (a precio de
+      costo) o Namecheap (~US$10-15/año), sin apuro.
 - [x] **Migración de cuentas de Lucio a `airclub@udesa.edu.ar`** (2026-09-27): tanto Supabase
       como Vercel se habían creado con la cuenta personal de Lucio — se migraron a la cuenta del
       club para no depender de una sola persona (ídem razonamiento de por qué Organization/Team
