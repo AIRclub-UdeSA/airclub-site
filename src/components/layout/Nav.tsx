@@ -226,8 +226,8 @@ function AccountMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+12px)] z-10 w-44">
-          <div className="absolute -top-[5px] right-3 h-2.5 w-2.5 rotate-45 rounded-[2px] border-l border-t border-border bg-bg/95" />
+        <div className="absolute left-0 top-[calc(100%+12px)] z-10 w-44">
+          <div className="absolute -top-[5px] left-3 h-2.5 w-2.5 rotate-45 rounded-[2px] border-l border-t border-border bg-bg/95" />
           <div className="relative flex flex-col gap-1 rounded-2xl border border-border bg-bg/95 p-2 shadow-xl backdrop-blur-xl">{menuContent}</div>
         </div>
       )}
