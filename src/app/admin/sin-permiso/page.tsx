@@ -1,5 +1,6 @@
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { signOutAction } from "@/lib/admin/auth-actions";
 
 export default async function AdminSinPermisoPage() {
   const session = await auth();
@@ -12,12 +13,7 @@ export default async function AdminSinPermisoPage() {
         Entraste como <span className="font-medium text-text">{session.user.email}</span>, pero esa cuenta todavía no
         tiene permisos en el panel de admin. Pedile a alguien del equipo que te agregue.
       </p>
-      <form
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/" });
-        }}
-      >
+      <form action={signOutAction}>
         <button type="submit" className="text-sm font-medium text-text2 underline hover:text-crimson">
           Salir
         </button>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOut } from "@/auth";
+import { signOutAction } from "@/lib/admin/auth-actions";
 import { requireAdminSession } from "@/lib/admin/permissions";
 
 // Etapa 4 (piloto /admin/talks) agrega mas items aca, filtrados por seccion igual que este.
@@ -28,12 +28,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </Link>
           )}
           <span className="text-sm text-text3">{admin.email}</span>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
+          <form action={signOutAction}>
             <button type="submit" className="text-sm font-medium text-text2 hover:text-crimson">
               Salir
             </button>
