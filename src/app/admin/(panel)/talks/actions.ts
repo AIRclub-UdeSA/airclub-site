@@ -19,9 +19,25 @@ function optStr(formData: FormData, name: string): string | null {
   return str(formData, name) || null;
 }
 
-function optDateTime(formData: FormData, name: string): Date | null {
-  const v = str(formData, name);
-  return v ? new Date(`${v}:00${AR_OFFSET}`) : null;
+function combineDateTime(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr) return null;
+  return new Date(`${dateStr}T${timeStr || "00:00"}:00${AR_OFFSET}`);
+}
+
+// El form pide un solo "día" (+ horas opcionales) para el caso común, y un "día de fin"
+// aparte solo cuando la charla dura más de un día (ventana tipo "semana del 12 al 16").
+function parseTalkDates(formData: FormData): { startsAt: Date | null; endsAt: Date | null } {
+  const dateStr = str(formData, "date");
+  const startTime = str(formData, "startTime");
+  const endTime = str(formData, "endTime");
+  const endDateStr = str(formData, "endDate");
+
+  const startsAt = combineDateTime(dateStr, startTime);
+
+  if (endDateStr) return { startsAt, endsAt: combineDateTime(endDateStr, endTime || "23:59") };
+  if (dateStr && !startTime && !endTime) return { startsAt, endsAt: combineDateTime(dateStr, "23:59") };
+  if (dateStr && endTime) return { startsAt, endsAt: combineDateTime(dateStr, endTime) };
+  return { startsAt, endsAt: null };
 }
 
 function parseJsonArray(raw: string): unknown[] {
@@ -61,6 +77,7 @@ function parseLinkItems(raw: string) {
 }
 
 function talkScalarData(formData: FormData) {
+  const { startsAt, endsAt } = parseTalkDates(formData);
   return {
     slug: str(formData, "slug"),
     title: str(formData, "title"),
@@ -73,8 +90,8 @@ function talkScalarData(formData: FormData) {
     speakerAffiliation: optStr(formData, "speakerAffiliation"),
     speakerAvatar: optStr(formData, "speakerAvatar"),
     speakerLinkedin: optStr(formData, "speakerLinkedin"),
-    startsAt: optDateTime(formData, "startsAt"),
-    endsAt: optDateTime(formData, "endsAt"),
+    startsAt,
+    endsAt,
     dateLabel: optStr(formData, "dateLabel"),
     recordingUrl: optStr(formData, "recordingUrl"),
     ctaLabel: optStr(formData, "ctaLabel"),

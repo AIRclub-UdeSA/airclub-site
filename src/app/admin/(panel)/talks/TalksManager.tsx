@@ -53,19 +53,63 @@ function RemoveTalkButton({ id, title }: { id: string; title: string }) {
   );
 }
 
+// Plantilla para "nueva charla a confirmar": mismo patrón que las charlas placeholder que ya
+// existían (segundo-air-talk/tercer-air-talk) — título/resumen genéricos, sin orador todavía,
+// solo falta poner la fecha/etiqueta y (más adelante) confirmar con los datos reales.
+const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
+  slug: "",
+  title: "Charla a confirmar",
+  subtitle: "Próximo AIR Talk",
+  abstract: "Estamos coordinando el tema y el orador invitado de este encuentro. Pronto vamos a confirmar los detalles.",
+  topic: null,
+  location: null,
+  speakerName: null,
+  speakerRole: null,
+  speakerAffiliation: null,
+  speakerAvatar: null,
+  speakerLinkedin: null,
+  startsAt: null,
+  endsAt: null,
+  dateLabel: "",
+  recordingUrl: null,
+  ctaLabel: null,
+  ctaUrl: null,
+  confirmed: false,
+  status: "PUBLISHED",
+  media: [],
+  slides: [],
+  links: [],
+};
+
+type FormSeed = { kind: "blank" } | { kind: "template" } | { kind: "edit"; talk: EditingTalk };
+
 export function TalksManager({ talks }: { talks: EditingTalk[] }) {
-  const [editingTalk, setEditingTalk] = useState<EditingTalk | null>(null);
+  const [seed, setSeed] = useState<FormSeed>({ kind: "blank" });
   const formRef = useRef<HTMLDivElement>(null);
 
   function startEditing(talk: EditingTalk) {
-    setEditingTalk(talk);
+    setSeed({ kind: "edit", talk });
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function startTemplate() {
+    setSeed({ kind: "template" });
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const editingId = seed.kind === "edit" ? seed.talk.id : undefined;
+  const initialValues = seed.kind === "edit" ? seed.talk : seed.kind === "template" ? NEW_TBD_TEMPLATE : null;
+  const formKey = seed.kind === "edit" ? seed.talk.id : seed.kind;
+
   return (
     <div className="flex flex-col gap-8">
-      <div ref={formRef}>
-        <TalkForm key={editingTalk?.id ?? "__new__"} editingTalk={editingTalk} onDone={() => setEditingTalk(null)} />
+      <div ref={formRef} className="flex flex-col gap-3">
+        {seed.kind === "blank" && (
+          <button type="button" onClick={startTemplate} className="w-fit text-sm font-medium text-text2 hover:text-crimson-text">
+            + Nueva charla &ldquo;a confirmar&rdquo; (plantilla, sin llenar todo a mano)
+          </button>
+        )}
+        <TalkForm key={formKey} editingId={editingId} initialValues={initialValues} onDone={() => setSeed({ kind: "blank" })} />
       </div>
 
       {talks.length === 0 ? (
