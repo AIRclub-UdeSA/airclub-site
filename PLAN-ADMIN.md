@@ -230,9 +230,31 @@ Se implementa junto con el piloto de `/talks` (Etapa 4).
       decidido** en la Etapa 2: fotos y videos cortos van a Supabase Storage, la grabación
       completa (opcional) siempre por link externo a YouTube, nunca a Storage — registrado en
       [#22](https://github.com/AIRclub-UdeSA/airclub-site/issues/22#issuecomment-5857130067).
-- [ ] Revisar `/talks` (y el estado de #3) y confirmar la lista de campos editables. **Esto sí
-      falta** — es chico, repasar qué campos de `Talk`/`TalkMedia`/`TalkSlide`/`TalkLink`
-      necesitan edición desde el panel.
+- [x] Revisar `/talks` (y el estado de #3) y confirmar la lista de campos editables
+      (2026-09-27). #3 sigue abierto en GitHub pero el rediseño que pedía (PRs #13/#18) ya está
+      en producción, así que se usó lo que la página realmente renderiza hoy como fuente de
+      verdad, no la descripción original del issue. Encontrado y resuelto en el camino (todo
+      confirmado con el usuario antes de tocar el schema):
+      - `details` y `placeholder` no los mostraba nada → sacados del modelo.
+      - No existía forma de tener un borrador que no apareciera en el sitio → agregado
+        `status: TalkStatus` (mismo patrón que `Event`), `getAllTalks` ahora filtra por
+        `PUBLISHED`.
+      - No existía una señal real de "charla confirmada" → agregado `confirmed: Boolean`. De
+        paso corrigió un bug: el badge "CONFIRMADA" del timeline se prendía con solo mirar si
+        era la próxima charla cronológicamente, no si estaba confirmada de verdad.
+      - La fila `call-for-speakers` en `Talk` había quedado huérfana tras el rediseño (la
+        sección real de Convocatoria Abierta es un componente aparte, sin relación con esa
+        fila) → borrada de la base y del seed.
+      - `recordingUrl` estaba en el modelo y lo pedía el issue, pero el rediseño nunca lo
+        enganchó a la vista → agregado como embed de YouTube en la pestaña "Memoria" de la
+        ventana flotante, probado con una URL real.
+
+      **Lista final de campos editables desde `/admin/talks`:** slug, título, subtítulo,
+      resumen (`abstract`), tema, lugar, orador (nombre/rol/afiliación/foto/LinkedIn), fecha
+      (`startsAt`/`endsAt`/`dateLabel`, semana o día específico), `confirmed`, `status`
+      (borrador/publicado), fotos/videos (`TalkMedia`, reordenables, la primera es portada),
+      slides (`TalkSlide`: título + embed + link), links de interés (`TalkLink`), grabación
+      (`recordingUrl`, opcional, YouTube), botón principal (`ctaLabel`/`ctaUrl`).
 - [ ] Lista en `/admin/talks` + "nueva charla a confirmar" + flujo de confirmación + carga
       de material en charla pasada. **Esto es lo que falta de verdad** — el bloque grande de
       trabajo de esta etapa, todavía sin empezar.
