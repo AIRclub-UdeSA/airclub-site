@@ -86,10 +86,13 @@ function toTalkItem(row: TalkRow): TalkItem {
 // Igual que events.ts/team.ts: la firma no cambia al conectar Postgres.
 export async function getAllTalks(): Promise<TalkItem[]> {
   const rows = await fetchTalkRows();
-  const items = rows.map(toTalkItem);
+  const items = rows.map((row) => ({ item: toTalkItem(row), order: row.order }));
   // Las charlas con fecha van en orden cronológico; las que no tienen (Call for Speakers) siempre al final.
-  const time = (t: TalkItem) => t.startsAt?.getTime() ?? Infinity;
-  return items.sort((a, b) => time(a) - time(b));
+  // MAX_SAFE_INTEGER y no Infinity: Infinity - Infinity da NaN, y el desempate por `order` tiene que ser explícito.
+  const time = (t: TalkItem) => t.startsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  return items
+    .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)
+    .map(({ item }) => item);
 }
 
 /** Todas las charlas en orden cronológico, más el slug de la próxima (si hay) y la última realizada. */
