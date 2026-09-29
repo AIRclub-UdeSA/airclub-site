@@ -84,7 +84,15 @@ const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
 
 type FormSeed = { kind: "blank" } | { kind: "template" } | { kind: "edit"; talk: EditingTalk };
 
-export function TalksManager({ talks, showLogsLink }: { talks: EditingTalk[]; showLogsLink: boolean }) {
+export function TalksManager({
+  talks,
+  showLogsLink,
+  storagePrefix,
+}: {
+  talks: EditingTalk[];
+  showLogsLink: boolean;
+  storagePrefix: string | null;
+}) {
   const [seed, setSeed] = useState<FormSeed>({ kind: "blank" });
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +118,13 @@ export function TalksManager({ talks, showLogsLink }: { talks: EditingTalk[]; sh
             + Nueva charla &ldquo;a confirmar&rdquo; (plantilla, sin llenar todo a mano)
           </button>
         )}
-        <TalkForm key={formKey} editingId={editingId} initialValues={initialValues} onDone={() => setSeed({ kind: "blank" })} />
+        <TalkForm
+          key={formKey}
+          editingId={editingId}
+          initialValues={initialValues}
+          storagePrefix={storagePrefix}
+          onDone={() => setSeed({ kind: "blank" })}
+        />
       </div>
 
       {talks.length === 0 ? (

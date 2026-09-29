@@ -5,6 +5,7 @@ import { createTalk, updateTalk, type ActionState } from "./actions";
 import { ListEditor } from "./ListEditor";
 import { UploadButton } from "./UploadButton";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
+import { isSiteImageUrl } from "@/lib/storage-url";
 
 const initialState: ActionState = { error: null };
 
@@ -56,6 +57,13 @@ function isDifferentDay(a: Date | null, b: Date | null): boolean {
   return toDatePart(a) !== toDatePart(b);
 }
 
+// Las fotos se muestran con next/image, que solo acepta nuestro bucket de Storage (ver next.config.ts):
+// un link pegado de otro sitio (LinkedIn, Drive, etc.) se guardaría bien pero se vería roto en /talks.
+function ImageUrlWarning({ url, storagePrefix }: { url: string; storagePrefix: string | null }) {
+  if (isSiteImageUrl(url, storagePrefix)) return null;
+  return <p className="max-w-[20rem] text-xs text-crimson">Esta foto no se va a ver en el sitio. Descargala y usá el botón Subir.</p>;
+}
+
 function slugify(text: string): string {
   return text
     .normalize("NFD")
@@ -68,12 +76,15 @@ function slugify(text: string): string {
 export function TalkForm({
   editingId,
   initialValues,
+  storagePrefix,
   onDone,
 }: {
   /** Presente sólo cuando se edita una charla existente (dispara updateTalk en vez de createTalk). */
   editingId?: string;
   /** Valores para precargar el form: la charla completa al editar, o una plantilla parcial al crear. */
   initialValues: Omit<EditingTalk, "id"> | null;
+  /** Prefijo de las URLs públicas de nuestro bucket, para avisar cuando se pega un link de foto de otro sitio. */
+  storagePrefix: string | null;
   onDone: () => void;
 }) {
   const isEditing = !!editingId;
@@ -84,7 +95,7 @@ export function TalkForm({
   const slugTouched = useRef(isEditing);
   const titleRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
-  const speakerAvatarRef = useRef<HTMLInputElement>(null);
+  const [speakerAvatar, setSpeakerAvatar] = useState(values?.speakerAvatar ?? "");
   const [multiDay, setMultiDay] = useState(() => isDifferentDay(values?.startsAt ?? null, values?.endsAt ?? null));
 
   // Igual que AdminUserForm: al terminar de guardar sin error, si estaba editando vuelve al
@@ -225,20 +236,15 @@ export function TalkForm({
           <label className={labelClass}>
             Foto
             <input
-              ref={speakerAvatarRef}
               type="url"
               name="speakerAvatar"
               placeholder="https://…"
-              defaultValue={values?.speakerAvatar ?? ""}
+              value={speakerAvatar}
+              onChange={(e) => setSpeakerAvatar(e.target.value)}
               className={inputClass}
             />
-            <UploadButton
-              accept="image/*"
-              label="Subir foto"
-              onUploaded={(url) => {
-                if (speakerAvatarRef.current) speakerAvatarRef.current.value = url;
-              }}
-            />
+            <ImageUrlWarning url={speakerAvatar} storagePrefix={storagePrefix} />
+            <UploadButton accept="image/*" label="Subir foto" onUploaded={setSpeakerAvatar} />
           </label>
           <label className={labelClass}>
             LinkedIn
@@ -300,6 +306,7 @@ export function TalkForm({
                   onChange={(e) => update({ src: e.target.value })}
                   className={inputClass}
                 />
+                {item.type === "IMAGE" && <ImageUrlWarning url={item.src} storagePrefix={storagePrefix} />}
                 <UploadButton
                   accept={item.type === "VIDEO" ? "video/*" : "image/*"}
                   label={item.type === "VIDEO" ? "Subir video" : "Subir foto"}
@@ -310,11 +317,13 @@ export function TalkForm({
                 <div className="flex flex-1 flex-col gap-1">
                   <input
                     type="url"
+                    required
                     placeholder="URL del poster (miniatura)"
                     value={item.poster}
                     onChange={(e) => update({ poster: e.target.value })}
                     className={inputClass}
                   />
+                  <ImageUrlWarning url={item.poster} storagePrefix={storagePrefix} />
                   <UploadButton accept="image/*" label="Subir poster" onUploaded={(url) => update({ poster: url })} />
                 </div>
               )}
@@ -322,7 +331,8 @@ export function TalkForm({
           )}
         />
         <p className="text-xs text-text3">
-          También podés pegar directamente un link ya alojado en otro lado (ej. una imagen ya subida a Storage por otro medio).
+          Las fotos tienen que subirse con el botón: un link pegado de otro sitio (LinkedIn, Drive, etc.) no se ve en /talks. Los
+          videos sí pueden ser un link externo.
         </p>
       </fieldset>
 

@@ -59,6 +59,12 @@ function parseMediaItems(raw: string) {
     .map((it, order) => ({ type: it.type, src: it.src.trim(), poster: it.poster?.trim() || null, order }));
 }
 
+// La miniatura de un video en /talks es su poster (next/image con src vacío rompe la página).
+function validateMedia(media: ReturnType<typeof parseMediaItems>): string | null {
+  if (media.some((m) => m.type === "VIDEO" && !m.poster)) return "Cada video necesita un poster (la miniatura que se ve en /talks).";
+  return null;
+}
+
 function parseSlideItems(raw: string) {
   return parseJsonArray(raw)
     .filter((it): it is SlideItem => {
@@ -155,6 +161,8 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
   if (error) return { error };
 
   const media = parseMediaItems(str(formData, "media") || "[]");
+  const mediaError = validateMedia(media);
+  if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
 
@@ -198,6 +206,8 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   if (error) return { error };
 
   const media = parseMediaItems(str(formData, "media") || "[]");
+  const mediaError = validateMedia(media);
+  if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
 

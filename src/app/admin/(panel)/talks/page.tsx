@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireSectionAccess } from "@/lib/admin/permissions";
+import { storagePublicPrefix } from "@/lib/storage-url";
 import { TalksManager } from "./TalksManager";
 import type { EditingTalk } from "./TalkForm";
 
@@ -51,7 +52,7 @@ export default async function AdminTalksPage() {
         </p>
       </div>
 
-      <TalksManager talks={talks} showLogsLink={admin.role === "ADMIN"} />
+      <TalksManager talks={talks} showLogsLink={admin.role === "ADMIN"} storagePrefix={storagePublicPrefix(process.env.SUPABASE_URL)} />
     </div>
   );
 }
