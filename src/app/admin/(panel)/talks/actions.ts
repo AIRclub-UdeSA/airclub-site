@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionAccess } from "@/lib/admin/permissions";
-import { uploadFile } from "@/lib/admin/storage";
+import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
+import { isPendingUpload } from "@/lib/upload-rules";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
 
 const SECTION = "talks";
@@ -62,6 +63,14 @@ function parseMediaItems(raw: string) {
 // La miniatura de un video en /talks es su poster (next/image con src vacío rompe la página).
 function validateMedia(media: ReturnType<typeof parseMediaItems>): string | null {
   if (media.some((m) => m.type === "VIDEO" && !m.poster)) return "Cada video necesita un poster (la miniatura que se ve en /talks).";
+  return null;
+}
+
+// Los archivos elegidos en el form se suben antes de guardar y el marcador se reemplaza por la URL:
+// si llega uno sin reemplazar, algo falló en el cliente y no hay que guardarlo en la base.
+function validateNoPendingUploads(data: { speakerAvatar: string | null }, media: ReturnType<typeof parseMediaItems>): string | null {
+  const values = [data.speakerAvatar ?? "", ...media.flatMap((m) => [m.src, m.poster ?? ""])];
+  if (values.some(isPendingUpload)) return "Hay archivos que no se terminaron de subir. Probá guardar de nuevo.";
   return null;
 }
 
@@ -161,7 +170,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
   if (error) return { error };
 
   const media = parseMediaItems(str(formData, "media") || "[]");
-  const mediaError = validateMedia(media);
+  const mediaError = validateMedia(media) ?? validateNoPendingUploads(data, media);
   if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
@@ -206,11 +215,12 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   if (error) return { error };
 
   const media = parseMediaItems(str(formData, "media") || "[]");
-  const mediaError = validateMedia(media);
+  const mediaError = validateMedia(media) ?? validateNoPendingUploads(data, media);
   if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
 
+  let replacedFiles: string[] = [];
   try {
     await prisma.$transaction(async (tx) => {
       const before = await tx.talk.findUniqueOrThrow({ where: { id }, include: TALK_RELATIONS });
@@ -236,6 +246,9 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
           after: talkAuditSnapshot(after),
         },
       });
+
+      const kept = new Set(talkFileUrls(after));
+      replacedFiles = talkFileUrls(before).filter((url) => !kept.has(url));
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -244,6 +257,7 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
     return { error: err instanceof Error ? err.message : "No se pudo guardar la charla." };
   }
 
+  await removeUnusedTalkFiles(replacedFiles);
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   return { error: null };
@@ -253,9 +267,11 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
   const actor = await requireSectionAccess(SECTION);
   const id = str(formData, "id");
 
+  let deletedFiles: string[] = [];
   try {
     await prisma.$transaction(async (tx) => {
       const target = await tx.talk.findUniqueOrThrow({ where: { id }, include: TALK_RELATIONS });
+      deletedFiles = talkFileUrls(target);
       // No hay FK de AuditLog a Talk (entityId es un id suelto): el historial sobrevive al borrado.
       await tx.talk.delete({ where: { id } });
       await tx.auditLog.create({
@@ -266,16 +282,79 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
     return { error: err instanceof Error ? err.message : "No se pudo borrar la charla." };
   }
 
+  await removeUnusedTalkFiles(deletedFiles);
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   return { error: null };
 }
 
-export async function uploadTalkFile(formData: FormData): Promise<{ url: string } | { error: string }> {
+// --- Archivos en Storage -------------------------------------------------------------------
+// Los archivos se suben recién al guardar (ver TalkForm), así que elegir uno y cancelar no deja
+// nada en el bucket. Lo que sí hay que limpiar: lo que deja de usarse al editar o borrar una
+// charla, y lo recién subido si el guardado falla.
+
+const STORAGE_FOLDER = "talks";
+const MAX_UPLOADS_PER_SAVE = 30;
+
+// Todos los campos de Talk/TalkMedia que pueden apuntar a un archivo del bucket. Si se agrega
+// otro, sumarlo acá y en referencedTalkFileUrls, o su archivo se borraría estando en uso.
+function talkFileUrls(talk: { speakerAvatar: string | null; media: { src: string; poster: string | null }[] }): string[] {
+  const urls = [talk.speakerAvatar, ...talk.media.flatMap((m) => [m.src, m.poster])];
+  return urls.filter((url): url is string => !!url);
+}
+
+async function referencedTalkFileUrls(urls: string[]): Promise<Set<string>> {
+  const [talks, media] = await Promise.all([
+    prisma.talk.findMany({ where: { speakerAvatar: { in: urls } }, select: { speakerAvatar: true } }),
+    prisma.talkMedia.findMany({ where: { OR: [{ src: { in: urls } }, { poster: { in: urls } }] }, select: { src: true, poster: true } }),
+  ]);
+  return new Set([...talks.map((t) => t.speakerAvatar), ...media.flatMap((m) => [m.src, m.poster])].filter((url): url is string => !!url));
+}
+
+/** Borra del bucket los archivos que ya no usa ninguna charla (la misma foto puede estar en dos). */
+async function removeUnusedTalkFiles(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  try {
+    const stillUsed = await referencedTalkFileUrls(urls);
+    await removeStorageFiles(urls.filter((url) => !stillUsed.has(url)));
+  } catch (err) {
+    console.error("No se pudieron limpiar archivos de charlas:", err);
+  }
+}
+
+/** Chequea los datos del form antes de subir archivos, para no subir 50MB y recién ahí enterarse
+ * de que faltaba el título o el slug ya existe. */
+export async function validateTalkForm(formData: FormData): Promise<ActionState> {
   await requireSectionAccess(SECTION);
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "No se recibió ningún archivo." };
-  return uploadFile(file, "talks");
+  const data = talkScalarData(formData);
+  const error = validateTalkData(data) ?? validateMedia(parseMediaItems(str(formData, "media") || "[]"));
+  if (error) return { error };
+
+  const id = str(formData, "id");
+  const sameSlug = await prisma.talk.findFirst({ where: { slug: data.slug, ...(id && { NOT: { id } }) }, select: { id: true } });
+  if (sameSlug) return { error: id ? "Ya existe otra charla con ese slug." : "Ya existe una charla con ese slug." };
+  return { error: null };
+}
+
+/** Firma una URL de subida directa a Storage por cada archivo (el navegador sube sin pasar por Vercel). */
+export async function prepareTalkUploads(files: { type: string; size: number }[]): Promise<{ uploads: SignedUpload[] } | { error: string }> {
+  await requireSectionAccess(SECTION);
+  if (files.length > MAX_UPLOADS_PER_SAVE) return { error: `Máximo ${MAX_UPLOADS_PER_SAVE} archivos por guardado.` };
+
+  const uploads: SignedUpload[] = [];
+  for (const file of files) {
+    const signed = await signUpload(file, STORAGE_FOLDER);
+    if ("error" in signed) return signed;
+    uploads.push(signed);
+  }
+  return { uploads };
+}
+
+/** Borra lo recién subido cuando el guardado falla. Solo toca archivos de la carpeta de charlas que
+ * ninguna charla use, así que no sirve para borrar nada en uso aunque se la llame con otras URLs. */
+export async function discardTalkUploads(urls: string[]): Promise<void> {
+  await requireSectionAccess(SECTION);
+  await removeUnusedTalkFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
 }
 
 export async function toggleConfirmed(_prevState: ActionState, formData: FormData): Promise<ActionState> {

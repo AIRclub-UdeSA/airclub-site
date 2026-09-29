@@ -12,11 +12,6 @@ const nextConfig: NextConfig = {
       ...(storagePrefix ? [new URL(`${storagePrefix}**`)] : []),
     ],
   },
-  experimental: {
-    // Default es 1MB; la subida de videos a Storage en /admin/talks pasa por una server action
-    // (src/lib/admin/storage.ts permite hasta 60MB para video).
-    serverActions: { bodySizeLimit: "60mb" },
-  },
   async headers() {
     return [
       {

@@ -1,13 +1,24 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { createTalk, updateTalk, type ActionState } from "./actions";
+import { useEffect, useRef, useState } from "react";
+import { createTalk, discardTalkUploads, prepareTalkUploads, updateTalk, validateTalkForm } from "./actions";
+import { FileField } from "./FileField";
 import { ListEditor } from "./ListEditor";
-import { UploadButton } from "./UploadButton";
+import { uploadToSignedUrl } from "./upload";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
-import { isSiteImageUrl } from "@/lib/storage-url";
+import { PENDING_PREFIX } from "@/lib/upload-rules";
 
-const initialState: ActionState = { error: null };
+const PENDING_PATTERN = new RegExp(`${PENDING_PREFIX}[0-9a-f-]{36}`, "g");
+
+/** Copia del FormData con cada marcador de archivo pendiente reemplazado por su URL ya subida
+ * (los marcadores aparecen sueltos, como en speakerAvatar, o dentro del JSON de media). */
+function withUploadedUrls(formData: FormData, urls: Map<string, string>): FormData {
+  const next = new FormData();
+  for (const [key, value] of formData) {
+    next.append(key, typeof value === "string" ? value.replace(PENDING_PATTERN, (placeholder) => urls.get(placeholder) ?? placeholder) : value);
+  }
+  return next;
+}
 
 export type EditingTalk = {
   id: string;
@@ -57,13 +68,6 @@ function isDifferentDay(a: Date | null, b: Date | null): boolean {
   return toDatePart(a) !== toDatePart(b);
 }
 
-// Las fotos se muestran con next/image, que solo acepta nuestro bucket de Storage (ver next.config.ts):
-// un link pegado de otro sitio (LinkedIn, Drive, etc.) se guardaría bien pero se vería roto en /talks.
-function ImageUrlWarning({ url, storagePrefix }: { url: string; storagePrefix: string | null }) {
-  if (isSiteImageUrl(url, storagePrefix)) return null;
-  return <p className="max-w-[20rem] text-xs text-crimson">Esta foto no se va a ver en el sitio. Descargala y usá el botón Subir.</p>;
-}
-
 function slugify(text: string): string {
   return text
     .normalize("NFD")
@@ -90,23 +94,84 @@ export function TalkForm({
   const isEditing = !!editingId;
   const values = initialValues;
   const action = isEditing ? updateTalk : createTalk;
-  const [state, formAction, pending] = useActionState(action, initialState);
-  const wasPending = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  // Archivos elegidos pero todavía no subidos, por marcador (ver FileField).
+  const pendingFiles = useRef(new Map<string, File>());
   const slugTouched = useRef(isEditing);
   const titleRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const [speakerAvatar, setSpeakerAvatar] = useState(values?.speakerAvatar ?? "");
   const [multiDay, setMultiDay] = useState(() => isDifferentDay(values?.startsAt ?? null, values?.endsAt ?? null));
 
-  // Igual que AdminUserForm: al terminar de guardar sin error, si estaba editando vuelve al
-  // formulario en blanco (listo para la próxima charla).
+  // Mientras sube, cerrar la pestaña cortaría la subida a la mitad: el navegador pide confirmación.
   useEffect(() => {
-    if (wasPending.current && !pending && !state.error) onDone();
-    wasPending.current = pending;
-  }, [pending, state.error, onDone]);
+    if (!saving) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saving]);
+
+  function pickFile(file: File): string {
+    const placeholder = `${PENDING_PREFIX}${crypto.randomUUID()}`;
+    pendingFiles.current.set(placeholder, file);
+    return placeholder;
+  }
+
+  const fileName = (placeholder: string) => pendingFiles.current.get(placeholder)?.name;
+
+  // Orden: validar los datos, recién ahí subir los archivos (directo a Storage) y por último guardar.
+  // Si algo falla después de subir, se borra lo recién subido para no dejar archivos sueltos.
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (saving) return;
+    const formData = new FormData(e.currentTarget);
+    setSaving(true);
+    setError(null);
+
+    let uploadedUrls: string[] = [];
+    try {
+      const check = await validateTalkForm(formData);
+      if (check.error) return setError(check.error);
+
+      const values = [...formData.values()].filter((v): v is string => typeof v === "string");
+      const placeholders = [...new Set(values.flatMap((v) => v.match(PENDING_PATTERN) ?? []))].filter((p) => pendingFiles.current.has(p));
+      const files = placeholders.map((p) => pendingFiles.current.get(p)!);
+      const urls = new Map<string, string>();
+
+      if (files.length > 0) {
+        const prepared = await prepareTalkUploads(files.map((f) => ({ type: f.type, size: f.size })));
+        if ("error" in prepared) return setError(prepared.error);
+
+        for (const [i, file] of files.entries()) {
+          const { signedUrl, publicUrl } = prepared.uploads[i];
+          await uploadToSignedUrl(signedUrl, file, (fraction) =>
+            setProgress(`Subiendo archivo ${i + 1} de ${files.length}… ${Math.round(fraction * 100)}%`),
+          );
+          uploadedUrls.push(publicUrl);
+          urls.set(placeholders[i], publicUrl);
+        }
+        setProgress("Guardando…");
+      }
+
+      const result = await action({ error: null }, withUploadedUrls(formData, urls));
+      if (result.error) return setError(result.error);
+
+      uploadedUrls = []; // guardado: los archivos ya están en uso
+      // Igual que AdminUserForm: al terminar de guardar vuelve al formulario en blanco.
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar la charla.");
+    } finally {
+      if (uploadedUrls.length > 0) void discardTalkUploads(uploadedUrls);
+      setSaving(false);
+      setProgress(null);
+    }
+  }
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 rounded-[var(--r-md)] border border-border bg-card-muted p-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[var(--r-md)] border border-border bg-card-muted p-5">
       {isEditing && <input type="hidden" name="id" value={editingId} />}
 
       <fieldset className="flex flex-col gap-3">
@@ -233,19 +298,20 @@ export function TalkForm({
               className={inputClass}
             />
           </label>
-          <label className={labelClass}>
+          <div className={labelClass}>
             Foto
-            <input
-              type="url"
+            <FileField
               name="speakerAvatar"
-              placeholder="https://…"
+              kind="image"
               value={speakerAvatar}
-              onChange={(e) => setSpeakerAvatar(e.target.value)}
-              className={inputClass}
+              onChange={setSpeakerAvatar}
+              pickLabel="Elegir foto"
+              placeholder="https://…"
+              storagePrefix={storagePrefix}
+              pickFile={pickFile}
+              fileName={fileName}
             />
-            <ImageUrlWarning url={speakerAvatar} storagePrefix={storagePrefix} />
-            <UploadButton accept="image/*" label="Subir foto" onUploaded={setSpeakerAvatar} />
-          </label>
+          </div>
           <label className={labelClass}>
             LinkedIn
             <input type="url" name="speakerLinkedin" defaultValue={values?.speakerLinkedin ?? ""} className={inputClass} />
@@ -297,42 +363,36 @@ export function TalkForm({
                 <option value="IMAGE">Foto</option>
                 <option value="VIDEO">Video</option>
               </select>
-              <div className="flex flex-1 flex-col gap-1">
-                <input
-                  type="url"
-                  required
-                  placeholder="URL de la foto/video"
-                  value={item.src}
-                  onChange={(e) => update({ src: e.target.value })}
-                  className={inputClass}
-                />
-                {item.type === "IMAGE" && <ImageUrlWarning url={item.src} storagePrefix={storagePrefix} />}
-                <UploadButton
-                  accept={item.type === "VIDEO" ? "video/*" : "image/*"}
-                  label={item.type === "VIDEO" ? "Subir video" : "Subir foto"}
-                  onUploaded={(url) => update({ src: url })}
-                />
-              </div>
+              <FileField
+                kind={item.type === "VIDEO" ? "video" : "image"}
+                required
+                value={item.src}
+                onChange={(src) => update({ src })}
+                pickLabel={item.type === "VIDEO" ? "Elegir video" : "Elegir foto"}
+                placeholder="URL de la foto/video"
+                storagePrefix={storagePrefix}
+                pickFile={pickFile}
+                fileName={fileName}
+              />
               {item.type === "VIDEO" && (
-                <div className="flex flex-1 flex-col gap-1">
-                  <input
-                    type="url"
-                    required
-                    placeholder="URL del poster (miniatura)"
-                    value={item.poster}
-                    onChange={(e) => update({ poster: e.target.value })}
-                    className={inputClass}
-                  />
-                  <ImageUrlWarning url={item.poster} storagePrefix={storagePrefix} />
-                  <UploadButton accept="image/*" label="Subir poster" onUploaded={(url) => update({ poster: url })} />
-                </div>
+                <FileField
+                  kind="image"
+                  required
+                  value={item.poster}
+                  onChange={(poster) => update({ poster })}
+                  pickLabel="Elegir poster"
+                  placeholder="URL del poster (miniatura)"
+                  storagePrefix={storagePrefix}
+                  pickFile={pickFile}
+                  fileName={fileName}
+                />
               )}
             </>
           )}
         />
         <p className="text-xs text-text3">
-          Las fotos tienen que subirse con el botón: un link pegado de otro sitio (LinkedIn, Drive, etc.) no se ve en /talks. Los
-          videos sí pueden ser un link externo.
+          Los archivos elegidos se suben al guardar. Las fotos tienen que elegirse desde tu compu: un link pegado de otro sitio
+          (LinkedIn, Drive, etc.) no se ve en /talks. Los videos sí pueden ser un link externo.
         </p>
       </fieldset>
 
@@ -427,17 +487,18 @@ export function TalkForm({
       <div className="flex items-center gap-4">
         <button
           type="submit"
-          disabled={pending}
+          disabled={saving}
           className="rounded-[var(--r-pill)] bg-crimson px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-crimson-hover disabled:opacity-60"
         >
-          {pending ? "Guardando…" : isEditing ? "Guardar cambios" : "Crear charla"}
+          {saving ? (progress ?? "Guardando…") : isEditing ? "Guardar cambios" : "Crear charla"}
         </button>
-        {(isEditing || values) && (
+        {(isEditing || values) && !saving && (
           <button type="button" onClick={onDone} className="text-sm font-medium text-text2 hover:text-crimson-text">
             Cancelar
           </button>
         )}
-        {state.error && <p className="text-sm text-crimson">{state.error}</p>}
+        {progress && progress !== "Guardando…" && <p className="text-sm text-text3">No cierres esta pestaña hasta que termine.</p>}
+        {error && <p className="text-sm text-crimson">{error}</p>}
       </div>
     </form>
   );
