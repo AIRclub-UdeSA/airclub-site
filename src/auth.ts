@@ -16,7 +16,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!token.email) return token;
 
       const email = token.email.toLowerCase();
-      const adminUser = await prisma.adminUser.findUnique({ where: { email } });
+      const found = await prisma.adminUser.findUnique({ where: { email } });
+      // Se relee en cada request: desactivar a alguien le corta el acceso en el acto, sin esperar a que venza la sesión.
+      const adminUser = found?.active ? found : null;
       token.adminId = adminUser?.id ?? null;
       token.role = adminUser?.role ?? null;
       token.sections = adminUser?.sections ?? [];

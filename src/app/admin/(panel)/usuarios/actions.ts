@@ -25,7 +25,7 @@ function parseSections(formData: FormData): string[] {
 }
 
 async function countAdmins(tx: Prisma.TransactionClient) {
-  return tx.adminUser.count({ where: { role: "ADMIN" } });
+  return tx.adminUser.count({ where: { role: "ADMIN", active: true } });
 }
 
 export async function addOrUpdateAdminUser(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -44,14 +44,15 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
     await prisma.$transaction(async (tx) => {
       const before = await tx.adminUser.findUnique({ where: { email } });
 
-      if (before?.role === "ADMIN" && role !== "ADMIN" && (await countAdmins(tx)) <= 1) {
+      if (before?.active && before.role === "ADMIN" && role !== "ADMIN" && (await countAdmins(tx)) <= 1) {
         throw new Error("No podés sacarle ADMIN a la última persona con ese rol — te quedarías sin nadie que pueda arreglar el panel.");
       }
 
       const after = await tx.adminUser.upsert({
         where: { email },
         create: { email, role, sections },
-        update: { role, sections },
+        // Volver a cargar a alguien desactivado lo reactiva, con el rol y las secciones elegidos ahora.
+        update: { role, sections, active: true },
       });
 
       await tx.auditLog.create({
@@ -59,9 +60,9 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
           adminUserId: actor.adminId,
           section: "admin-usuarios",
           entityId: after.id,
-          action: before ? "update" : "create",
-          before: before ? { email: before.email, role: before.role, sections: before.sections } : undefined,
-          after: { email: after.email, role: after.role, sections: after.sections },
+          action: !before ? "create" : before.active ? "update" : "reactivate",
+          before: before ? { email: before.email, role: before.role, sections: before.sections, active: before.active } : undefined,
+          after: { email: after.email, role: after.role, sections: after.sections, active: after.active },
         },
       });
     });
@@ -73,6 +74,8 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
   return { error: null };
 }
 
+// Desactiva en vez de borrar: AuditLog apunta a AdminUser con onDelete: Restrict, y el historial
+// tiene que seguir diciendo quién hizo cada cambio.
 export async function removeAdminUser(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireAdminRole();
   const id = String(formData.get("id") ?? "");
@@ -81,23 +84,25 @@ export async function removeAdminUser(_prevState: ActionState, formData: FormDat
     await prisma.$transaction(async (tx) => {
       const target = await tx.adminUser.findUniqueOrThrow({ where: { id } });
 
+      if (!target.active) return;
       if (target.role === "ADMIN" && (await countAdmins(tx)) <= 1) {
-        throw new Error("No podés borrar a la última persona ADMIN — te quedarías sin nadie que pueda arreglar el panel.");
+        throw new Error("No podés sacarle el acceso a la última persona ADMIN — te quedarías sin nadie que pueda arreglar el panel.");
       }
 
-      await tx.adminUser.delete({ where: { id } });
+      await tx.adminUser.update({ where: { id }, data: { active: false } });
       await tx.auditLog.create({
         data: {
           adminUserId: actor.adminId,
           section: "admin-usuarios",
           entityId: id,
-          action: "delete",
-          before: { email: target.email, role: target.role, sections: target.sections },
+          action: "deactivate",
+          before: { email: target.email, role: target.role, sections: target.sections, active: true },
+          after: { active: false },
         },
       });
     });
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "No se pudo borrar." };
+    return { error: err instanceof Error ? err.message : "No se pudo sacar el acceso." };
   }
 
   revalidatePath("/admin/usuarios");

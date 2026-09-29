@@ -28,12 +28,15 @@ enum AdminRole {
 // Personas con acceso a /admin. Loguearse con Google restringido a @udesa.edu.ar no alcanza
 // por si solo: hace falta ademas estar cargado aca. Ver src/lib/admin/permissions.ts.
 model AdminUser {
-  id        String      @id @default(cuid())
-  email     String      @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   role      AdminRole
   sections  String[] // ids de seccion (ej: "talks"); ADMIN ignora este campo, ve todo
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  // Sacar el acceso desactiva, no borra: AuditLog apunta a esta fila (onDelete: Restrict) y
+  // el historial tiene que seguir diciendo quien hizo cada cambio.
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   auditLogs AuditLog[]
 }
 

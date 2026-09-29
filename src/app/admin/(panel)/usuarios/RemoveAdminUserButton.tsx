@@ -19,7 +19,7 @@ export function RemoveAdminUserButton({ id, email }: { id: string; email: string
         }}
         className="text-sm font-medium text-crimson-text hover:underline disabled:opacity-60"
       >
-        {pending ? "Borrando…" : "Sacar acceso"}
+        {pending ? "Sacando…" : "Sacar acceso"}
       </button>
       {state.error && <p className="max-w-[16rem] text-right text-xs text-crimson">{state.error}</p>}
     </form>

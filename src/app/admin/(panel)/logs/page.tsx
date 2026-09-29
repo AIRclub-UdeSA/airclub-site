@@ -4,7 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { sectionLabel } from "@/lib/admin/sections";
 
-const ACTION_LABELS: Record<string, string> = { create: "Creó", update: "Editó", delete: "Borró" };
+const ACTION_LABELS: Record<string, string> = {
+  create: "Creó",
+  update: "Editó",
+  delete: "Borró",
+  deactivate: "Desactivó",
+  reactivate: "Reactivó",
+};
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 function formatLogDate(date: Date): string {
@@ -119,9 +125,11 @@ export default async function AdminLogsPage({ searchParams }: PageProps<"/admin/
           Acción
           <select name="action" defaultValue={action} className="rounded-[var(--r-sm)] border border-border bg-card px-3 py-2 text-sm text-text">
             <option value="">Todas</option>
-            <option value="create">Creó</option>
-            <option value="update">Editó</option>
-            <option value="delete">Borró</option>
+            {Object.entries(ACTION_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
         {entityId && <input type="hidden" name="entityId" value={entityId} />}

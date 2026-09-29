@@ -6,7 +6,7 @@ import { SectionsPicker } from "./SectionsPicker";
 
 const initialState: ActionState = { error: null };
 
-export type EditingUser = { email: string; role: "ADMIN" | "EDITOR"; sections: string[] };
+export type EditingUser = { email: string; role: "ADMIN" | "EDITOR"; sections: string[]; active?: boolean };
 
 export function AdminUserForm({ editingUser, onDone }: { editingUser: EditingUser | null; onDone: () => void }) {
   const [state, formAction, pending] = useActionState(addOrUpdateAdminUser, initialState);
@@ -60,7 +60,7 @@ export function AdminUserForm({ editingUser, onDone }: { editingUser: EditingUse
           disabled={pending}
           className="rounded-[var(--r-pill)] bg-crimson px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-crimson-hover disabled:opacity-60"
         >
-          {pending ? "Guardando…" : editingUser ? "Guardar cambios" : "Agregar"}
+          {pending ? "Guardando…" : editingUser?.active === false ? "Reactivar" : editingUser ? "Guardar cambios" : "Agregar"}
         </button>
         {editingUser && (
           <button type="button" onClick={onDone} className="text-sm font-medium text-text2 hover:text-crimson-text">
