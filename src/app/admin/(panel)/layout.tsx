@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { signOutAction } from "@/lib/admin/auth-actions";
+import { SignOutButton } from "@/components/layout/SignOutButton";
 import { requireAdminSession } from "@/lib/admin/permissions";
 
 const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
@@ -35,11 +35,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </>
           )}
           <span className="text-sm text-text3">{admin.email}</span>
-          <form action={signOutAction}>
-            <button type="submit" className="text-sm font-medium text-text2 hover:text-crimson">
-              Salir
-            </button>
-          </form>
+          <SignOutButton className="text-sm font-medium text-text2 hover:text-crimson">Salir</SignOutButton>
         </nav>
       </header>
       <main>{children}</main>

@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { signOutAction } from "@/lib/admin/auth-actions";
+import { SignOutButton } from "@/components/layout/SignOutButton";
 
 export default async function AdminSinPermisoPage() {
   const session = await auth();
@@ -13,11 +13,7 @@ export default async function AdminSinPermisoPage() {
         Entraste como <span className="font-medium text-text">{session.user.email}</span>, pero esa cuenta todavía no
         tiene permisos en el panel de admin. Pedile a alguien del equipo que te agregue.
       </p>
-      <form action={signOutAction}>
-        <button type="submit" className="text-sm font-medium text-text2 underline hover:text-crimson">
-          Salir
-        </button>
-      </form>
+      <SignOutButton className="text-sm font-medium text-text2 underline hover:text-crimson">Salir</SignOutButton>
     </div>
   );
 }

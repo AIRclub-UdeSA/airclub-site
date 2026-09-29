@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Anton, Syne, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { auth } from "@/auth";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
@@ -33,9 +32,7 @@ try {
 } catch (e) {}
 `;
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const session = await auth();
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
@@ -50,7 +47,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="overflow-x-hidden bg-bg font-body text-text antialiased">
         <SkipLink />
         <ParticlesBackground />
-        <Nav session={session} />
+        <Nav />
         <main id="main-content">{children}</main>
         <Footer />
         <ThemeToggle />

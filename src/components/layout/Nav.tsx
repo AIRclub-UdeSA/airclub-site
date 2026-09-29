@@ -3,12 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { User } from "lucide-react";
-import type { Session } from "next-auth";
+import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { signInAction, signOutAction } from "@/lib/admin/auth-actions";
+import { signInAction } from "@/lib/admin/auth-actions";
 import { cn } from "@/lib/utils";
 import { NavHoverHighlight } from "./NavHoverHighlight";
+import { SignOutButton } from "./SignOutButton";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -20,7 +21,17 @@ const NAV_LINKS = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export function Nav({ session }: { session: Session | null }) {
+// La sesión se lee acá, en el navegador, y no en el RootLayout: leerla en el servidor usa
+// cookies y obliga a armar todas las páginas públicas en cada visita en vez de servirlas pre-armadas.
+export function Nav() {
+  return (
+    <SessionProvider>
+      <NavContent />
+    </SessionProvider>
+  );
+}
+
+function NavContent() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [visible, setVisible] = useState(!isHome);
@@ -101,7 +112,7 @@ export function Nav({ session }: { session: Session | null }) {
         </NavHoverHighlight>
 
         <div className="flex items-center gap-2">
-          <AccountMenu session={session} className="hidden sm:block" />
+          <AccountMenu className="hidden sm:block" />
 
           <Link
             href="/contacto"
@@ -143,7 +154,7 @@ export function Nav({ session }: { session: Session | null }) {
             >
               Sumarme al club
             </Link>
-            <AccountMenu session={session} variant="inline" className="mt-1" />
+            <AccountMenu variant="inline" className="mt-1" />
           </div>
         )}
       </nav>
@@ -151,15 +162,9 @@ export function Nav({ session }: { session: Session | null }) {
   );
 }
 
-function AccountMenu({
-  session,
-  className,
-  variant = "dropdown",
-}: {
-  session: Session | null;
-  className?: string;
-  variant?: "dropdown" | "inline";
-}) {
+function AccountMenu({ className, variant = "dropdown" }: { className?: string; variant?: "dropdown" | "inline" }) {
+  // Mientras carga (status "loading") session es undefined: se muestra el ícono genérico, sin parpadeo de layout.
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const isDropdown = variant === "dropdown";
@@ -185,14 +190,9 @@ function AccountMenu({
           Panel de admin
         </Link>
       )}
-      <form action={signOutAction}>
-        <button
-          type="submit"
-          className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
-        >
-          Cerrar sesión
-        </button>
-      </form>
+      <SignOutButton className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text">
+        Cerrar sesión
+      </SignOutButton>
     </>
   ) : (
     <form action={signInAction}>
