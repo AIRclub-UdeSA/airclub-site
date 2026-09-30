@@ -29,8 +29,8 @@ export default async function TalksPage() {
       <header className="relative w-full overflow-hidden pt-28 sm:pt-32 md:pt-34 pb-4 sm:pb-6">
         <div className="w-full px-4 sm:px-8 md:px-12">
           {/* Masthead monumental en Anton (font-logo) sin líneas de corte ni subtítulos redundantes */}
-          <div className="overflow-hidden">
-            <h1 className="font-logo uppercase tracking-tight text-text select-none text-[clamp(4.2rem,13.5vw,13.5rem)] leading-[0.84] whitespace-nowrap">
+          <div className="overflow-hidden py-1 sm:py-2">
+            <h1 className="font-logo uppercase tracking-tight text-text select-none text-[clamp(4.2rem,13.5vw,13.5rem)] leading-[0.92] whitespace-nowrap">
               AIR <span className="text-crimson">TALKS</span>
             </h1>
           </div>
