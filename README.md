@@ -58,10 +58,10 @@ CI (`typecheck`, `lint`, `build`) corre en cada PR contra `v2` o `main`.
 
 Eventos, robots, proyectos y contacto se editan directamente en `prisma/seed-data/*.ts` (arrays tipados), con el mismo flujo de PR que el resto del código. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
 
-El equipo y las charlas viven en la base: se editan en `prisma/seed-data/` y se cargan con `npm run db:seed`. En el equipo, el array (`founders` / `collaborators`) define en qué lista aparece cada persona, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
+El equipo y las charlas viven en la base, y `npm run db:seed` carga en ella lo que dice `prisma/seed-data/`:
 
-> [!CAUTION]
-> `npm run db:seed` reemplaza cada charla de la base con su versión de `prisma/seed-data/talks.ts`. Si una charla se editó directo en la base, correr el seed pisa esos cambios.
+- **Equipo:** se edita en `prisma/seed-data/team.ts` y se corre `npm run db:seed`, que crea o actualiza a cada persona. El array (`founders` / `collaborators`) define en qué lista aparece, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
+- **Charlas:** la fuente de verdad es la base (se editan desde el panel). El seed solo crea las charlas que no existen y nunca modifica una existente, así que correrlo no pisa lo editado.
 
 ### Imágenes
 

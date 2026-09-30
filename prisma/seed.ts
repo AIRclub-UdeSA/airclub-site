@@ -44,6 +44,8 @@ async function main() {
     });
   }
 
+  // El equipo todavía no tiene sección en /admin: la verdad sigue en seed-data/team.ts, así que acá
+  // el seed sí actualiza. Cuando exista /admin/equipo, pasar a `update: {}` como las charlas.
   // Upsert por slug, no borrar y recrear: así el id de cada persona no cambia entre seeds y otras
   // tablas pueden apuntarle sin romperse. El grupo sale del array en el que está cada persona.
   const people = [
@@ -64,6 +66,9 @@ async function main() {
     await prisma.teamMember.upsert({ where: { slug }, create: { slug, ...data }, update: data });
   }
 
+  // Las charlas se editan desde /admin/talks: la verdad está en la base, no en seed-data. El seed solo
+  // crea las que faltan (update vacío) y nunca pisa una charla existente. Contra: una charla de
+  // seed-data que se borró desde el panel vuelve a aparecer si se corre el seed.
   for (const [i, talk] of talks.entries()) {
     const { speaker, media, slides, links, cta, ...talkData } = talk;
     const data = {
@@ -85,12 +90,7 @@ async function main() {
         slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
         links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
       },
-      update: {
-        ...data,
-        media: { deleteMany: {}, create: media.map((m, j) => toTalkMediaRow(m, j)) },
-        slides: { deleteMany: {}, create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
-        links: { deleteMany: {}, create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
-      },
+      update: {},
     });
   }
 
