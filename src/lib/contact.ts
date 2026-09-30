@@ -7,10 +7,14 @@ import {
 } from "../../prisma/seed-data/contact";
 
 export type ContactChannel = SeedContactChannel;
-export type ContactReason = Omit<SeedContactReason, "url" | "subject" | "body"> & {
+export type ContactReason = Omit<SeedContactReason, "url" | "body"> & {
   /** Destino ya resuelto: el formulario o un mailto con asunto y plantilla. */
   href: string;
   external: boolean;
+  /** "form" abre un formulario en otra pestaña; "mail" abre tu programa de correo con el asunto ya puesto. */
+  kind: "form" | "mail";
+  /** A dónde va realmente: el dominio del formulario o la casilla del club. */
+  destination: string;
 };
 
 export { CONTACT_EMAIL };
@@ -25,8 +29,11 @@ export function buildMailto(subject: string, body?: string[]): string {
 function toReason({ url, subject, body, ...rest }: SeedContactReason): ContactReason {
   return {
     ...rest,
+    subject,
     href: url ?? buildMailto(subject ?? "Consulta", body),
     external: Boolean(url),
+    kind: url ? "form" : "mail",
+    destination: url ? new URL(url).hostname : CONTACT_EMAIL,
   };
 }
 

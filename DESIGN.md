@@ -223,3 +223,32 @@ El dueño eligió que `/equipo` y `/contacto` usen el **lenguaje recto de `/talk
 
 ### Pendientes
 * Reemplazar las fotos de baja calidad cuando cada integrante mande la suya (el dueño las va a pedir). La de Juan ya está.
+
+---
+
+## 10. Contacto (`/contacto`): decisiones, rechazos y mapa
+
+Mismo lenguaje recto que `/talks` y `/equipo` (ver sección 9).
+
+### Idea rectora: el motivo decide el destino
+La página es un enrutador: elegís el motivo y te lleva al canal. Por eso **el color y el texto dicen a dónde va cada panel**:
+* **Carmesí = formulario** (se abre en otra pestaña). **Contorno = mail** (se abre tu programa de correo).
+* Cada panel muestra en mono **lo que va a pasar al tocarlo**: `→ docs.google.com` o `→ airclub@udesa.edu.ar · Asunto: Propuesta de AIR Talk`. Antes, cuatro de las seis acciones eran el mismo mail con otro asunto y se veían como enlaces comunes.
+* El conteo real (`06` motivos, `04` canales) es el ancla, igual que en `/equipo` (`src/components/shared/CountHeading.tsx`).
+
+### Estructura y archivos
+1. `src/app/contacto/page.tsx`: título "CONTACTO" (Anton, centrado, igual que `/talks` y `/equipo`), cabecera `06 Escribinos por` con la frase de ayuda, motivos y banda de canales.
+2. `src/components/contacto/ReasonPanels.tsx`: `PrimaryReason` (carmesí macizo a todo el ancho, botón píldora blanco y sello inclinado "Formulario") y `ReasonPanel` (panel recto de 1px que es un solo enlace; con `strip` queda en una línea). Los motivos se reparten en filas asimétricas (7+5 y 5+7) y el último en franja, para no repetir cinco tarjetas iguales.
+3. `src/components/contacto/ChannelsBand.tsx`: banda `bg-bg2` con los cuatro canales en una fila; el handle es el diseño (Syne grande). Las líneas entre celdas son de 1px y sirven de grilla, no de adorno.
+4. `src/lib/contact.ts`: `ContactReason` ahora expone `kind` (`"form"` o `"mail"`), `destination` y `subject`, para mostrar el destino sin hardcodear nada en los componentes.
+
+### Lo que se cambió respecto del diseño original
+* La acción principal (comunidad) deja de pesar lo mismo que "Consultas y prensa".
+* Se eliminan los íconos que no representaban su canal (cámara por Instagram, maletín por LinkedIn).
+* Se elimina el hueco de ~400px bajo los canales (columna izquierda con `sticky`) y las seis filas numeradas con divisores.
+* Mobile: la acción principal va primero y los canales al final.
+
+### Trampas conocidas
+* Una grilla de una sola columna sin `grid-cols-1` toma el ancho mínimo de su contenido: a 320px la URL/asunto en mono ensanchaba todo el viewport. Usar `grid-cols-1` (que es `minmax(0,1fr)`) y `[overflow-wrap:anywhere]` en el texto largo.
+* El título "SUMARME A LA COMUNIDAD" en Syne mayúscula parte en tres líneas si la columna es angosta: por eso `lg:grid-cols-[1.6fr_1fr]` y un máximo de 3.1rem.
+

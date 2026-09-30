@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getCollaborators, getFounders } from "@/lib/team";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
+import { CountHeading } from "@/components/shared/CountHeading";
 import { JoinPanel, TeamTile } from "@/components/equipo/TeamTile";
 import { JoinSection } from "@/components/equipo/JoinSection";
 import { getContactReason } from "@/lib/contact";
@@ -19,21 +20,6 @@ export const metadata: Metadata = buildMetadata({
 export const dynamic = "force-dynamic";
 
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-4 lg:gap-x-4";
-
-/** Anton monumental con la cantidad real de personas de la lista: el dato es el ancla visual. */
-function Count({ n }: { n: number }) {
-  return (
-    <span
-      className="font-logo text-[clamp(5.5rem,13vw,11rem)] leading-[0.8] text-crimson-text"
-      aria-hidden="true"
-    >
-      {String(n).padStart(2, "0")}
-    </span>
-  );
-}
-
-const SECTION_TITLE =
-  "font-display text-[clamp(1.05rem,5.4vw,3rem)] font-black uppercase leading-[0.98] tracking-tight text-text";
 
 export default async function EquipoPage() {
   const [founders, collaborators, community, team] = await Promise.all([
@@ -55,10 +41,7 @@ export default async function EquipoPage() {
       <section className="pb-16 md:pb-24">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
           <RevealOnScroll>
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-              <Count n={founders.length} />
-              <h2 className={`${SECTION_TITLE} pb-1`}>Fundadores</h2>
-            </div>
+            <CountHeading n={founders.length} title="Fundadores" />
 
             <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
               <figure className="relative aspect-[3/4] overflow-hidden border border-text bg-bg2 lg:col-span-4 lg:aspect-auto lg:min-h-[28rem]">
@@ -89,13 +72,15 @@ export default async function EquipoPage() {
         <section className="bg-bg2 py-16 md:py-24">
           <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
             <RevealOnScroll>
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                <Count n={collaborators.length} />
-                <h2 className={`${SECTION_TITLE} pb-1`}>Colaboradores</h2>
-                <p className="pb-1.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.18em] text-mauve lg:ml-auto">
-                  Segundo semestre 2026
-                </p>
-              </div>
+              <CountHeading
+                n={collaborators.length}
+                title="Colaboradores"
+                aside={
+                  <p className="pb-1.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.18em] text-mauve lg:ml-auto">
+                    Segundo semestre 2026
+                  </p>
+                }
+              />
 
               <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
                 <ul className={`${GRID} content-start lg:col-span-8 lg:col-start-5 lg:row-start-1`}>
