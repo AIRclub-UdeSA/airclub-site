@@ -25,6 +25,40 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/eventos",
+        destination: "/proximamente?de=eventos",
+        permanent: false,
+      },
+      {
+        source: "/eventos/:slug*",
+        destination: "/proximamente?de=eventos",
+        permanent: false,
+      },
+      {
+        source: "/proyectos",
+        destination: "/proximamente?de=proyectos",
+        permanent: false,
+      },
+      {
+        source: "/proyectos/:slug*",
+        destination: "/proximamente?de=proyectos",
+        permanent: false,
+      },
+      {
+        source: "/plataformas",
+        destination: "/proximamente?de=plataformas",
+        permanent: false,
+      },
+      {
+        source: "/plataformas/:slug*",
+        destination: "/proximamente?de=plataformas",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
