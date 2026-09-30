@@ -54,7 +54,7 @@ export const talks: SeedTalk[] = [
     title: "Presentación del club y Tadeo Casiraghi",
     subtitle: "Primer AIR Talk",
     confirmed: true,
-    location: "Aula Magna · Campus Victoria, UdeSA",
+    location: "Campus Victoria, UdeSA",
     topic: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas",
     speaker: {
       name: "Tadeo Casiraghi",

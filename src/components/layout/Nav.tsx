@@ -13,10 +13,7 @@ import { SignOutButton } from "./SignOutButton";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
-  { href: "/proyectos", label: "Proyectos" },
-  { href: "/eventos", label: "Eventos" },
   { href: "/talks", label: "AIR Talks" },
-  { href: "/plataformas", label: "Robots" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
 ];

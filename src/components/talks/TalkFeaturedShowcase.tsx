@@ -114,7 +114,11 @@ export function TalkFeaturedShowcase({
             <time dateTime={latestPastTalk.startsAt?.slice(0, 10)}>
               {formatFeaturedDate(latestPastTalk.startsAt, latestPastTalk.dateLabel)}
             </time>
-            <span>{latestPastTalk.location ?? "Campus Victoria, UdeSA"}</span>
+            <span>
+              {latestPastTalk.location
+                ? latestPastTalk.location.replace(/Aula Magna\s*·?\s*/gi, "").trim()
+                : "Campus Victoria, UdeSA"}
+            </span>
           </div>
 
           {/* Título de la charla en Syne aprovechando el ancho disponible */}
