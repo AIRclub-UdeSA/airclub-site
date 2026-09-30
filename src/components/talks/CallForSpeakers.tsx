@@ -1,77 +1,60 @@
-"use client";
-
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { TalksBattlement } from "./TalksBattlement";
 
 const TRACKS = [
   {
-    num: "01",
-    title: "Tesistas & Investigadores",
+    title: "Tesistas e investigadores",
     desc: "Presentá tu tesis de grado o maestría, papers en desarrollo y avances del LINAR ante la comunidad técnica.",
   },
   {
-    num: "02",
-    title: "Alumnos con Proyectos",
+    title: "Alumnos con proyectos",
     desc: "Contá lo que estás construyendo en el taller: robots móviles, visión artificial, gemelos digitales o hardware.",
   },
   {
-    num: "03",
-    title: "Empresas & Industria",
+    title: "Empresas e industria",
     desc: "Vení a mostrar cómo aplican la automatización, la robótica o la IA en problemas reales de producción.",
   },
 ];
 
+const MAILTO =
+  "mailto:airclub@udesa.edu.ar?subject=Propuesta de AIR Talk&body=Hola AIR Club, me gustaría proponer una charla sobre:%0D%0A- Tema:%0D%0A- Breve abstract o link a borrador de slides:%0D%0A- Nombre y afiliación:";
+
+// Cierre de la página: banda oscura a todo el ancho (como la cuenta regresiva de la portada), igual en modo claro y oscuro.
 export function CallForSpeakers() {
   return (
-    <section className="mx-auto max-w-7xl px-6 pt-12 pb-24 sm:px-8 md:px-12 md:pt-16 md:pb-28">
-      <div className="border-t border-border/80 pt-12 md:pt-16">
-        {/* Encabezado Manifiesto Editorial Calibrado */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14 items-start">
-          <div className="lg:col-span-6">
-            <div className="font-mono text-[.74rem] uppercase tracking-[.2em] text-crimson-text font-semibold">
-              Convocatoria Abierta
-            </div>
-            <h2 className="mt-2 font-display text-[clamp(1.5rem,2.6vw,2.2rem)] font-bold leading-[1.15] tracking-tight text-text">
-              ¿Querés dar una <span className="text-crimson font-medium">charla</span> en el AIR Club?
-            </h2>
-            <p className="mt-4 text-[.95rem] sm:text-[1rem] leading-[1.7] text-text2 max-w-[50ch]">
+    <section id="convocatoria" className="relative scroll-mt-24 bg-[#0e0407] text-[#f5e8ec]">
+      <TalksBattlement className="text-[#0e0407]" />
+      <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-16 sm:px-8 md:px-12 md:py-24 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+        <div className="flex flex-col justify-between gap-10">
+          <h2 className="font-logo text-[clamp(3.2rem,7.4vw,7rem)] uppercase leading-[0.92] tracking-tight">
+            ¿Querés dar una <span className="text-[#f0357f]">charla</span>?
+          </h2>
+          <div>
+            <p className="max-w-[46ch] text-[1.02rem] leading-[1.7] text-[#f5e8ec]/75">
               Las AIR Talks son un espacio abierto y horizontal. Buscamos divulgar ciencia y tecnología sin rodeos:
               código real, arquitectura de sistemas, fallas superadas y modelos en producción.
             </p>
-
-            {/* Acción de contacto directo */}
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
-              <a
-                href="mailto:airclub@udesa.edu.ar?subject=Propuesta de AIR Talk&body=Hola AIR Club, me gustaría proponer una charla sobre:%0D%0A- Tema:%0D%0A- Breve abstract o link a borrador de slides:%0D%0A- Nombre y afiliación:"
-                className="group inline-flex shrink-0 items-center gap-3 whitespace-nowrap rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
-              >
-                <span>Proponer una charla</span>
-                <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-              </a>
-              <span className="font-mono text-[.72rem] text-text3">
-                Escribinos con tema y 2 líneas de abstract.
-              </span>
-            </div>
-          </div>
-
-          {/* Tres pistas técnicas organizadas como lista indexada y proporcionada */}
-          <div className="lg:col-span-6 flex flex-col divide-y divide-border/60">
-            {TRACKS.map((track) => (
-              <div key={track.num} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4">
-                <span className="font-mono text-[.74rem] font-bold text-crimson-text pt-0.5 shrink-0">
-                  {track.num}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-[1rem] font-bold text-text leading-snug">
-                    {track.title}
-                  </h3>
-                  <p className="mt-1 text-[.84rem] leading-[1.6] text-text2">
-                    {track.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
+            <a
+              href={MAILTO}
+              className="mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
+            >
+              <span>Proponer una charla</span>
+              <ArrowUpRight size={15} aria-hidden="true" />
+            </a>
+            <p className="mt-4 font-mono text-[.76rem] text-[#f5e8ec]/55">
+              Escribinos con tema y 2 líneas de abstract.
+            </p>
           </div>
         </div>
+
+        <ul className="divide-y divide-white/15 self-end border-y border-white/15">
+          {TRACKS.map((track) => (
+            <li key={track.title} className="py-6">
+              <h3 className="font-display text-[1.3rem] font-bold leading-tight">{track.title}</h3>
+              <p className="mt-2 max-w-[44ch] text-[.95rem] leading-[1.65] text-[#f5e8ec]/70">{track.desc}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

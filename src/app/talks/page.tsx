@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTalksTimeline } from "@/lib/talks";
+import { formatDaysUntil, isUpcoming } from "@/lib/dates";
 import type { TimelineTalk } from "@/components/talks/TalksTimeline";
 import { TalksHub } from "@/components/talks/TalksHub";
 import { buildMetadata } from "@/lib/seo";
@@ -21,27 +22,22 @@ export default async function TalksPage() {
   const serializable: TimelineTalk[] = talks.map((t) => ({
     ...t,
     startsAt: t.startsAt?.toISOString(),
-    endsAt: undefined,
+    endsAt: t.endsAt?.toISOString(),
+    isUpcoming: Boolean(t.startsAt && isUpcoming(t.startsAt, t.endsAt)),
   }));
 
-  return (
-    <>
-      <header className="relative w-full overflow-hidden pt-28 sm:pt-32 md:pt-34 pb-4 sm:pb-6">
-        <div className="w-full px-4 sm:px-8 md:px-12">
-          {/* Masthead monumental en Anton (font-logo) sin líneas de corte ni subtítulos redundantes */}
-          <div className="overflow-hidden py-1 sm:py-2">
-            <h1 className="font-logo uppercase tracking-tight text-text select-none text-[clamp(4.2rem,13.5vw,13.5rem)] leading-[0.92] whitespace-nowrap">
-              AIR <span className="text-crimson">TALKS</span>
-            </h1>
-          </div>
-        </div>
-      </header>
+  // El "hoy" y los días que faltan se calculan acá, en el servidor, para que el cliente
+  // renderice exactamente lo mismo al hidratar.
+  const next = talks.find((t) => t.slug === nextSlug);
+  const daysUntilNext = next?.startsAt ? (formatDaysUntil(next.startsAt) ?? "En curso") : null;
 
-      <TalksHub
-        talks={serializable}
-        nextSlug={nextSlug}
-        latestPastSlug={latestPastSlug}
-      />
-    </>
+  return (
+    <TalksHub
+      talks={serializable}
+      nextSlug={nextSlug}
+      latestPastSlug={latestPastSlug}
+      todayIso={new Date().toISOString()}
+      daysUntilNext={daysUntilNext}
+    />
   );
 }
