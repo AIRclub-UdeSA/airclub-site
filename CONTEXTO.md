@@ -74,6 +74,12 @@ de esa sesión:
 - Intento 1 (rechazado): `https://claude.ai/code/artifact/05463884-5295-477a-9fd6-47304328aa63`
 - Intento 2 (rechazado): `https://claude.ai/code/artifact/d43d4cdb-86ea-497f-aeb2-87e9881ab23c`
 
+### Subpágina `/talks`
+
+Fue rediseñada por completo en una sesión posterior y ya tiene un sistema propio (la fecha como
+ancla visual, color según estado, formas rectas). Todo el detalle, lo aprobado, lo rechazado y las
+trampas técnicas están en **DESIGN.md, sección 8**: leerla antes de tocar `src/components/talks/`.
+
 ## Backend: dónde está parado esto
 
 - Schema de Prisma completo en `prisma/schema.prisma` (Event, EventRegistration, Robot,
