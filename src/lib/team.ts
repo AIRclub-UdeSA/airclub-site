@@ -1,4 +1,9 @@
 import { prisma } from "./prisma";
+import {
+  founders as seedFounders,
+  collaborators as seedCollaborators,
+  type SeedTeamMember,
+} from "../../prisma/seed-data/team";
 
 export type TeamMemberItem = {
   name: string;
@@ -36,18 +41,31 @@ function toTeamMemberItem(row: TeamMemberRow): TeamMemberItem {
   };
 }
 
+function fromSeed({ name, role, photoUrl, links }: SeedTeamMember): TeamMemberItem {
+  return { name, role, photoUrl, links };
+}
+
+// Igual que talks.ts: lee de Prisma con fallback a seed-data si no hay conexión a base.
 export async function getFounders(): Promise<TeamMemberItem[]> {
-  const rows = await prisma.teamMember.findMany({
-    where: { group: "FOUNDER", active: true },
-    orderBy: { order: "asc" },
-  });
-  return rows.map(toTeamMemberItem);
+  try {
+    const rows = await prisma.teamMember.findMany({
+      where: { group: "FOUNDER", active: true },
+      orderBy: { order: "asc" },
+    });
+    return rows.map(toTeamMemberItem);
+  } catch {
+    return seedFounders.map(fromSeed);
+  }
 }
 
 export async function getCollaborators(): Promise<TeamMemberItem[]> {
-  const rows = await prisma.teamMember.findMany({
-    where: { group: "COLLABORATOR", active: true },
-    orderBy: { order: "asc" },
-  });
-  return rows.map(toTeamMemberItem);
+  try {
+    const rows = await prisma.teamMember.findMany({
+      where: { group: "COLLABORATOR", active: true },
+      orderBy: { order: "asc" },
+    });
+    return rows.map(toTeamMemberItem);
+  } catch {
+    return seedCollaborators.map(fromSeed);
+  }
 }

@@ -159,7 +159,7 @@ Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para 
 * **Hero**: rectángulos rectos a todo el ancho. Le gusta "mucho"; no cambiar su composición sin pedirlo. Tiene que entrar en el primer viewport a 1440×900 (la altura de los paneles se calcula con `100dvh` menos el alto del título).
 * **Cronograma**: tipografía y numerales (los conserva); formas rectas con contorno de 1px (`border-text`), sin esquinas redondeadas.
 * **Modal**: centrado (no un cajón lateral), `<dialog>` nativo, 62rem de ancho, organización minimalista. Arriba, un slideshow de fotos con puntos (el activo más ancho, se va llenando de carmesí para mostrar cuándo cambia; avanza solo cada 5 s, tocar la foto pasa a la siguiente, tocar un punto salta a esa foto, el cursor sobre la foto pausa, sobre los puntos no; los videos van mudos con botón de sonido). Pestañas solo **Resumen / Diapositivas / Video**: no hay pestaña de Fotos.
-* **Forma**: los botones siguen siendo píldora (`rounded-full`); los paneles y tarjetas de `/talks` son rectos. La landing conserva `rounded-card`. Hoy son dos lenguajes de formas distintos; **pendiente de decidir con el dueño si se unifican** (no asumir).
+* **Forma**: los botones siguen siendo píldora (`rounded-full`); los paneles y tarjetas de `/talks` son rectos. La landing conserva `rounded-card`. Las subpáginas (`/talks`, `/equipo`, `/contacto`) comparten el lenguaje recto; la landing conserva `rounded-card`. Decisión del dueño al empezar la pasada de `/equipo` y `/contacto` (ver sección 9).
 
 ### Rechazado (no reintroducir)
 * Barras de progreso a todo el ancho arriba del slideshow del modal: al tocar otra barra tardaban en arrancar (el cursor sobre todo el slideshow las pausaba) y se sentía raro. Se volvió a los puntos, con el activo más ancho; para mostrar cuándo cambia, el punto activo se llena y solo la foto pausa, no los puntos.
@@ -185,6 +185,41 @@ Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para 
 * El panel de navegador de Claude pausa el render cuando está oculto: las capturas salen "a medio fade" o desactualizadas. Esperar y volver a capturar antes de juzgar una animación.
 
 ### Pendientes
-* Decidir si `/talks` y la landing comparten lenguaje de formas (ver arriba).
 * El seed tiene una diapositiva con paréntesis en el título ("Cómo reemplazar un tobillo (Tadeo Casiraghi)") y una fecha con mayúscula ("3 de Septiembre"): son datos, se corrigen en el seed o en el panel de administración.
 
+---
+
+## 9. Equipo (`/equipo`): decisiones del dueño, rechazos y mapa
+
+### Decisión previa: lenguaje de formas
+El dueño eligió que `/equipo` y `/contacto` usen el **lenguaje recto de `/talks`** (paneles rectos con contorno de 1px, bandas de color a todo el ancho, botones píldora, cero sombras) y no el `rounded-card` de la landing. Las tres subpáginas forman una familia; la landing queda como está.
+
+### Idea rectora: cuántos somos, y con qué cara
+* El **conteo real** es el ancla visual: `07` y `04` en Anton (`data.length`, nunca escritos a mano), como la fecha en `/talks`.
+* Las **caras** son lo más valioso de la página: fichas cuadradas y grandes en vez de una lista con avatares de 40px.
+* Cada persona tiene **dos caras**: la de LinkedIn (la ficha) y la de GitHub (un círculo en la esquina).
+
+### Estructura y archivos
+1. `src/app/equipo/page.tsx`: título "EQUIPO" (Anton, centrado, misma altura de letra que "AIR TALKS"), banda Fundadores sobre el lienzo, banda Colaboradores en `bg-bg2` y cierre. Las dos listas usan la misma grilla de 12 columnas (foto o panel a la izquierda, fichas a la derecha en 4 columnas), por eso quedan alineadas.
+2. `src/components/equipo/TeamTile.tsx`: `TeamTile` (ficha con foto de LinkedIn + círculo de GitHub; sin foto, trama diagonal con las iniciales en Anton) y `JoinPanel` (trama diagonal "¿Vos?" con el círculo de GitHub vacío, en el lugar de la foto grupal de colaboradores; lleva a `#sumarte`).
+3. `src/components/equipo/JoinSection.tsx`: "Cómo sumarte", banda oscura fija (igual en claro y oscuro). Dos pasos en orden: `01 Primero` (carmesí macizo) y `02 Después` (contorno). El texto viene de los motivos `comunidad` y `equipo` de `src/lib/contact.ts`, no está duplicado.
+4. `src/lib/team.ts`: lee de Prisma con **fallback al seed** (mismo patrón que `talks.ts`).
+
+### Lo que el dueño aprobó (conservar)
+* Fichas cuadradas con contorno de 1px, nombre en Syne y etiqueta mono; el borde y el nombre pasan a carmesí al hover/foco. **Las fotos van a color**: el blanco y negro que se probó primero "se sentía muerto" (se descartó; nada de `grayscale` en las caras).
+* El avatar de GitHub es un **círculo** de 44px con contorno de 1px (no un sello cuadrado inclinado). Son dos enlaces hermanos, nunca anidados.
+* El bloque "¿Vos? / Tu lugar" va en **Colaboradores**, no en Fundadores (nadie se suma como fundador). Usa la trama diagonal de `/talks` = "lugar reservado".
+* Conteo en Anton (`07`, `04`) junto al título de cada banda; "Segundo semestre 2026" como etiqueta mono a la derecha del título de Colaboradores.
+* "Cómo sumarte" sin el shader WebGL: banda plana.
+
+### Rechazado (no reintroducir)
+* Fotos en blanco y negro que se revelan a color (se sentía "muerto"). Sello inclinado para el avatar de GitHub (tiene que ser un círculo). El bloque "¿Vos?" entre los fundadores. La lista de nombres con dos botones redondos de 40px; la sombra grande y el `rounded-card` en la foto grupal; `hover:scale`; la grilla de puntos del header; la lista numerada 01–04 de beneficios duplicada de `/contacto`.
+
+### Trampas conocidas
+* Syne extra-bold en mayúsculas mide ~1.2em por letra: "COLABORADORES" no entra en 4 de 12 columnas ni a 320px si el mínimo del `clamp` es 1.4rem. El título va en una fila propia con mínimo `1.05rem` (`SECTION_TITLE` en `page.tsx`). A 320px, además, un botón con `whitespace-nowrap` dentro de un ítem de grilla ensanchaba todo el viewport: el panel necesita `min-w-0` y el botón poder partirse.
+* Las fotos de LinkedIn no se pueden obtener automáticamente (sus términos lo prohíben): son archivos en `public/equipo/linkedin/` que sube cada persona. Las fichas miden ~190px: una foto de 400px o más se ve nítida, una de 180-200px se ve blanda. Si una foto trae bordes negros, recortarla en el archivo.
+* `next dev` cachea las imágenes optimizadas en `.next/dev/cache/images`: si reemplazás un archivo con el mismo nombre y se sigue viendo el viejo, borrá esa carpeta.
+* Con 7 fundadores, la última fila de la grilla de 4 columnas queda con 3 fichas (hueco a la derecha). Es deliberado.
+
+### Pendientes
+* Reemplazar las fotos de baja calidad cuando cada integrante mande la suya (el dueño las va a pedir). La de Juan ya está.

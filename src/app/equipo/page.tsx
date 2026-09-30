@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getCollaborators, getFounders } from "@/lib/team";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { MembersList } from "@/components/equipo/MembersList";
+import { JoinPanel, TeamTile } from "@/components/equipo/TeamTile";
 import { JoinSection } from "@/components/equipo/JoinSection";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
@@ -18,8 +18,22 @@ export const metadata: Metadata = buildMetadata({
 // dummy en CI para no exponer secretos).
 export const dynamic = "force-dynamic";
 
-const sectionTitle =
-  "border-b border-border/80 pb-6 font-display text-[clamp(1.1rem,5.3vw,3rem)] sm:text-[clamp(1.9rem,3.6vw,3rem)] font-black uppercase leading-[0.98] tracking-tight text-text";
+const GRID = "grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-4 lg:gap-x-4";
+
+/** Anton monumental con la cantidad real de personas de la lista: el dato es el ancla visual. */
+function Count({ n }: { n: number }) {
+  return (
+    <span
+      className="font-logo text-[clamp(5.5rem,13vw,11rem)] leading-[0.8] text-crimson-text"
+      aria-hidden="true"
+    >
+      {String(n).padStart(2, "0")}
+    </span>
+  );
+}
+
+const SECTION_TITLE =
+  "font-display text-[clamp(1.05rem,5.4vw,3rem)] font-black uppercase leading-[0.98] tracking-tight text-text";
 
 export default async function EquipoPage() {
   const [founders, collaborators, community, team] = await Promise.all([
@@ -31,68 +45,74 @@ export default async function EquipoPage() {
 
   return (
     <>
-      <header className="relative mx-auto max-w-7xl overflow-hidden px-6 pb-8 pt-32 sm:px-8 md:px-12 md:pb-10 md:pt-36">
-        <div
-          className="pointer-events-none absolute right-0 top-0 hidden h-full w-1/3 opacity-15 dark:opacity-20 md:block"
-          style={{
-            backgroundImage: "radial-gradient(circle, var(--rose) 1.5px, transparent 1.5px)",
-            backgroundSize: "18px 18px",
-          }}
-        />
-        <div className="relative">
-          <h1 className="border-b border-border/80 pb-6 font-display text-[clamp(2.4rem,12vw,3rem)] sm:text-[clamp(3rem,8vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tight text-text">
-            <span className="text-crimson">Equipo</span>
-          </h1>
-        </div>
+      {/* Mismo título que /talks (misma altura de letra), una sola línea y centrado. */}
+      <header className="pb-10 pt-24 md:pb-14">
+        <h1 className="talk-rise select-none overflow-hidden whitespace-nowrap px-4 text-center font-logo text-[min(36rem,calc((100vw-2rem)/5))] uppercase leading-[0.92] tracking-tight text-crimson-text sm:px-8 sm:text-[min(36rem,calc((100vw-4rem)/5.8))] md:px-12 md:text-[min(36rem,calc((100vw-6rem)/6.8))]">
+          Equipo
+        </h1>
       </header>
 
-      <section className="mx-auto max-w-7xl px-6 py-14 sm:px-8 md:px-12 md:py-20">
-        <RevealOnScroll>
-          <h2 className={sectionTitle}>
-            <span className="text-crimson">Fundadores</span>
-          </h2>
-        </RevealOnScroll>
-        <RevealOnScroll>
-          <div className="mt-10 grid grid-cols-2 items-start gap-12 max-lg:grid-cols-1">
-            <div className="relative overflow-hidden rounded-card border-[1.5px] border-crimson bg-card shadow-[0_24px_60px_rgba(13,4,7,0.1)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
-              <div className="relative aspect-[3/4] w-full">
+      <section className="pb-16 md:pb-24">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
+          <RevealOnScroll>
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+              <Count n={founders.length} />
+              <h2 className={`${SECTION_TITLE} pb-1`}>Fundadores</h2>
+            </div>
+
+            <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
+              <figure className="relative aspect-[3/4] overflow-hidden border border-text bg-bg2 lg:col-span-4 lg:aspect-auto lg:min-h-[28rem]">
                 <Image
                   src="/equipo.jpg"
                   alt="Fundadores del AIR Club UdeSA con sus robots"
                   fill
-                  sizes="(min-width: 1024px) 560px, 100vw"
-                  className="object-cover"
+                  sizes="(min-width: 1024px) 33vw, 100vw"
+                  className="object-cover object-[50%_25%]"
                 />
+                <figcaption className="absolute bottom-4 left-4 -rotate-3 border border-text bg-bg px-3 py-2 font-mono text-[.7rem] font-semibold uppercase tracking-[.16em] text-text">
+                  Los fundadores del AIR Club
+                </figcaption>
+              </figure>
+
+              <ul className={`${GRID} content-start lg:col-span-8`}>
+                {founders.map((member) => (
+                  <TeamTile key={member.name} member={member} />
+                ))}
+              </ul>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* La foto grupal de colaboradores se suma acá cuando esté. */}
+      {collaborators.length > 0 && (
+        <section className="bg-bg2 py-16 md:py-24">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
+            <RevealOnScroll>
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+                <Count n={collaborators.length} />
+                <h2 className={`${SECTION_TITLE} pb-1`}>Colaboradores</h2>
+                <p className="pb-1.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.18em] text-mauve lg:ml-auto">
+                  Segundo semestre 2026
+                </p>
               </div>
-              <p className="border-t border-border px-5 py-3.5 font-mono text-[.7rem] font-semibold uppercase tracking-[.16em] text-text3">
-                Los fundadores del AIR Club
-              </p>
-            </div>
-            <div>
-              <MembersList team={founders} />
-            </div>
-          </div>
-        </RevealOnScroll>
-      </section>
 
-      {/* La foto grupal de colaboradores se suma acá cuando esté (mismo esquema que Fundadores). */}
-      <section className="mx-auto max-w-7xl px-6 pb-14 pt-2 sm:px-8 md:px-12 md:pb-20">
-        <RevealOnScroll>
-          <h2 className={sectionTitle}>
-            <span className="text-crimson">Colaboradores</span>
-          </h2>
-          <p className="mt-6 font-mono text-[.78rem] font-semibold uppercase tracking-[.18em] text-mauve">
-            Segundo semestre 2026
-          </p>
-        </RevealOnScroll>
-        <RevealOnScroll>
-          <div className="mt-4">
-            <MembersList team={collaborators} columns />
+              <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
+                <ul className={`${GRID} content-start lg:col-span-8 lg:col-start-5 lg:row-start-1`}>
+                  {collaborators.map((member) => (
+                    <TeamTile key={member.name} member={member} />
+                  ))}
+                </ul>
+                <div className="lg:col-span-4 lg:col-start-1 lg:row-start-1">
+                  <JoinPanel />
+                </div>
+              </div>
+            </RevealOnScroll>
           </div>
-        </RevealOnScroll>
-      </section>
+        </section>
+      )}
 
-      <JoinSection communityHref={community.href} teamHref={team.href} />
+      <JoinSection community={community} team={team} />
     </>
   );
 }
