@@ -1,80 +1,62 @@
-"use client";
+import { ArrowUpRight } from "lucide-react";
+import type { ContactReason } from "@/lib/contact";
 
-import dynamic from "next/dynamic";
-import { ArrowUpRight, Mail } from "lucide-react";
+const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
-// Carga dinámica con SSR deshabilitado para el fondo 3D shadergradient, igual que en CountdownStrip.
-const ShaderGradientBg = dynamic(
-  () => import("@/components/home/ShaderGradientBg").then((mod) => mod.ShaderGradientBg),
-  { ssr: false }
-);
-
-const COMMUNITY_BENEFITS = [
-  "Te llegan las novedades y todo lo nuevo del club",
-  "Acceso a charlas, cursos y workshops",
-  "Invitaciones a eventos y competencias",
-  "Canal directo para hablar con nosotros y proponer ideas",
-];
-
-export function JoinSection({ communityHref, teamHref }: { communityHref: string; teamHref: string }) {
+/**
+ * Cierre de /equipo: banda oscura a todo el ancho (igual en claro y oscuro, como la de /talks). Los dos caminos son
+ * pasos en orden: primero la comunidad (carmesí macizo, la entrada) y después el equipo principal. El texto viene de los
+ * motivos de contacto ("comunidad" y "equipo"), así no se duplica la copy de /contacto.
+ */
+export function JoinSection({ community, team }: { community: ContactReason; team: ContactReason }) {
   return (
-    <section className="relative overflow-hidden border-y border-white/10 bg-[#0e0407] py-16 text-[#f5e8ec] sm:py-24">
-      {/* Fondo inmersivo 3D ShaderGradient en paleta carmesí/vino, igual que la cuenta regresiva del Challenge JAR 2026. */}
-      <ShaderGradientBg />
+    <section id="sumarte" className="scroll-mt-24 bg-[#0e0407] text-[#f5e8ec]">
+      <div className="mx-auto max-w-[1440px] px-4 py-16 sm:px-8 md:px-12 md:py-24">
+        <h2 className="font-logo text-[clamp(3.2rem,7.4vw,7rem)] uppercase leading-[0.92] tracking-tight">
+          Cómo <span className="text-[#f0357f]">sumarte</span>
+        </h2>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8 md:px-12">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-7">
-            <h2 className="font-display text-[clamp(1.9rem,4.6vw,3rem)] font-black uppercase leading-[1.02] tracking-tight text-[#f5e8ec]">
-              Cómo <span className="text-[#f0357f]">sumarte</span>
-            </h2>
-            <p className="mt-5 max-w-[52ch] text-[1rem] leading-[1.8] text-[#f5e8ec]/80">
-              Sin requisitos ni experiencia previa, completás el formulario y pasás a formar parte de la comunidad:
-            </p>
-
-            <ul className="mt-8 flex flex-col divide-y divide-white/10">
-              {COMMUNITY_BENEFITS.map((item, i) => (
-                <li key={item} className="flex items-start gap-4 py-3.5 first:pt-0">
-                  <span className="shrink-0 pt-0.5 font-mono text-[.74rem] font-bold text-[#f0357f]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="text-[.95rem] leading-[1.6] text-[#f5e8ec]/80">{item}</span>
-                </li>
-              ))}
-            </ul>
-
-            <a
-              href={communityHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-9 inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.75rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
-            >
-              Sumarme a la comunidad <ArrowUpRight size={14} />
-            </a>
-          </div>
-
-          <div className="border-t border-white/10 pt-8 lg:col-span-5 lg:border-t-0 lg:border-l lg:pl-14 lg:pt-0">
-            <h3 className="font-display text-[1.3rem] font-black uppercase leading-[1.1] tracking-tight text-[#f5e8ec]">
-              Equipo principal
-            </h3>
-            <p className="mt-4 text-[.95rem] leading-[1.75] text-[#f5e8ec]/80">
-              Es el grupo que desarrolla los proyectos y organiza los eventos del club.
-            </p>
-            <p className="mt-4 text-[.95rem] leading-[1.75] text-[#f5e8ec]/80">
-              Para ingresar tenés que ser parte de la comunidad primero y contarnos qué te gustaría hacer. Según las
-              necesidades de cada proyecto, organizamos una entrevista.
-            </p>
-
-            <a
-              href={teamHref}
-              className="mt-7 inline-flex items-center gap-2 rounded-full border-[1.5px] border-[#f5e8ec] px-6 py-3.5 font-mono text-[.75rem] font-semibold uppercase tracking-[.14em] text-[#f5e8ec] transition-all hover:bg-[#f5e8ec] hover:text-[#0e0407]"
-            >
-              <Mail size={14} />
-              Escribinos
-            </a>
-          </div>
+        <div className="mt-10 grid gap-3 lg:grid-cols-[1.15fr_1fr]">
+          <Step n="01" label="Primero" reason={community} primary />
+          <Step n="02" label="Después" reason={team} />
         </div>
       </div>
     </section>
+  );
+}
+
+function Step({ n, label, reason, primary = false }: { n: string; label: string; reason: ContactReason; primary?: boolean }) {
+  return (
+    <article
+      className={`flex min-h-[22rem] min-w-0 flex-col justify-between gap-10 border p-6 sm:p-8 lg:p-10 ${
+        primary ? "border-crimson bg-crimson text-white" : "border-[#f5e8ec]/35"
+      }`}
+    >
+      <div className="flex items-end justify-between gap-4">
+        <span className="font-logo text-[clamp(4.5rem,8vw,8rem)] leading-[0.8]" aria-hidden="true">
+          {n}
+        </span>
+        <span className="pb-1 font-mono text-[.78rem] uppercase tracking-[.16em] text-current/80">{label}</span>
+      </div>
+
+      <div>
+        <h3 className="font-display text-[clamp(1.6rem,2.6vw,2.3rem)] font-bold leading-[1.1] tracking-tight">{reason.title}</h3>
+        <p className="mt-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-current/85">{reason.desc}</p>
+        <a
+          href={reason.href}
+          target={reason.external ? "_blank" : undefined}
+          rel={reason.external ? "noopener noreferrer" : undefined}
+          className={`mt-7 inline-flex max-w-full items-center gap-2 rounded-full px-6 py-3.5 leading-tight font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] transition-colors ${
+            primary
+              ? "bg-white text-crimson hover:bg-[#f5e8ec]"
+              : "border border-[#f5e8ec] text-[#f5e8ec] hover:bg-[#f5e8ec] hover:text-[#0e0407]"
+          }`}
+        >
+          <span>{reason.action}</span>
+          <ArrowUpRight size={15} aria-hidden="true" />
+          {reason.external && NEW_TAB_HINT}
+        </a>
+      </div>
+    </article>
   );
 }

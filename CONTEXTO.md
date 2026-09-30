@@ -80,6 +80,12 @@ Fue rediseñada por completo en una sesión posterior y ya tiene un sistema prop
 ancla visual, color según estado, formas rectas). Todo el detalle, lo aprobado, lo rechazado y las
 trampas técnicas están en **DESIGN.md, sección 8**: leerla antes de tocar `src/components/talks/`.
 
+### Subpáginas `/equipo` y `/contacto`
+
+También rediseñadas en una pasada propia, con el mismo lenguaje recto de `/talks`. Las decisiones, lo
+rechazado y las trampas están en **DESIGN.md, secciones 9 (`/equipo`) y 10 (`/contacto`)**: leerlas antes de
+tocar `src/components/equipo/` o `src/components/contacto/`.
+
 ## Backend: dónde está parado esto
 
 - Schema de Prisma completo en `prisma/schema.prisma` (Event, EventRegistration, Robot,
