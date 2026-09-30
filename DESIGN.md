@@ -230,25 +230,32 @@ El dueño eligió que `/equipo` y `/contacto` usen el **lenguaje recto de `/talk
 
 Mismo lenguaje recto que `/talks` y `/equipo` (ver sección 9).
 
-### Idea rectora: el motivo decide el destino
-La página es un enrutador: elegís el motivo y te lleva al canal. Por eso **el color y el texto dicen a dónde va cada panel**:
-* **Carmesí = formulario** (se abre en otra pestaña). **Contorno = mail** (se abre tu programa de correo).
-* Cada panel muestra en mono **lo que va a pasar al tocarlo**: `→ docs.google.com` o `→ airclub@udesa.edu.ar · Asunto: Propuesta de AIR Talk`. Antes, cuatro de las seis acciones eran el mismo mail con otro asunto y se veían como enlaces comunes.
-* El conteo real (`06` motivos, `04` canales) es el ancla, igual que en `/equipo` (`src/components/shared/CountHeading.tsx`).
+### Idea rectora: el motivo decide el destino, y el color dice la intención
+La página es un enrutador: elegís el motivo y te lleva al canal. **El fondo no cambia**: es el lienzo, o `bg-bg2` alternado como en `/equipo` y `/talks`. **El color va en los paneles de arriba**, y cada color es una intención, tomado de la paleta de la marca:
+* **Carmesí = sumarte** (comunidad, equipo principal). **Rosa = aportar** (charla, workshop, sponsors). **Malva = preguntar** (consultas y prensa).
+* Cada sección se titula en primera persona y en Anton: "Quiero sumarme", "Quiero aportar", "Tengo una duda", "O escribinos directo". Ese título es el subtítulo: no hay otro.
+* El **tipo de destino** se lee por forma: etiqueta rellena = formulario (otra pestaña), etiqueta con contorno = mail (tu programa de correo). Cada panel muestra en mono lo que va a pasar al tocarlo: `→ docs.google.com` o `→ airclub@udesa.edu.ar · Asunto: Propuesta de AIR Talk`. Antes, cuatro de las seis acciones eran el mismo mail con otro asunto y se veían como enlaces comunes.
 
 ### Estructura y archivos
-1. `src/app/contacto/page.tsx`: título "CONTACTO" (Anton, centrado, igual que `/talks` y `/equipo`), cabecera `06 Escribinos por` con la frase de ayuda, motivos y banda de canales.
-2. `src/components/contacto/ReasonPanels.tsx`: `PrimaryReason` (carmesí macizo a todo el ancho, botón píldora blanco y sello inclinado "Formulario") y `ReasonPanel` (panel recto de 1px que es un solo enlace; con `strip` queda en una línea). Los motivos se reparten en filas asimétricas (7+5 y 5+7) y el último en franja, para no repetir cinco tarjetas iguales.
-3. `src/components/contacto/ChannelsBand.tsx`: banda `bg-bg2` con los cuatro canales en una fila; el handle es el diseño (Syne grande). Las líneas entre celdas son de 1px y sirven de grilla, no de adorno.
-4. `src/lib/contact.ts`: `ContactReason` ahora expone `kind` (`"form"` o `"mail"`), `destination` y `subject`, para mostrar el destino sin hardcodear nada en los componentes.
+1. `src/app/contacto/page.tsx`: título "CONTACTO" (Anton, centrado, igual que `/talks` y `/equipo`) y cuatro secciones, todas con datos de `src/lib/contact.ts`.
+2. `src/components/contacto/IntentSection.tsx`: sección con su título y el tono (`crimson`, `rose`, `mauve`). El tono fija por variable CSS la "tinta" (`--ink`, texto sobre el panel) y el "papel" (`--paper`, relleno del panel). Son colores fijos en claro y oscuro: la tinta siempre contrasta con su papel.
+3. `src/components/contacto/ReasonPanels.tsx`: `ReasonPanel`, un panel recto de 1px que es un solo enlace. Variantes: `featured` (la acción principal, con botón píldora), `outline` (solo contorno, se rellena al acercarse) y `strip` (en una línea en desktop). Al acercarse sube 2px y toma el contorno del texto; con movimiento reducido no se mueve.
+4. `src/components/contacto/ChannelsBand.tsx`: los cuatro canales en una fila sobre `bg-bg2`; el handle es el diseño (Syne grande). Las líneas entre celdas son de 1px y sirven de grilla, no de adorno.
+5. `src/lib/contact.ts`: `ContactReason` expone `kind` (`"form"` o `"mail"`), `destination` y `subject`, para mostrar el destino sin hardcodear nada en los componentes.
 
-### Lo que se cambió respecto del diseño original
-* La acción principal (comunidad) deja de pesar lo mismo que "Consultas y prensa".
-* Se eliminan los íconos que no representaban su canal (cámara por Instagram, maletín por LinkedIn).
-* Se elimina el hueco de ~400px bajo los canales (columna izquierda con `sticky`) y las seis filas numeradas con divisores.
+### Lo que el dueño aprobó (conservar)
+* El fondo de la página no cambia de color; el color va en los paneles, y las secciones alternan `bg`/`bg2`.
+* Títulos de sección en primera persona, en Anton, con la última palabra en carmesí.
+* Paneles rellenos por intención (carmesí, rosa, malva) y la acción principal (comunidad) más grande, con su botón píldora.
 * Mobile: la acción principal va primero y los canales al final.
+
+### Rechazado (no reintroducir)
+* **Bandas de color a todo el ancho** (fondo carmesí, rosa y oscuro por sección): "el fondo no cambia". Lo que cambia son las cosas de arriba.
+* El subtítulo "Escribinos por", con o sin el conteo grande `06`, y la frase de ayuda grande como apertura ("se siente sin alma"). Tampoco van los conteos en Anton en esta página (sí en `/equipo`).
+* Que casi toda la página sea solo lienzo y carmesí ("blanco y rosa").
+* Los íconos que no representaban su canal (cámara por Instagram, maletín por LinkedIn), el hueco de ~400px bajo los canales (columna izquierda con `sticky`) y las seis filas numeradas con divisores.
 
 ### Trampas conocidas
 * Una grilla de una sola columna sin `grid-cols-1` toma el ancho mínimo de su contenido: a 320px la URL/asunto en mono ensanchaba todo el viewport. Usar `grid-cols-1` (que es `minmax(0,1fr)`) y `[overflow-wrap:anywhere]` en el texto largo.
-* El título "SUMARME A LA COMUNIDAD" en Syne mayúscula parte en tres líneas si la columna es angosta: por eso `lg:grid-cols-[1.6fr_1fr]` y un máximo de 3.1rem.
-
+* Los colores de tinta y papel son fijos, no tokens de tema: los tokens cambian en oscuro (por ejemplo `--mauve` se aclara) y le quitarían contraste al texto blanco del panel malva.
+* Al sacar capturas de página completa, esperar a `document.fonts.ready`: si no, una palabra en Anton puede salir en la fuente de reemplazo y verse más chica de lo real.

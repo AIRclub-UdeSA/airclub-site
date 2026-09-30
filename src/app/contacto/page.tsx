@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { CountHeading } from "@/components/shared/CountHeading";
-import { PrimaryReason, ReasonPanel } from "@/components/contacto/ReasonPanels";
+import { IntentSection } from "@/components/contacto/IntentSection";
+import { ReasonPanel } from "@/components/contacto/ReasonPanels";
 import { ChannelsBand } from "@/components/contacto/ChannelsBand";
-import { getContactChannels, getContactReasons } from "@/lib/contact";
+import { getContactChannels, getContactReasons, type ContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -14,9 +14,13 @@ export const metadata: Metadata = buildMetadata({
 
 export default async function ContactoPage() {
   const [channels, reasons] = await Promise.all([getContactChannels(), getContactReasons()]);
-  const [primary, ...others] = reasons;
-  // Después de la acción principal: dos filas asimétricas (7+5 y 5+7) y el último motivo como franja.
-  const [equipo, charla, workshop, sponsors, ...strip] = others;
+  const reason = (key: ContactReason["key"]) => reasons.find((r) => r.key === key);
+  const comunidad = reason("comunidad");
+  const equipo = reason("equipo");
+  const charla = reason("charla");
+  const workshop = reason("workshop");
+  const sponsors = reason("sponsors");
+  const consultas = reason("consultas");
 
   return (
     <>
@@ -27,38 +31,38 @@ export default async function ContactoPage() {
         </h1>
       </header>
 
-      <section className="pb-16 md:pb-24">
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
-          <RevealOnScroll>
-            <CountHeading n={reasons.length} title="Escribinos por" />
-            <p className="mt-6 max-w-[52ch] text-[1.02rem] leading-[1.75] text-text2">
-              ¿Querés sumarte, proponer una idea o simplemente saber más del club? Elegí el motivo y te llevamos al canal
-              indicado, o escribinos directo.
-            </p>
+      <IntentSection tone="crimson" lead="Quiero" accent="sumarme">
+        <RevealOnScroll>
+          <div className="mt-10 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+            {comunidad && <ReasonPanel reason={comunidad} featured className="lg:col-span-7" />}
+            {equipo && <ReasonPanel reason={equipo} outline className="lg:col-span-5" />}
+          </div>
+        </RevealOnScroll>
+      </IntentSection>
 
-            <div className="mt-10 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
-              {primary && (
-                <div className="lg:col-span-12">
-                  <PrimaryReason reason={primary} />
-                </div>
-              )}
-              {equipo && <ReasonPanel reason={equipo} className="lg:col-span-7" />}
-              {charla && <ReasonPanel reason={charla} className="lg:col-span-5" />}
-              {workshop && <ReasonPanel reason={workshop} className="lg:col-span-5" />}
-              {sponsors && <ReasonPanel reason={sponsors} className="lg:col-span-7" />}
-              {strip.map((r) => (
-                <ReasonPanel key={r.key} reason={r} strip className="lg:col-span-12" />
-              ))}
-            </div>
-          </RevealOnScroll>
-        </div>
-      </section>
+      <IntentSection tone="rose" lead="Quiero" accent="aportar" alt>
+        <RevealOnScroll>
+          <div className="mt-10 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+            {charla && <ReasonPanel reason={charla} className="lg:col-span-5" />}
+            {workshop && <ReasonPanel reason={workshop} className="lg:col-span-7" />}
+            {sponsors && <ReasonPanel reason={sponsors} strip className="lg:col-span-12" />}
+          </div>
+        </RevealOnScroll>
+      </IntentSection>
+
+      <IntentSection tone="mauve" lead="Tengo una" accent="duda">
+        <RevealOnScroll>
+          <div className="mt-10 grid grid-cols-1">{consultas && <ReasonPanel reason={consultas} strip />}</div>
+        </RevealOnScroll>
+      </IntentSection>
 
       <section className="bg-bg2 py-16 md:py-24">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
           <RevealOnScroll>
-            <CountHeading n={channels.length} title="Canales directos" />
-            <div className="mt-8">
+            <h2 className="font-logo text-[clamp(3rem,7.4vw,7rem)] uppercase leading-[0.92] tracking-tight text-text">
+              O escribinos <span className="text-crimson-text">directo</span>
+            </h2>
+            <div className="mt-10">
               <ChannelsBand channels={channels} />
             </div>
           </RevealOnScroll>
