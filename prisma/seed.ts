@@ -44,23 +44,25 @@ async function main() {
     });
   }
 
-  // El grupo (Fundador / Colaborador) se guarda en `role`.
+  // Upsert por slug, no borrar y recrear: así el id de cada persona no cambia entre seeds y otras
+  // tablas pueden apuntarle sin romperse. El grupo sale del array en el que está cada persona.
   const people = [
-    ...founders.map((m) => ({ ...m, role: m.role ?? "Fundador" })),
-    ...collaborators.map((m) => ({ ...m, role: m.role ?? "Colaborador" })),
+    ...founders.map((m) => ({ ...m, group: "FOUNDER" as const })),
+    ...collaborators.map((m) => ({ ...m, group: "COLLABORATOR" as const })),
   ];
-  await prisma.teamMember.deleteMany({});
-  await prisma.teamMember.createMany({
-    data: people.map(({ name, role, photoUrl, links }, i) => ({
+  for (const [i, { slug, name, group, role, photoUrl, links }] of people.entries()) {
+    const data = {
       name,
-      role,
+      group,
+      role: role ?? null,
       photoUrl,
       linkedin: links?.linkedin,
       linkedinPhoto: links?.linkedinPhoto,
       github: links?.github,
       order: i,
-    })),
-  });
+    };
+    await prisma.teamMember.upsert({ where: { slug }, create: { slug, ...data }, update: data });
+  }
 
   for (const [i, talk] of talks.entries()) {
     const { speaker, media, slides, links, cta, ...talkData } = talk;

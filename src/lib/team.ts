@@ -36,13 +36,9 @@ function toTeamMemberItem(row: TeamMemberRow): TeamMemberItem {
   };
 }
 
-// CAUTION: agrupa por el valor exacto de `role` ("Fundador"/"Colaborador"). Ese mismo campo
-// esta pensado para el rol individual de cada persona a futuro (ver comentario en
-// schema.prisma) — asignarle un rol real a alguien la va a sacar de ambas listas en
-// silencio hasta que se agregue un campo de grupo dedicado.
 export async function getFounders(): Promise<TeamMemberItem[]> {
   const rows = await prisma.teamMember.findMany({
-    where: { role: "Fundador", active: true },
+    where: { group: "FOUNDER", active: true },
     orderBy: { order: "asc" },
   });
   return rows.map(toTeamMemberItem);
@@ -50,7 +46,7 @@ export async function getFounders(): Promise<TeamMemberItem[]> {
 
 export async function getCollaborators(): Promise<TeamMemberItem[]> {
   const rows = await prisma.teamMember.findMany({
-    where: { role: "Colaborador", active: true },
+    where: { group: "COLLABORATOR", active: true },
     orderBy: { order: "asc" },
   });
   return rows.map(toTeamMemberItem);
