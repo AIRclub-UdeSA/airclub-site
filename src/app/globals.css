@@ -343,8 +343,8 @@ body {
   animation: talk-modal-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
-/* Slideshow del modal: la barra activa se llena y, al terminar, pasa a la siguiente foto. */
-@keyframes talk-progress {
+/* Slideshow del modal: el punto activo se llena y, al terminar, pasa a la siguiente foto. */
+@keyframes talk-dot-fill {
   from {
     transform: scaleX(0);
   }
@@ -352,11 +352,8 @@ body {
     transform: scaleX(1);
   }
 }
-.talk-progress-bar {
-  animation: talk-progress var(--dur, 5s) linear forwards;
-}
-.talk-progress:hover .talk-progress-bar {
-  animation-play-state: paused;
+.talk-dot-fill {
+  animation: talk-dot-fill var(--dur, 5s) linear forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -367,8 +364,8 @@ body {
   .talk-modal-panel {
     animation: none !important;
   }
-  /* Sin auto-avance: la barra activa queda llena y las fotos se cambian a mano. */
-  .talk-progress-bar {
+  /* Sin auto-avance: el punto activo queda lleno y las fotos se cambian a mano. */
+  .talk-dot-fill {
     animation: none;
     transform: scaleX(1);
   }

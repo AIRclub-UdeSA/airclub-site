@@ -15,21 +15,29 @@ interface TalkSlideshowProps {
   overlay?: React.ReactNode;
 }
 
-// Fotos que avanzan solas: la barra de arriba muestra cuánto falta, tocar una barra salta a esa foto,
-// y tocar la foto pasa a la siguiente. El cursor encima la pausa. Con "menos movimiento" no hay auto-avance.
+// Fotos que avanzan solas: los puntos de arriba marcan la actual (más ancha) y se va llenando de carmesí hasta
+// que toca cambiar. Tocar un punto salta a esa foto y tocar la foto pasa a la siguiente. El cursor sobre la foto
+// pausa el avance (sobre los puntos no, para que el temporizador arranque al elegir una). Con "menos movimiento"
+// no hay auto-avance.
 export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const [index, setIndex] = useState(0);
   const [muted, setMuted] = useState(true);
-  const [videoSeconds, setVideoSeconds] = useState<Record<number, number>>({});
+  const [paused, setPaused] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
   const count = media.length;
   const active = media[index];
   const isVideo = active.type === "video";
-  const goNext = () => setIndex((i) => (i + 1) % count);
+  const goTo = (i: number) => {
+    setVideoProgress(0);
+    setIndex(i);
+  };
+  const goNext = () => goTo((index + 1) % count);
 
   return (
-    <div className="talk-progress relative aspect-[16/9] w-full overflow-hidden bg-black text-white sm:aspect-[2/1]">
+    <div className="relative aspect-[16/9] w-full overflow-hidden bg-black text-white sm:aspect-[2/1]"
+    >
       {active.type === "image" ? (
         <Image
           key={active.src}
@@ -52,9 +60,9 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
           controls={reducedMotion}
           loop={count === 1}
           playsInline
-          onLoadedMetadata={(e) => {
-            const seconds = e.currentTarget.duration;
-            if (Number.isFinite(seconds)) setVideoSeconds((prev) => ({ ...prev, [index]: seconds }));
+          onTimeUpdate={(e) => {
+            const { currentTime, duration } = e.currentTarget;
+            if (duration > 0) setVideoProgress(currentTime / duration);
           }}
           onEnded={count > 1 ? goNext : undefined}
           className="h-full w-full object-cover"
@@ -68,37 +76,50 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         <button
           type="button"
           onClick={goNext}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
           aria-label="Foto siguiente"
           className="absolute inset-0 cursor-pointer"
         />
       )}
 
+      {/* Cada botón mide 40 px de alto y 32 de ancho aunque el punto se vea chico. */}
       {count > 1 && (
-        <div className="absolute inset-x-0 top-0 z-10 flex gap-1.5 px-4 pt-2 sm:px-6">
+        <div className="absolute right-3 top-3 z-10 flex items-center rounded-full border border-white/30 bg-black/75 px-2 shadow-lg backdrop-blur-sm sm:right-5 sm:top-4">
           {media.map((m, i) => (
             <button
               key={m.src}
               type="button"
-              onClick={() => setIndex(i)}
+              onClick={() => goTo(i)}
               aria-label={`Ver foto ${i + 1} de ${count}`}
               aria-current={i === index ? "true" : undefined}
-              className="flex-1 cursor-pointer py-2.5"
+              className="group/dot flex h-10 min-w-8 cursor-pointer items-center justify-center px-1 focus-visible:outline-none"
             >
-              <span className="relative block h-[3px] overflow-hidden bg-white/35">
-                {i < index && <span className="absolute inset-0 bg-white" />}
-                {i === index && (
-                  <span
-                    key={index}
-                    className="talk-progress-bar absolute inset-0 origin-left bg-white"
-                    style={
-                      {
-                        "--dur": `${m.type === "video" ? (videoSeconds[i] ?? IMAGE_SECONDS) : IMAGE_SECONDS}s`,
-                      } as React.CSSProperties
-                    }
-                    // Las fotos avanzan cuando se llena la barra; los videos, cuando terminan de reproducirse.
-                    onAnimationEnd={m.type === "image" ? goNext : undefined}
-                  />
-                )}
+              <span
+                className={`relative h-2.5 overflow-hidden rounded-full transition-all duration-300 group-focus-visible/dot:ring-2 group-focus-visible/dot:ring-white ${
+                  i === index ? "w-14 bg-white/35" : "w-2.5 bg-white/80 group-hover/dot:bg-white"
+                }`}
+              >
+                {i === index &&
+                  (m.type === "image" ? (
+                    // Las fotos avanzan cuando se llena; los videos, cuando terminan (se llena según van por su duración).
+                    <span
+                      key={index}
+                      className="talk-dot-fill absolute inset-0 origin-left bg-crimson"
+                      style={
+                        {
+                          "--dur": `${IMAGE_SECONDS}s`,
+                          animationPlayState: paused ? "paused" : "running",
+                        } as React.CSSProperties
+                      }
+                      onAnimationEnd={goNext}
+                    />
+                  ) : (
+                    <span
+                      className="absolute inset-0 origin-left bg-crimson"
+                      style={{ transform: `scaleX(${videoProgress})` }}
+                    />
+                  ))}
               </span>
             </button>
           ))}
