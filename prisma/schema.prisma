@@ -206,20 +206,26 @@ model TalkLink {
   @@index([talkId])
 }
 
+enum TeamGroup {
+  FOUNDER // se lista en "Fundadores" en /equipo
+  COLLABORATOR // se lista en "Colaboradores"
+}
+
 model TeamMember {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
+  // Identificador estable (ej. "juan-kaplan"): el seed actualiza por slug en vez de borrar y
+  // recrear, así el id no cambia y otras tablas pueden apuntar a una persona sin romperse.
+  slug          String    @unique
   name          String
-  role          String? // nullable: current roster has no roles yet. CAUTION: getFounders()/getCollaborators()
-  // in src/lib/team.ts currently filter on this exact string ("Fundador"/"Colaborador") to
-  // group people — setting a real per-person role here will silently drop that person from
-  // both lists until team.ts gets a dedicated group field.
+  group         TeamGroup // en qué lista de /equipo aparece; no confundir con role
+  role          String? // cargo de la persona (ej. "Presidente"), opcional; no afecta en qué lista aparece
   photoUrl      String? // nullable: currently one group photo, not per-person
-  bio           String?  @db.Text
+  bio           String?   @db.Text
   linkedin      String? // perfil publico de LinkedIn
   linkedinPhoto String? // foto de LinkedIn: no se puede traer automaticamente, se sube a mano (URL o ruta)
   github        String? // perfil publico de GitHub
-  order         Int      @default(0)
-  active        Boolean  @default(true) // soft-remove without losing history
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  order         Int       @default(0)
+  active        Boolean   @default(true) // soft-remove without losing history
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }

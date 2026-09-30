@@ -17,7 +17,7 @@ Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Pr
 | `src/components/` | Componentes de layout (`layout/`), compartidos (`shared/`) y de Home (`home/`) |
 | `src/lib/` | Acceso a datos (`events.ts`, `robots.ts`, `team.ts`), utilidades y el cliente de Prisma |
 | `prisma/schema.prisma` | Modelo de datos (Event, EventRegistration, Robot, TeamMember) |
-| `prisma/seed-data/` | Contenido tipado (eventos, robots, equipo) — hoy es la única fuente de datos; en la Fase 2 se siembra a Postgres desde acá |
+| `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo y charlas se siembran a Postgres desde acá con `npm run db:seed` |
 | `public/` | Imágenes estáticas (logo, favicon, fotos) |
 | `netlify.toml` | Deploy de la versión **actual en producción** (rama `main`), sin tocar |
 
@@ -28,11 +28,16 @@ npm install
 npm run dev
 ```
 
-Y entrar a http://localhost:3000. No hace falta una base de datos para esto: el contenido sale de `prisma/seed-data/` mientras Postgres no esté conectado.
+Y entrar a http://localhost:3000.
 
 ### Variables de entorno
 
-Copiar `.env.example` a `.env`. Con valores dummy alcanza para levantar el sitio (`npm run dev`, `npm run build`); solo hacen falta las credenciales reales de Supabase para `prisma migrate dev` o `npm run db:seed`.
+Copiar `.env.example` a `.env`. Con valores dummy alcanza para `npm run build` y para las páginas que leen de `prisma/seed-data/` (Home, Eventos, Plataformas, Proyectos, Contacto).
+
+**`/equipo` y `/talks` leen de la base de Supabase**: sin las credenciales reales en `.env`, esas dos páginas dan error. Pedirle el `.env` a quien administra el proyecto de Supabase.
+
+> [!WARNING]
+> Hoy hay una sola base: la de tu `.env` es **la misma que usa el sitio en vivo**. Cualquier cambio que hagas en local (desde `/admin`, un script o `npm run db:seed`) se ve al instante en producción. Separar desarrollo y producción está pendiente en [#26](https://github.com/AIRclub-UdeSA/airclub-site/issues/26).
 
 ## Cómo proponer un cambio
 
@@ -51,7 +56,12 @@ CI (`typecheck`, `lint`, `build`) corre en cada PR contra `v2` o `main`.
 
 ### Contenido (eventos, robots, equipo)
 
-Por ahora se edita directamente en `prisma/seed-data/*.ts` (arrays tipados) — mismo flujo de PR que el resto del código, sin panel de administración todavía. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
+Eventos, robots, proyectos y contacto se editan directamente en `prisma/seed-data/*.ts` (arrays tipados), con el mismo flujo de PR que el resto del código. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
+
+El equipo y las charlas viven en la base, y `npm run db:seed` carga en ella lo que dice `prisma/seed-data/`:
+
+- **Equipo:** se edita en `prisma/seed-data/team.ts` y se corre `npm run db:seed`, que crea o actualiza a cada persona. El array (`founders` / `collaborators`) define en qué lista aparece, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
+- **Charlas:** la fuente de verdad es la base (se editan desde el panel). El seed solo crea las charlas que no existen y nunca modifica una existente, así que correrlo no pisa lo editado.
 
 ### Imágenes
 

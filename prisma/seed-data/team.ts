@@ -1,5 +1,8 @@
 export type SeedTeamMember = {
+  /** Identificador estable de la persona (no cambiarlo aunque cambie el nombre): el seed actualiza por slug. */
+  slug: string;
   name: string;
+  /** Cargo de la persona (ej. "Presidente"). No define en qué lista aparece: eso lo da el array (founders/collaborators). */
   role?: string;
   photoUrl?: string;
   /** Perfiles públicos. Cada uno es opcional; se aceptan links con o sin "https://". */
@@ -13,6 +16,7 @@ export type SeedTeamMember = {
 
 export const founders: SeedTeamMember[] = [
   {
+    slug: "juan-kaplan",
     name: "Juan Kaplan",
     links: {
       linkedin: "https://www.linkedin.com/in/juan-kaplan/",
@@ -21,6 +25,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "lucio-luque-materazzi",
     name: "Lucio Luque Materazzi",
     links: {
       linkedin: "https://www.linkedin.com/in/lucio-luque-materazzi",
@@ -29,6 +34,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "camila-guerrero",
     name: "Camila Guerrero",
     links: {
       linkedin: "https://www.linkedin.com/in/camila-guerrero-ia/",
@@ -37,6 +43,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "zoe-velazquez",
     name: "Zoe Velazquez",
     links: {
       linkedin: "https://www.linkedin.com/in/zoe-velazquez-zorzi/",
@@ -45,6 +52,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "francesca-ragonesi",
     name: "Francesca Ragonesi",
     links: {
       linkedin: "https://www.linkedin.com/in/francesca-ragonesi-14a961290/",
@@ -53,6 +61,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "teo-kaucher",
     name: "Teo Kaucher",
     links: {
       linkedin: "https://www.linkedin.com/in/teo-manuel-kaucher/",
@@ -61,6 +70,7 @@ export const founders: SeedTeamMember[] = [
     },
   },
   {
+    slug: "tomas-diaz",
     name: "Tomas Diaz",
     links: {
       linkedin: "https://www.linkedin.com/in/tomas-diaz-b369a2270/",
@@ -71,6 +81,7 @@ export const founders: SeedTeamMember[] = [
 
 export const collaborators: SeedTeamMember[] = [
   {
+    slug: "ciro-russi",
     name: "Ciro Russi",
     links: {
       linkedin: "https://www.linkedin.com/in/ciro-russi-718533349/",
@@ -79,6 +90,7 @@ export const collaborators: SeedTeamMember[] = [
     },
   },
   {
+    slug: "martina-grunewald",
     name: "Martina Grunewald",
     links: {
       linkedin: "https://www.linkedin.com/in/martina-grunewald/",
@@ -87,6 +99,7 @@ export const collaborators: SeedTeamMember[] = [
     },
   },
   {
+    slug: "lisandro-morales-arce",
     name: "Lisandro Morales Arce",
     links: {
       linkedin: "https://www.linkedin.com/in/lisandro-morales-arce/",
@@ -95,6 +108,7 @@ export const collaborators: SeedTeamMember[] = [
     },
   },
   {
+    slug: "manuela-gomez-pazos",
     name: "Manuela Gomez Pazos",
     links: {
       linkedin: "https://www.linkedin.com/in/manuelagomezpazos/",
