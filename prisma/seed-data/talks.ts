@@ -20,25 +20,25 @@ export type SeedTalk = {
   slug: string;
   title: string;
   subtitle: string;
-  /** Tercera línea: invitado/a y afiliación, o aclaración. */
-  details: string;
   abstract: string;
   speaker?: TalkSpeaker;
   /**
    * Ordena la línea de tiempo y define si la charla es pasada o próxima.
-   * Sin `startsAt` la tarjeta queda siempre al final, sin importar las fechas (ej.: Call for Speakers).
+   * Sin `startsAt` la tarjeta queda siempre al final, sin importar las fechas.
    */
   startsAt?: Date;
   /** Fin de un rango (ej.: la semana completa); la charla sigue "próxima" hasta que termine. */
   endsAt?: Date;
   /** Reemplaza a la fecha exacta cuando aún no hay día confirmado (ej.: "Semana del 12 al 16 de octubre"). */
   dateLabel?: string;
-  /** Texto grande del placeholder cuando no hay fotos (ej.: "?"). */
-  placeholder?: string;
   /** Ubicación o sala donde se realizó o realizará la charla. */
   location?: string;
   /** Frase o cita temática destacada de la charla. */
   topic?: string;
+  /** Grabación completa, opcional: siempre un link externo de YouTube, nunca Storage. */
+  recordingUrl?: string;
+  /** true = título/orador/resumen ya están definidos, no son placeholder de "a confirmar". */
+  confirmed?: boolean;
   /** Fotos y videos, en orden de aparición. El primero es la portada de la tarjeta. */
   media: TalkMedia[];
   /** Diapositivas interactivas para visualizar directamente en la ventana flotante. */
@@ -53,7 +53,7 @@ export const talks: SeedTalk[] = [
     slug: "primer-encuentro-air-club",
     title: "Presentación del club y Tadeo Casiraghi",
     subtitle: "Primer AIR Talk",
-    details: "Tadeo Casiraghi, profesor de la carrera e investigador del LINAR, UdeSA",
+    confirmed: true,
     location: "Aula Magna · Campus Victoria, UdeSA",
     topic: "Cómo reemplazar un tobillo: entrando al mundo de las prótesis motorizadas",
     speaker: {
@@ -114,13 +114,11 @@ export const talks: SeedTalk[] = [
     slug: "segundo-air-talk",
     title: "Charla a confirmar",
     subtitle: "Segundo AIR Talk",
-    details: "Tema e invitado a confirmar",
     abstract:
       "Estamos coordinando el tema y el orador invitado de este segundo encuentro. Próximamente habilitaremos el registro y la reserva de lugar.",
     startsAt: new Date("2026-10-12T00:00:00-03:00"),
     endsAt: new Date("2026-10-16T23:59:59-03:00"),
     dateLabel: "Semana del 12 al 16 de octubre",
-    placeholder: "?",
     media: [],
     cta: {
       label: "Reservar lugar (Próximamente)",
@@ -131,28 +129,11 @@ export const talks: SeedTalk[] = [
     slug: "tercer-air-talk",
     title: "Charla a confirmar",
     subtitle: "Tercer AIR Talk",
-    details: "Tema e invitado a confirmar",
     abstract:
       "Estamos coordinando el tema y el invitado de esta charla. Lo vamos a anunciar por acá y en nuestras redes.",
     startsAt: new Date("2026-10-29T00:00:00-03:00"),
     endsAt: new Date("2026-10-29T23:59:59-03:00"),
     dateLabel: "29 de Octubre de 2026",
-    placeholder: "?",
     media: [],
-  },
-  {
-    slug: "call-for-speakers",
-    title: "¿Querés dar una charla?",
-    subtitle: "Call for Speakers",
-    details: "Estudiantes, tesistas, investigadores y empresas",
-    abstract:
-      "Las AIR Talks son un espacio abierto. Si estás haciendo una tesis o un proyecto propio, investigás o trabajás en IA y robótica, te invitamos a contarlo. Escribinos con tu tema y un abstract de un par de líneas, o el link a un borrador de tus slides.",
-    dateLabel: "Convocatoria abierta",
-    placeholder: "+",
-    media: [],
-    cta: {
-      label: "Proponer una talk",
-      url: `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Propuesta de AIR Talk")}`,
-    },
   },
 ];

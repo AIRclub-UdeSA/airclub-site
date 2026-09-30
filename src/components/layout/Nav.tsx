@@ -2,10 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { User } from "lucide-react";
+import { SessionProvider, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { signInAction } from "@/lib/admin/auth-actions";
 import { cn } from "@/lib/utils";
 import { NavHoverHighlight } from "./NavHoverHighlight";
+import { SignOutButton } from "./SignOutButton";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -17,7 +21,17 @@ const NAV_LINKS = [
   { href: "/contacto", label: "Contacto" },
 ];
 
+// La sesión se lee acá, en el navegador, y no en el RootLayout: leerla en el servidor usa
+// cookies y obliga a armar todas las páginas públicas en cada visita en vez de servirlas pre-armadas.
 export function Nav() {
+  return (
+    <SessionProvider>
+      <NavContent />
+    </SessionProvider>
+  );
+}
+
+function NavContent() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [visible, setVisible] = useState(!isHome);
@@ -98,6 +112,8 @@ export function Nav() {
         </NavHoverHighlight>
 
         <div className="flex items-center gap-2">
+          <AccountMenu className="hidden sm:block" />
+
           <Link
             href="/contacto"
             className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-crimson px-4 py-1.5 font-body text-[.78rem] font-semibold text-white transition-all hover:bg-crimson-hover"
@@ -138,10 +154,84 @@ export function Nav() {
             >
               Sumarme al club
             </Link>
+            <AccountMenu variant="inline" className="mt-1" />
           </div>
         )}
       </nav>
     </header>
+  );
+}
+
+function AccountMenu({ className, variant = "dropdown" }: { className?: string; variant?: "dropdown" | "inline" }) {
+  // Mientras carga (status "loading") session es undefined: se muestra el ícono genérico, sin parpadeo de layout.
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const isDropdown = variant === "dropdown";
+
+  useEffect(() => {
+    if (!isDropdown) return;
+    function onPointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [isDropdown]);
+
+  const menuContent = session?.user?.email ? (
+    <>
+      <p className="truncate px-3 py-1.5 font-mono text-[.7rem] text-text3">{session.user.email}</p>
+      {session.user.role && (
+        <Link
+          href="/admin"
+          onClick={() => setOpen(false)}
+          className="block rounded-xl px-3 py-2 font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
+        >
+          Panel de admin
+        </Link>
+      )}
+      <SignOutButton className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text">
+        Cerrar sesión
+      </SignOutButton>
+    </>
+  ) : (
+    <form action={signInAction}>
+      <button
+        type="submit"
+        className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
+      >
+        Continuar con Google
+      </button>
+    </form>
+  );
+
+  if (!isDropdown) {
+    return <div className={cn("flex flex-col gap-1 rounded-2xl border border-border/60 p-2", className)}>{menuContent}</div>;
+  }
+
+  return (
+    <div ref={rootRef} className={cn("relative", className)}>
+      <button
+        type="button"
+        aria-label={session?.user?.email ? "Cuenta" : "Ingresar"}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card text-text2 transition-colors hover:text-crimson-text"
+      >
+        {session?.user?.image ? (
+          <Image src={session.user.image} alt="" width={32} height={32} className="h-full w-full object-cover" />
+        ) : (
+          <User className="h-4 w-4" strokeWidth={2} />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+12px)] z-10 w-44">
+          <div className="absolute -top-[5px] left-3 h-2.5 w-2.5 rotate-45 rounded-[2px] border-l border-t border-border bg-bg/95" />
+          <div className="relative flex flex-col gap-1 rounded-2xl border border-border bg-bg/95 p-2 shadow-xl backdrop-blur-xl">{menuContent}</div>
+        </div>
+      )}
+    </div>
   );
 }
 

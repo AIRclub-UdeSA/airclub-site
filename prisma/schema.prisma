@@ -20,6 +20,43 @@ enum RobotSpecGroup {
   SOFTWARE
 }
 
+enum AdminRole {
+  ADMIN // acceso total, incluida la gestion de personas autorizadas
+  EDITOR // acceso solo a las secciones listadas en AdminUser.sections
+}
+
+// Personas con acceso a /admin. Loguearse con Google restringido a @udesa.edu.ar no alcanza
+// por si solo: hace falta ademas estar cargado aca. Ver src/lib/admin/permissions.ts.
+model AdminUser {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  role      AdminRole
+  sections  String[] // ids de seccion (ej: "talks"); ADMIN ignora este campo, ve todo
+  // Sacar el acceso desactiva, no borra: AuditLog apunta a esta fila (onDelete: Restrict) y
+  // el historial tiene que seguir diciendo quien hizo cada cambio.
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
+}
+
+// Registro de cada accion de escritura hecha desde /admin. Se escribe en la misma
+// transaccion que el cambio que audita (ver Etapa 3 de PLAN-ADMIN.md).
+model AuditLog {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+  section     String // ej: "talks"
+  entityId    String // id del registro afectado
+  action      String // ej: "create" | "update" | "delete" | "publish"
+  before      Json?
+  after       Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([section, entityId])
+  @@index([adminUserId])
+}
+
 enum TalkMediaType {
   IMAGE
   VIDEO
@@ -100,12 +137,16 @@ model RobotLink {
   @@index([robotId])
 }
 
+enum TalkStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model Talk {
   id                 String      @id @default(cuid())
   slug               String      @unique
   title              String
   subtitle           String
-  details            String      @db.Text
   abstract           String      @db.Text
   speakerName        String?
   speakerRole        String?
@@ -115,12 +156,13 @@ model Talk {
   startsAt           DateTime?
   endsAt             DateTime?
   dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
-  placeholder        String? // texto grande del placeholder cuando no hay fotos (ej.: "?")
   location           String?
   topic              String?
   recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
   ctaLabel           String?
   ctaUrl             String?
+  status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
+  confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
   order              Int         @default(0)
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt

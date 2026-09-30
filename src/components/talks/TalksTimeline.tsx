@@ -10,14 +10,14 @@ export type TimelineTalk = {
   slug: string;
   title: string;
   subtitle: string;
-  details: string;
   abstract: string;
   speaker?: TalkSpeaker;
   startsAt?: string; // ISO; sin fecha = siempre al final
   dateLabel?: string;
-  placeholder?: string;
   location?: string;
   topic?: string;
+  recordingUrl?: string;
+  confirmed: boolean;
   media: TalkMedia[];
   slides?: TalkSlide[];
   links?: { label: string; url: string }[];
@@ -45,8 +45,6 @@ function formatDate(iso?: string, label?: string) {
 }
 
 export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProps) {
-  // Charlas programadas (excluyendo el call-for-speakers que va al pie)
-  const scheduledTalks = talks.filter((t) => t.slug !== "call-for-speakers");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -63,10 +61,10 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
     const cardWidth = 380;
     const current = Math.min(
       Math.max(Math.round(scrollLeft / cardWidth) + 1, 1),
-      scheduledTalks.length,
+      talks.length,
     );
     setActiveIndex(current);
-  }, [scheduledTalks.length]);
+  }, [talks.length]);
 
   useEffect(() => {
     checkScroll();
@@ -105,7 +103,7 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
           {/* Indicador y botones anterior / siguiente */}
           <div className="flex items-center gap-4">
             <span className="font-mono text-[.76rem] tracking-widest text-text3">
-              [ {String(activeIndex).padStart(2, "0")} / {String(scheduledTalks.length).padStart(2, "0")} ]
+              [ {String(activeIndex).padStart(2, "0")} / {String(talks.length).padStart(2, "0")} ]
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -136,7 +134,7 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
           className="flex gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scrollbar-none"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {scheduledTalks.map((talk, index) => {
+          {talks.map((talk, index) => {
             const isNext = talk.slug === nextSlug;
             const hasSlides = talk.slides && talk.slides.length > 0;
             const hasMedia = talk.media && talk.media.length > 0;
@@ -160,12 +158,13 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
                           ? "PRÓXIMA EDICIÓN"
                           : `EDICIÓN #${String(index + 1).padStart(2, "0")}`}
                     </span>
-                    {isNext && (
+                    {isNext && talk.confirmed && (
                       <span className="flex items-center gap-1.5 text-crimson-text font-semibold">
                         <span className="size-1.5 rounded-full bg-crimson animate-pulse" />
                         <span>CONFIRMADA</span>
                       </span>
                     )}
+                    {isNext && !talk.confirmed && <span className="text-text3 font-semibold">A CONFIRMAR</span>}
                   </div>
 
                   {/* Fecha de la sesión */}
