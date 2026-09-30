@@ -44,7 +44,7 @@ export const founders: SeedTeamMember[] = [
   },
   {
     slug: "zoe-velazquez",
-    name: "Zoe Velazquez",
+    name: "Zoë Velazquez",
     links: {
       linkedin: "https://www.linkedin.com/in/zoe-velazquez-zorzi/",
       linkedinPhoto: "/equipo/linkedin/zoe.jpeg",
