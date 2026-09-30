@@ -100,13 +100,13 @@ Estos son los patrones que construyen la identidad visual de AIR Club:
    * Manejado por scroll reactivo; coordina los 4 actuadores para trazar la "A" y la "R".
 2. **`TiltCard` (`src/components/shared/TiltCard.tsx`)**:
    * Tarjeta con inclinación 3D contenida (`max={5}, scale={1.02}, lift={0}`).
-   * Radio de borde uniforme: `rounded-card` (`--r-card: 22px`).
+   * Radio de borde uniforme: `rounded-card` (`--r-card: 22px`). Es la regla de la landing; `/talks` tiene su propio lenguaje de formas, ver sección 8.
 3. **`border-trail-hover` (`src/app/globals.css`)**:
    * Borde con destello de luz cónica rotativa que se activa en hover. Comunica interacción sin mover el layout.
 4. **Botón Mono Técnico (`Button.tsx`)**:
    * Borde fino, esquinas redondeadas (`rounded-full`), tipografía `font-mono text-[.8rem] uppercase` y flecha `ArrowUpRight` en hover.
 5. **Eje Temporal con Nodo ("HOY")**:
-   * Línea horizontal en desktop y vertical en mobile que ancla los eventos pasados a la izquierda y los futuros a la derecha.
+   * Ancla los eventos pasados a la izquierda (línea sólida) y los futuros a la derecha (línea punteada), con el marcador HOY en el corte. Implementado en `TalksTimeline.tsx`, solo horizontal (en mobile se desliza lateralmente; no hay versión vertical).
 
 ---
 
@@ -120,6 +120,8 @@ Para no regresar a los patrones mediocres de IA, queda **estrictamente prohibido
 * ❌ **Glassmorphism descontrolado**: Prohibido aplicar `backdrop-blur` y fondos semitransparentes en cada elemento. Solo la barra de navegación y los modales usan blur.
 * ❌ **Emojis en lugar de íconos**: Cero emojis para ilustrar conceptos de ingeniería. Usar íconos vectoriales SVG limpios (`lucide-react`) con trazo parejo.
 * ❌ **Bloques "Sponsor / Empresa" fuera de la landing**: El bloque de vinculación empresarial pertenece únicamente al final de la portada, no a los footers de subpáginas.
+* ❌ **Paréntesis en rótulos de conteo** ("Fotos (5)", "Diapositivas (2)"): el dueño los rechazó. Usar el rótulo solo, o una cifra aparte.
+* ❌ **Divisores decorativos entre secciones** (reglas de vernier, cintas de texto, dibujos de circuito): todos se probaron en `/talks` y se descartaron, ver sección 8. Las secciones se separan con bandas de color a todo el ancho.
 * ❌ **Hardcodear datos dentro de los componentes**: Todo contenido estructurado debe residir en `prisma/seed-data/*.ts` y consumirse a través de `src/lib/*.ts`, preparado para su migración a Supabase.
 
 ---
@@ -131,4 +133,57 @@ Antes de proponer cualquier PR contra `v2`:
 - [ ] **Idiomas**: Código, commits, documentación y comentarios en **español**.
 - [ ] **Sin AI Co-Author**: No incluir trailers `Co-authored-by: ... [bot]` (el CI lo rechaza).
 - [ ] **Modo Oscuro**: Todo componente nuevo debe verse perfecto en claro (`--bg: #faf8f8`) y en oscuro (`--bg: #0e0407`).
+- [ ] **Next 16**: en `next/image` usar `loading="eager" fetchPriority="high"` (la prop `priority` está deprecada). Antes de escribir código, leer la guía correspondiente en `node_modules/next/dist/docs/`.
+- [ ] **Movimiento reducido**: todo lo que se anima debe respetar `prefers-reduced-motion` (ver el bloque al final de las utilidades `talk-*` en `globals.css` y `src/lib/use-reduced-motion.ts`).
 - [ ] **Pruebas de CI**: Debe pasar localmente `npm run typecheck`, `npm run lint` y `npm run build` sin advertencias.
+
+---
+
+## 8. AIR Talks (`/talks`): decisiones del dueño, rechazos y mapa
+
+Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para no repetir lo que ya se probó.
+
+### Idea rectora: el tiempo es el diseño
+* La **fecha es el ancla visual**: numerales en Anton (`03`, `12-16`) en el hero, en cada tarjeta y en el modal.
+* El **color codifica el estado**: pasado = foto monocromática que "se revela" a color al hover/foco/apertura (`.talk-photo`, `.talk-develop`); la próxima charla = carmesí macizo; por confirmar = trama diagonal (`.talk-hatch`), que se lee como "lugar reservado", no como vacío.
+* **HOY** marca el corte entre lo que pasó y lo que viene: sello cuadrado inclinado en la costura del hero y nodo en el eje del cronograma.
+
+### Estructura y archivos (`src/components/talks/`, de arriba hacia abajo)
+1. `TalksHero.tsx`: título "AIR TALKS" + dos rectángulos a todo el ancho (última charla | próxima), separados por una línea de 12px del color del canvas. Maneja los casos sin pasada, sin próxima y sin ninguna.
+2. `TalksTimeline.tsx`: "Cronograma", pista horizontal sobre banda `bg-bg2` a todo el ancho. Tarjetas con forma de entrada (cuerpo con la fecha, talón con líneas de puntos), sellos inclinados, nodos cuadrados.
+3. `CallForSpeakers.tsx`: banda oscura fija (igual en claro y oscuro) a todo el ancho, con `TalksBattlement.tsx` como borde superior almenado.
+4. `TalkModal.tsx` + `TalkSlideshow.tsx`: detalle de charla. `TalksHub.tsx` orquesta el estado. `src/lib/talk-format.ts` es el único lugar donde se formatean fechas (siempre en hora de Buenos Aires); `src/lib/use-reduced-motion.ts` es el hook de movimiento reducido.
+
+### Lo que el dueño aprobó (conservar)
+* **Título**: "AIR TALKS" en Anton, **centrado**, una sola línea, sin nada debajo, a ≈50% del ancho en desktop. Se bajó en cuatro pasos porque "era demasiado masivo". El tamaño es `min(36rem, calc((100vw - gutters) / N))` con N = 5 / 5.8 / 6.8 por breakpoint (más N = más chico). También se comparó alineado a la izquierda y se eligió centrado.
+* **Hero**: rectángulos rectos a todo el ancho. Le gusta "mucho"; no cambiar su composición sin pedirlo. Tiene que entrar en el primer viewport a 1440×900 (la altura de los paneles se calcula con `100dvh` menos el alto del título).
+* **Cronograma**: tipografía y numerales (los conserva); formas rectas con contorno de 1px (`border-text`), sin esquinas redondeadas.
+* **Modal**: centrado (no un cajón lateral), `<dialog>` nativo, 62rem de ancho, organización minimalista. Arriba, un slideshow de fotos con barras de progreso (avanza solo cada 5 s, tocar la foto pasa a la siguiente, tocar una barra salta a esa foto, el cursor pausa; los videos van mudos con botón de sonido). Pestañas solo **Resumen / Diapositivas / Video**: no hay pestaña de Fotos.
+* **Forma**: los botones siguen siendo píldora (`rounded-full`); los paneles y tarjetas de `/talks` son rectos. La landing conserva `rounded-card`. Hoy son dos lenguajes de formas distintos; **pendiente de decidir con el dueño si se unifican** (no asumir).
+
+### Rechazado (no reintroducir)
+* El diseño original: masthead gigante a la izquierda con regla de vernier y marcas de registro, carrusel automático de fotos con puntos, tres botones píldora seguidos, contadores `[01 / 03]`, "EDICIÓN #01", puntos que pulsan.
+* **Cualquier divisor** entre título, hero y cronograma. Se probaron: (a) cinta negra de texto que corre, inclinada y luego recta, entre título y hero y luego entre hero y cronograma (gustó al principio, al final se pidió sacarla); (b) dibujo animado de circuito de placa (rechazado de entrada). El dueño prefiere sin divisores.
+* Título a todo el ancho de la página, y título alineado a la izquierda.
+* Cajón lateral para el detalle; pestaña de Fotos; paréntesis en los conteos.
+
+### Referencias externas
+* El dueño compartió el design.md de **Slush** como referencia. Se adoptaron sus *reglas de construcción* (contorno negro de 1px, colores planos sin sombras, sellos/stickers inclinados, bandas de color a todo el ancho, botones píldora). **No** se adoptó su paleta pastel/arcoíris ni las cintas 3D: chocan con carmesí/lienzo, que el dueño no quiere cambiar.
+* Borde almenado: adaptado de **cult-ui "SVG Bands"** (MIT), https://github.com/nolly-studio/cult-ui. Hay crédito en el comentario de `TalksBattlement.tsx`.
+
+### Cómo iterar con el dueño
+* Pide ajustes de a poco ("un poco menos"): mover una sola perilla por vez, en pasos de ~12%.
+* Cuando duda entre dos opciones, pide **verlas lado a lado**: sacar dos capturas y mostrarlas antes de decidir.
+* Verificar cada cambio visual a 1440×900 y 375×812, en claro y oscuro, más `npm run typecheck` y `npm run lint`.
+
+### Trampas conocidas
+* Syne extra-bold en mayúsculas es muy ancha: "CRONOGRAMA" desborda en mobile si el tamaño mínimo no es chico (`clamp(1.5rem, 6.6vw, 4rem)`). Ese desborde ensancha el viewport en mobile y rompe toda la página, no solo el título.
+* Las animaciones de filtro que deben poder cambiar al hover (`.talk-develop`) usan `animation-fill-mode: backwards`; con `both` el estado final queda fijo y el hover deja de funcionar.
+* `<dialog>`: no darle `display` fijo; usar `open:flex`, o queda visible aunque esté cerrado.
+* Nada de fecha "de ahora" en componentes cliente: `todayIso` y `daysUntilNext` se calculan en el servidor (`page.tsx`) para no romper la hidratación.
+* El panel de navegador de Claude pausa el render cuando está oculto: las capturas salen "a medio fade" o desactualizadas. Esperar y volver a capturar antes de juzgar una animación.
+
+### Pendientes
+* Decidir si `/talks` y la landing comparten lenguaje de formas (ver arriba).
+* El seed tiene una diapositiva con paréntesis en el título ("Cómo reemplazar un tobillo (Tadeo Casiraghi)") y una fecha con mayúscula ("3 de Septiembre"): son datos, se corrigen en el seed o en el panel de administración.
+
