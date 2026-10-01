@@ -1,5 +1,12 @@
 
-export type TalkMedia = { type: "image"; src: string } | { type: "video"; src: string; poster: string };
+export type TalkMedia =
+  | {
+      type: "image";
+      src: string;
+      lightBg?: boolean;
+      objectFit?: "contain" | "cover";
+    }
+  | { type: "video"; src: string; poster: string };
 
 export type TalkSlide = {
   title: string;
@@ -131,7 +138,12 @@ export const talks: SeedTalk[] = [
     endsAt: new Date("2026-10-14T17:50:00-03:00"),
     dateLabel: "14 de Octubre de 2026",
     media: [
-      { type: "image", src: "/talks/bio-and-bits/bnct-planificacion.jpg" },
+      {
+        type: "image",
+        src: "/talks/bio-and-bits/bnct-planificacion.png",
+        lightBg: true,
+        objectFit: "contain",
+      },
     ],
     cta: {
       label: "Inscribirse a la charla",

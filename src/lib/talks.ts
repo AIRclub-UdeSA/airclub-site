@@ -2,7 +2,14 @@ import { prisma } from "./prisma";
 import { isUpcoming } from "@/lib/dates";
 import { talks as seedTalks, type SeedTalk } from "../../prisma/seed-data/talks";
 
-export type TalkMedia = { type: "image"; src: string } | { type: "video"; src: string; poster: string };
+export type TalkMedia =
+  | {
+      type: "image";
+      src: string;
+      lightBg?: boolean;
+      objectFit?: "contain" | "cover";
+    }
+  | { type: "video"; src: string; poster: string };
 
 export type TalkSlide = {
   title: string;

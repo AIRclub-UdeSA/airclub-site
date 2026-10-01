@@ -64,6 +64,14 @@ async function main() {
       const marzikModalPath = path.join(OUTPUT_DIR, "talk-marzik-modal.png");
       await page.screenshot({ path: marzikModalPath, fullPage: false });
       console.log(`Guardada: ${marzikModalPath}`);
+
+      // Scroll to speaker avatar section
+      await page.locator(".talk-modal-panel div.overflow-y-auto").evaluate(el => el.scrollTop = 420);
+      await page.waitForTimeout(300);
+      const marzikAvatarPath = path.join(OUTPUT_DIR, "marzik-avatar-scrolled.png");
+      await page.screenshot({ path: marzikAvatarPath, fullPage: false });
+      console.log(`Guardada: ${marzikAvatarPath}`);
+
       await page.keyboard.press("Escape");
       await page.waitForTimeout(400);
     }
@@ -77,6 +85,14 @@ async function main() {
       const torreModalPath = path.join(OUTPUT_DIR, "talk-torre-modal.png");
       await page.screenshot({ path: torreModalPath, fullPage: false });
       console.log(`Guardada: ${torreModalPath}`);
+
+      // Scroll to speaker avatar section
+      await page.locator(".talk-modal-panel div.overflow-y-auto").evaluate(el => el.scrollTop = 420);
+      await page.waitForTimeout(300);
+      const torreAvatarPath = path.join(OUTPUT_DIR, "torre-avatar-scrolled.png");
+      await page.screenshot({ path: torreAvatarPath, fullPage: false });
+      console.log(`Guardada: ${torreAvatarPath}`);
+
       await page.keyboard.press("Escape");
       await page.waitForTimeout(400);
     }
