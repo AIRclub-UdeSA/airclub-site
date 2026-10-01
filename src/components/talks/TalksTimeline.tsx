@@ -14,6 +14,7 @@ export type TimelineTalk = {
   subtitle: string;
   abstract: string;
   speaker?: TalkSpeaker;
+  speakers?: TalkSpeaker[];
   startsAt?: string; // ISO; sin fecha = siempre al final
   endsAt?: string; // ISO; fin de un rango (ej.: una semana entera)
   dateLabel?: string;
@@ -26,6 +27,9 @@ export type TimelineTalk = {
   slides?: TalkSlide[];
   links?: { label: string; url: string }[];
   cta?: { label: string; url: string };
+  category?: "talk" | "workshop" | "competition" | "meetup";
+  capacity?: number;
+  prerequisites?: string;
 };
 
 interface TalksTimelineProps {
@@ -286,7 +290,7 @@ function TalkColumn({
           {upcoming ? (
             // Sello pegado a mano: rectángulo con contorno negro, apenas inclinado.
             <span className="absolute right-4 top-4 rotate-[4deg] border border-[#0d0407] bg-[#faf8f8] px-2.5 py-1 font-mono text-[.68rem] font-bold uppercase tracking-[.12em] text-[#0d0407]">
-              {isNext ? "Próxima" : "A confirmar"}
+              {isNext ? "Próxima" : talk.confirmed ? "Próxima" : "A confirmar"}
             </span>
           ) : (
             <ArrowUpRight

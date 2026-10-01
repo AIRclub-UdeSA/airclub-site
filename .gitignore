@@ -43,3 +43,6 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+
+# Capturas de auditoría / UI
+/public/eventos/capturas/

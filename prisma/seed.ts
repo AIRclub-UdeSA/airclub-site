@@ -20,10 +20,24 @@ function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: numbe
 
 async function main() {
   for (const event of events) {
+    const eventData = {
+      slug: event.slug,
+      title: event.title,
+      tagline: event.tagline,
+      description: event.description,
+      location: event.location,
+      startsAt: event.startsAt,
+      endsAt: event.endsAt,
+      externalUrl: event.externalUrl,
+      rsvpEnabled: event.rsvpEnabled,
+      capacity: event.capacity,
+      featuredForCountdown: event.featuredForCountdown,
+      imageUrl: event.imageUrl,
+    };
     await prisma.event.upsert({
       where: { slug: event.slug },
-      create: event,
-      update: event,
+      create: eventData,
+      update: eventData,
     });
   }
 
@@ -90,7 +104,21 @@ async function main() {
         slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
         links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
       },
-      update: {},
+      update: {
+        ...data,
+        media: {
+          deleteMany: {},
+          create: media.map((m, j) => toTalkMediaRow(m, j)),
+        },
+        slides: {
+          deleteMany: {},
+          create: (slides ?? []).map((s, j) => ({ ...s, order: j })),
+        },
+        links: {
+          deleteMany: {},
+          create: (links ?? []).map((l, j) => ({ ...l, order: j })),
+        },
+      },
     });
   }
 

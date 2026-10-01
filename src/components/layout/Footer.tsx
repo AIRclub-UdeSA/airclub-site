@@ -6,6 +6,7 @@ import { getContactChannels } from "@/lib/contact";
 const FOOTER_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/talks", label: "AIR Talks" },
+  { href: "/eventos", label: "Eventos" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
 ];

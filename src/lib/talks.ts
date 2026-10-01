@@ -16,6 +16,7 @@ export type TalkSpeaker = {
   affiliation?: string;
   avatar?: string;
   linkedin?: string;
+  bio?: string;
 };
 
 export type TalkItem = {
@@ -24,6 +25,7 @@ export type TalkItem = {
   subtitle: string;
   abstract: string;
   speaker?: TalkSpeaker;
+  speakers?: TalkSpeaker[];
   startsAt?: Date;
   endsAt?: Date;
   dateLabel?: string;
@@ -68,6 +70,17 @@ function toTalkItem(row: TalkRow): TalkItem {
           linkedin: row.speakerLinkedin ?? undefined,
         }
       : undefined,
+    speakers: row.speakerName
+      ? [
+          {
+            name: row.speakerName,
+            role: row.speakerRole ?? "",
+            affiliation: row.speakerAffiliation ?? undefined,
+            avatar: row.speakerAvatar ?? undefined,
+            linkedin: row.speakerLinkedin ?? undefined,
+          },
+        ]
+      : undefined,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     dateLabel: row.dateLabel ?? undefined,
@@ -85,12 +98,14 @@ function toTalkItem(row: TalkRow): TalkItem {
 }
 
 function fromSeed(t: SeedTalk): TalkItem {
+  const speakers = t.speakers?.length ? t.speakers : t.speaker ? [t.speaker] : undefined;
   return {
     slug: t.slug,
     title: t.title,
     subtitle: t.subtitle,
     abstract: t.abstract,
     speaker: t.speaker,
+    speakers,
     startsAt: t.startsAt,
     endsAt: t.endsAt,
     dateLabel: t.dateLabel,
