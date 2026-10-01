@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { isUpcoming } from "@/lib/dates";
+import { talks as seedTalks, type SeedTalk } from "../../prisma/seed-data/talks";
 
 export type TalkMedia = { type: "image"; src: string } | { type: "video"; src: string; poster: string };
 
@@ -83,16 +84,44 @@ function toTalkItem(row: TalkRow): TalkItem {
   };
 }
 
-// Igual que events.ts/team.ts: la firma no cambia al conectar Postgres.
+function fromSeed(t: SeedTalk): TalkItem {
+  return {
+    slug: t.slug,
+    title: t.title,
+    subtitle: t.subtitle,
+    abstract: t.abstract,
+    speaker: t.speaker,
+    startsAt: t.startsAt,
+    endsAt: t.endsAt,
+    dateLabel: t.dateLabel,
+    location: t.location,
+    topic: t.topic,
+    recordingUrl: t.recordingUrl,
+    confirmed: Boolean(t.confirmed),
+    media: t.media ?? [],
+    slides: t.slides?.length ? t.slides : undefined,
+    links: t.links?.length ? t.links : undefined,
+    cta: t.cta,
+  };
+}
+
+// Lee de Prisma con fallback a seed-data si no hay conexión a base (ej.: build en CI con credenciales dummy).
 export async function getAllTalks(): Promise<TalkItem[]> {
-  const rows = await fetchTalkRows();
-  const items = rows.map((row) => ({ item: toTalkItem(row), order: row.order }));
-  // Las charlas con fecha van en orden cronológico; las que no tienen (Call for Speakers) siempre al final.
-  // MAX_SAFE_INTEGER y no Infinity: Infinity - Infinity da NaN, y el desempate por `order` tiene que ser explícito.
   const time = (t: TalkItem) => t.startsAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-  return items
-    .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)
-    .map(({ item }) => item);
+
+  try {
+    const rows = await fetchTalkRows();
+    const items = rows.map((row) => ({ item: toTalkItem(row), order: row.order }));
+    // Las charlas con fecha van en orden cronológico; las que no tienen (Call for Speakers) siempre al final.
+    return items
+      .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)
+      .map(({ item }) => item);
+  } catch {
+    const items = seedTalks.map((talk, idx) => ({ item: fromSeed(talk), order: idx }));
+    return items
+      .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)
+      .map(({ item }) => item);
+  }
 }
 
 /** Todas las charlas en orden cronológico, más el slug de la próxima (si hay) y la última realizada. */
