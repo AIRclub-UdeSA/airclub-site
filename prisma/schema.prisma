@@ -153,6 +153,7 @@ model Talk {
   speakerAffiliation String?
   speakerAvatar      String?
   speakerLinkedin    String?
+  speakerBio         String?     @db.Text
   startsAt           DateTime?
   endsAt             DateTime?
   dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
@@ -172,13 +173,15 @@ model Talk {
 }
 
 model TalkMedia {
-  id     String        @id @default(cuid())
-  talkId String
-  talk   Talk          @relation(fields: [talkId], references: [id], onDelete: Cascade)
-  type   TalkMediaType
-  src    String
-  poster String? // solo para videos
-  order  Int           @default(0)
+  id        String        @id @default(cuid())
+  talkId    String
+  talk      Talk          @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  type      TalkMediaType
+  src       String
+  poster    String? // solo para videos
+  lightBg   Boolean       @default(false)
+  objectFit String? // "contain" | "cover"
+  order     Int           @default(0)
 
   @@index([talkId])
 }

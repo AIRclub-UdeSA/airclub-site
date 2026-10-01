@@ -25,11 +25,11 @@ export function CategoryBadge({
       return (
         <span
           className={cn(
-            "inline-flex items-center gap-1 border border-[#ddaabc] bg-[#ddaabc]/20 px-2.5 py-1 font-mono text-[.68rem] font-semibold uppercase tracking-[.14em] text-text",
+            "inline-flex items-center gap-1 border border-rose bg-rose/20 px-2.5 py-1 font-mono text-[.68rem] font-semibold uppercase tracking-[.14em] text-text",
             className
           )}
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-[#a40c4c]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-crimson" />
           Workshop
         </span>
       );
@@ -37,11 +37,11 @@ export function CategoryBadge({
       return (
         <span
           className={cn(
-            "inline-flex items-center gap-1 border border-[#8f5261]/40 bg-[#8f5261]/15 px-2.5 py-1 font-mono text-[.68rem] font-semibold uppercase tracking-[.14em] text-text",
+            "inline-flex items-center gap-1 border border-mauve/40 bg-mauve/15 px-2.5 py-1 font-mono text-[.68rem] font-semibold uppercase tracking-[.14em] text-text",
             className
           )}
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-[#8f5261]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-mauve" />
           Competencia
         </span>
       );

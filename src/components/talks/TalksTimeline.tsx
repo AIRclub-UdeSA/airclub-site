@@ -288,9 +288,8 @@ function TalkColumn({
           )}
 
           {upcoming ? (
-            // Sello pegado a mano: rectángulo con contorno negro, apenas inclinado.
-            <span className="absolute right-4 top-4 rotate-[4deg] border border-[#0d0407] bg-[#faf8f8] px-2.5 py-1 font-mono text-[.68rem] font-bold uppercase tracking-[.12em] text-[#0d0407]">
-              {isNext ? "Próxima" : talk.confirmed ? "Próxima" : "A confirmar"}
+            <span className="absolute right-4 top-4 rotate-[4deg] border border-text bg-card px-2.5 py-1 font-mono text-[.68rem] font-bold uppercase tracking-[.12em] text-text">
+              {isNext ? "Próxima" : talk.confirmed ? "Confirmada" : "A confirmar"}
             </span>
           ) : (
             <ArrowUpRight

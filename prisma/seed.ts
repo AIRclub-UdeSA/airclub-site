@@ -14,6 +14,8 @@ function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: numbe
     type: m.type === "image" ? ("IMAGE" as const) : ("VIDEO" as const),
     src: m.src,
     poster: m.type === "video" ? m.poster : undefined,
+    lightBg: m.type === "image" ? Boolean(m.lightBg) : false,
+    objectFit: m.type === "image" ? (m.objectFit ?? null) : null,
     order,
   };
 }
@@ -92,6 +94,7 @@ async function main() {
       speakerAffiliation: speaker?.affiliation,
       speakerAvatar: speaker?.avatar,
       speakerLinkedin: speaker?.linkedin,
+      speakerBio: speaker?.bio,
       ctaLabel: cta?.label,
       ctaUrl: cta?.url,
       order: i,
@@ -104,21 +107,7 @@ async function main() {
         slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
         links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
       },
-      update: {
-        ...data,
-        media: {
-          deleteMany: {},
-          create: media.map((m, j) => toTalkMediaRow(m, j)),
-        },
-        slides: {
-          deleteMany: {},
-          create: (slides ?? []).map((s, j) => ({ ...s, order: j })),
-        },
-        links: {
-          deleteMany: {},
-          create: (links ?? []).map((l, j) => ({ ...l, order: j })),
-        },
-      },
+      update: {},
     });
   }
 

@@ -13,7 +13,7 @@ export function JoinSection({ community, team }: { community: ContactReason; tea
     <section id="sumarte" className="scroll-mt-24 bg-[#0e0407] text-[#f5e8ec]">
       <div className="mx-auto max-w-[1440px] px-4 py-16 sm:px-8 md:px-12 md:py-24">
         <h2 className="font-logo text-[clamp(3.2rem,7.4vw,7rem)] uppercase leading-[0.92] tracking-tight">
-          Cómo <span className="text-[#f0357f]">sumarte</span>
+          Cómo <span className="text-crimson">sumarte</span>
         </h2>
 
         <div className="mt-10 grid gap-3 lg:grid-cols-[1.15fr_1fr]">

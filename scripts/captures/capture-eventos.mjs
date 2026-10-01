@@ -60,8 +60,8 @@ async function main() {
     await desktopPage.screenshot({ path: viewportPath, fullPage: false });
     console.log(`Guardada: ${viewportPath}`);
 
-    // Captura de Octubre con Segundo AIR Talk multi-día (Semana del 12 al 16)
-    console.log("Capturando vista de Octubre con multi-día...");
+    // Captura de Octubre con actividades del mes
+    console.log("Capturando vista de Octubre con actividades...");
     const octMultidiaPath = path.join(OUTPUT_DIR, "eventos-multidia-octubre.png");
     await desktopPage.screenshot({ path: octMultidiaPath, fullPage: false });
     console.log(`Guardada: ${octMultidiaPath}`);

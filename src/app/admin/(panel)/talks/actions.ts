@@ -57,7 +57,14 @@ function parseMediaItems(raw: string) {
       const item = it as Partial<MediaItem>;
       return (item.type === "IMAGE" || item.type === "VIDEO") && typeof item.src === "string" && item.src.trim() !== "";
     })
-    .map((it, order) => ({ type: it.type, src: it.src.trim(), poster: it.poster?.trim() || null, order }));
+    .map((it, order) => ({
+      type: it.type,
+      src: it.src.trim(),
+      poster: it.poster?.trim() || null,
+      lightBg: Boolean(it.lightBg),
+      objectFit: it.objectFit === "contain" ? "contain" : null,
+      order,
+    }));
 }
 
 // La miniatura de un video en /talks es su poster (next/image con src vacío rompe la página).
@@ -106,6 +113,7 @@ function talkScalarData(formData: FormData) {
     speakerAffiliation: optStr(formData, "speakerAffiliation"),
     speakerAvatar: optStr(formData, "speakerAvatar"),
     speakerLinkedin: optStr(formData, "speakerLinkedin"),
+    speakerBio: optStr(formData, "speakerBio"),
     startsAt,
     endsAt,
     dateLabel: optStr(formData, "dateLabel"),
@@ -141,6 +149,7 @@ function talkAuditSnapshot(talk: {
   speakerAffiliation: string | null;
   speakerAvatar: string | null;
   speakerLinkedin: string | null;
+  speakerBio?: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
   dateLabel: string | null;
@@ -150,7 +159,7 @@ function talkAuditSnapshot(talk: {
   confirmed: boolean;
   status: string;
   order: number;
-  media: { type: string; src: string; poster: string | null; order: number }[];
+  media: { type: string; src: string; poster: string | null; lightBg?: boolean; objectFit?: string | null; order: number }[];
   slides: { title: string; embedUrl: string; openUrl: string; order: number }[];
   links: { label: string; url: string; order: number }[];
 }): Prisma.InputJsonValue {
@@ -202,6 +211,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
 
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
+  revalidatePath("/eventos");
   return { error: null };
 }
 
@@ -260,6 +270,7 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   await removeUnusedTalkFiles(replacedFiles);
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
+  revalidatePath("/eventos");
   return { error: null };
 }
 
@@ -285,6 +296,7 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
   await removeUnusedTalkFiles(deletedFiles);
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
+  revalidatePath("/eventos");
   return { error: null };
 }
 
@@ -383,5 +395,6 @@ export async function toggleConfirmed(_prevState: ActionState, formData: FormDat
 
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
+  revalidatePath("/eventos");
   return { error: null };
 }

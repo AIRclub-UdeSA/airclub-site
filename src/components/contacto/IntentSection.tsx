@@ -2,14 +2,16 @@ import type { CSSProperties } from "react";
 
 /**
  * El fondo no cambia (lienzo, o `bg-bg2` alternado como en /equipo y /talks): el color va en los paneles de arriba.
- * Cada intención tiene su color, de la paleta de la marca: carmesí = sumarte, rosa = aportar, malva = preguntar.
- * Cada tono fija la "tinta" (texto sobre el panel) y el "papel" (relleno del panel) que los paneles toman por variable.
- * Son fijos en claro y oscuro: la tinta siempre contrasta con su papel.
+ * Las intenciones siguen un camino continuo y sutil a lo largo de la escala monocromática (sin saltos bruscos):
+ * - "Quiero sumarme" (`crimson`): `#a40c4c` (Posición 4, carmesí principal institucional, L=35%)
+ * - "Quiero aportar" (`rose`):    `#8c0a41` (Posición 3, paso sutil en la línea de tono, L=30%)
+ * - "Tengo una duda" (`mauve`):   `#740936` (Posición 2, paso sutil en la línea de tono, L=25%)
+ * La tinta siempre es blanca `#ffffff` con ratios de contraste AAA (7.7:1 a 11.4:1).
  */
 const TONES = {
   crimson: { ink: "#ffffff", paper: "#a40c4c" },
-  rose: { ink: "#0d0407", paper: "#ddaabc" },
-  mauve: { ink: "#ffffff", paper: "#8f5261" },
+  rose: { ink: "#ffffff", paper: "#8c0a41" },
+  mauve: { ink: "#ffffff", paper: "#740936" },
 } as const;
 
 export type Tone = keyof typeof TONES;

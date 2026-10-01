@@ -87,7 +87,43 @@ export function buildGoogleCalendarUrl(activity: SchedulableActivity): string {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-/** Genera un data URI con formato iCalendar (.ics) estándar */
+function escapeIcsText(str: string): string {
+  return str
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
+function foldIcsLine(line: string, maxBytes = 75): string {
+  const encoder = new TextEncoder();
+  if (encoder.encode(line).length <= maxBytes) return line;
+
+  const chunks: string[] = [];
+  let curStr = "";
+  let curLen = 0;
+  let isFirst = true;
+
+  for (const char of line) {
+    const charBytes = encoder.encode(char).length;
+    const maxAllowed = isFirst ? maxBytes : maxBytes - 1;
+
+    if (curLen + charBytes > maxAllowed) {
+      chunks.push(curStr);
+      curStr = char;
+      curLen = charBytes;
+      isFirst = false;
+    } else {
+      curStr += char;
+      curLen += charBytes;
+    }
+  }
+  if (curStr) chunks.push(curStr);
+
+  return chunks.join("\r\n ");
+}
+
+/** Genera un data URI con formato iCalendar (.ics) estándar compatible con RFC 5545 */
 export function buildIcsDataUri(activity: SchedulableActivity): string {
   if (!activity.startsAt) return "";
 
@@ -108,13 +144,13 @@ export function buildIcsDataUri(activity: SchedulableActivity): string {
     `DTSTAMP:${formatIcs(new Date())}`,
     `DTSTART:${formatIcs(start)}`,
     `DTEND:${formatIcs(end)}`,
-    `SUMMARY:${activity.title}`,
-    `DESCRIPTION:${detailsText.replace(/\n/g, "\\n")}`,
-    `LOCATION:${activity.location || "Campus Victoria, UdeSA"}`,
+    `SUMMARY:${escapeIcsText(activity.title)}`,
+    `DESCRIPTION:${escapeIcsText(detailsText)}`,
+    `LOCATION:${escapeIcsText(activity.location || "Campus Victoria, UdeSA")}`,
     "STATUS:CONFIRMED",
     "END:VEVENT",
     "END:VCALENDAR",
   ];
 
-  return `data:text/calendar;charset=utf8,${encodeURIComponent(icsLines.join("\r\n"))}`;
+  return `data:text/calendar;charset=utf8,${encodeURIComponent(icsLines.map((line) => foldIcsLine(line)).join("\r\n"))}`;
 }

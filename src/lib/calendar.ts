@@ -160,11 +160,7 @@ export async function getUnifiedCalendarActivities(): Promise<{
     getPastEvents(),
   ]);
 
-  // Excluimos `primer-encuentro` porque en el calendario se representa
-  // a través de `primer-encuentro-air-club` desde talks, con su set completo de fotos y diapositivas.
-  const allEvents = [...upcomingEvents, ...pastEvents].filter(
-    (e) => e.slug !== "primer-encuentro"
-  );
+  const allEvents = [...upcomingEvents, ...pastEvents];
 
   const mappedTalks = talks.map((t) => fromTalk(t, now));
   const mappedEvents = allEvents.map((e) => fromEvent(e, now));

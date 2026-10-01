@@ -124,7 +124,7 @@ export function CalendarTimelineList({ activities, onOpenActivity }: CalendarTim
                         <div className="mb-3 flex flex-wrap items-center gap-y-2 gap-x-4">
                           <CategoryBadge category={act.category} />
                           {isRange && (
-                            <span className="border border-[#8f5261]/40 bg-[#8f5261]/10 px-2 py-0.5 font-mono text-[.66rem] uppercase tracking-[.1em] text-text">
+                            <span className="border border-mauve/40 bg-mauve/10 px-2 py-0.5 font-mono text-[.66rem] uppercase tracking-[.1em] text-text">
                               Multi-día
                             </span>
                           )}

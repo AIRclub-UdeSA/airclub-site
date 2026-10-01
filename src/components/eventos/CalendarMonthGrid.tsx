@@ -121,14 +121,26 @@ function getWeekEventSlots(week: CalendarDayCell[], activities: CalendarActivity
   return slots;
 }
 
+function getBaYearMonth(d: Date): { year: number; month: number } {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(d);
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value) - 1;
+  return { year, month };
+}
+
 export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthGridProps) {
-  // Inicializar en el mes del primer evento futuro (u hoy)
-  const initialDate = activities.find((a) => a.isUpcoming)?.startsAt
+  // Inicializar en el mes del primer evento futuro (u hoy) en hora de Buenos Aires
+  const rawDate = activities.find((a) => a.isUpcoming)?.startsAt
     ? new Date(activities.find((a) => a.isUpcoming)!.startsAt!)
     : new Date();
+  const { year: initYear, month: initMonth } = getBaYearMonth(rawDate);
 
   const [currentDate, setCurrentDate] = useState(
-    new Date(initialDate.getFullYear(), initialDate.getMonth(), 1)
+    new Date(initYear, initMonth, 1)
   );
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
@@ -151,15 +163,14 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
   };
 
   const goToToday = () => {
-    const now = new Date();
-    setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    const { year: nowY, month: nowM } = getBaYearMonth(new Date());
+    setCurrentDate(new Date(nowY, nowM, 1));
     setSelectedDayKey(null);
   };
 
   // Calcular matriz de días para el mes (Lunes = 0, ..., Domingo = 6)
   const firstDayOfWeek = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   // Helper para armar key YYYY-MM-DD
   const formatDayKey = (y: number, m: number, d: number) => {
@@ -168,12 +179,13 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
     return `${y}-${mm}-${dd}`;
   };
 
-  // Días previos de relleno
+  // Días previos de relleno (maneja cambio de año/mes automáticamente)
   const prevDays: CalendarDayCell[] = [];
   for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-    const d = daysInPrevMonth - i;
-    const m = month - 1;
-    const y = month === 0 ? year - 1 : year;
+    const dateObj = new Date(year, month, -i);
+    const y = dateObj.getFullYear();
+    const m = dateObj.getMonth();
+    const d = dateObj.getDate();
     prevDays.push({
       day: d,
       month: m,
@@ -195,19 +207,21 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
     });
   }
 
-  // Días posteriores para completar la última semana
+  // Días posteriores para completar la última semana (maneja cambio de año/mes automáticamente)
   const totalSlots = prevDays.length + currentDays.length;
   const remainingSlots = (7 - (totalSlots % 7)) % 7;
   const nextDays: CalendarDayCell[] = [];
   for (let d = 1; d <= remainingSlots; d++) {
-    const m = month + 1;
-    const y = month === 11 ? year + 1 : year;
+    const dateObj = new Date(year, month + 1, d);
+    const y = dateObj.getFullYear();
+    const m = dateObj.getMonth();
+    const dNum = dateObj.getDate();
     nextDays.push({
-      day: d,
+      day: dNum,
       month: m,
       year: y,
       isCurrentMonth: false,
-      dayKey: formatDayKey(y, m, d),
+      dayKey: formatDayKey(y, m, dNum),
     });
   }
 
@@ -394,10 +408,10 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                             "bg-crimson/15 border-crimson/50 text-crimson-text hover:bg-crimson/25 hover:border-crimson";
                         } else if (act.category === "competition") {
                           themeStyles =
-                            "bg-[#8f5261]/20 border-[#8f5261]/55 text-text hover:bg-[#8f5261]/30 hover:border-[#8f5261]";
+                            "bg-mauve/20 border-mauve/55 text-text hover:bg-mauve/30 hover:border-mauve";
                         } else if (act.category === "workshop") {
                           themeStyles =
-                            "bg-[#ddaabc]/25 border-[#a40c4c]/50 text-text hover:bg-[#ddaabc]/35 hover:border-[#a40c4c]";
+                            "bg-rose/25 border-crimson/50 text-text hover:bg-rose/35 hover:border-crimson";
                         } else {
                           themeStyles =
                             "bg-bg2 border-border text-text2 hover:border-text hover:text-text";

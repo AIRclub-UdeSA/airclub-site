@@ -27,7 +27,7 @@ export function CallForSpeakers() {
       <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-16 sm:px-8 md:px-12 md:py-24 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
         <div className="flex flex-col justify-between gap-10">
           <h2 className="font-logo text-[clamp(3.2rem,7.4vw,7rem)] uppercase leading-[0.92] tracking-tight">
-            ¿Querés dar una <span className="text-[#f0357f]">charla</span>?
+            ¿Querés dar una <span className="text-crimson">charla</span>?
           </h2>
           <div>
             <p className="max-w-[46ch] text-[1.02rem] leading-[1.7] text-[#f5e8ec]/75">

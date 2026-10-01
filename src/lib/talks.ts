@@ -75,6 +75,7 @@ function toTalkItem(row: TalkRow): TalkItem {
           affiliation: row.speakerAffiliation ?? undefined,
           avatar: row.speakerAvatar ?? undefined,
           linkedin: row.speakerLinkedin ?? undefined,
+          bio: row.speakerBio ?? undefined,
         }
       : undefined,
     speakers: row.speakerName
@@ -85,6 +86,7 @@ function toTalkItem(row: TalkRow): TalkItem {
             affiliation: row.speakerAffiliation ?? undefined,
             avatar: row.speakerAvatar ?? undefined,
             linkedin: row.speakerLinkedin ?? undefined,
+            bio: row.speakerBio ?? undefined,
           },
         ]
       : undefined,
@@ -96,7 +98,14 @@ function toTalkItem(row: TalkRow): TalkItem {
     recordingUrl: row.recordingUrl ?? undefined,
     confirmed: row.confirmed,
     media: row.media.map((m) =>
-      m.type === "VIDEO" ? { type: "video" as const, src: m.src, poster: m.poster ?? "" } : { type: "image" as const, src: m.src },
+      m.type === "VIDEO"
+        ? { type: "video" as const, src: m.src, poster: m.poster ?? "" }
+        : {
+            type: "image" as const,
+            src: m.src,
+            lightBg: m.lightBg,
+            objectFit: (m.objectFit as "contain" | "cover" | null) ?? undefined,
+          },
     ),
     slides: row.slides.length ? row.slides.map(({ title, embedUrl, openUrl }) => ({ title, embedUrl, openUrl })) : undefined,
     links: row.links.length ? row.links.map(({ label, url }) => ({ label, url })) : undefined,
@@ -138,7 +147,8 @@ export async function getAllTalks(): Promise<TalkItem[]> {
     return items
       .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)
       .map(({ item }) => item);
-  } catch {
+  } catch (err) {
+    console.error("[talks] Falló la consulta a base de datos, usando fallback al seed:", err);
     const items = seedTalks.map((talk, idx) => ({ item: fromSeed(talk), order: idx }));
     return items
       .sort((a, b) => time(a.item) - time(b.item) || a.order - b.order)

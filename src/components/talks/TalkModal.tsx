@@ -128,6 +128,7 @@ export function TalkModal({
   ];
 
   const date = talkDateParts(talk.startsAt, talk.endsAt);
+  const icsDataUri = buildIcsDataUri(talk);
 
   const dateOverlay = date && (
     <div className="flex items-end gap-4">
@@ -185,9 +186,9 @@ export function TalkModal({
               <div
                 className={cn(
                   "relative aspect-[16/9] w-full overflow-hidden sm:aspect-[3/1]",
-                  talk.category === "workshop" && "bg-[#25101a] text-white",
-                  talk.category === "competition" && "bg-[#18111e] text-white",
-                  talk.category === "meetup" && "bg-[#140a0e] text-white",
+                  talk.category === "workshop" && "bg-[#740936] text-white",
+                  talk.category === "competition" && "bg-[#5d072b] text-white",
+                  talk.category === "meetup" && "bg-[#bc0e57] text-white",
                   (!talk.category || talk.category === "talk") && (upcoming && talk.confirmed ? "bg-crimson text-white" : "bg-[#140a0e] text-white"),
                 )}
               >
@@ -365,9 +366,9 @@ export function TalkModal({
                           Google Calendar
                           <ArrowUpRight size={12} className="text-text3" />
                         </a>
-                        {buildIcsDataUri(talk) && (
+                        {icsDataUri && (
                           <a
-                            href={buildIcsDataUri(talk)}
+                            href={icsDataUri}
                             download={`${talk.slug}.ics`}
                             className="inline-flex items-center gap-2 font-mono text-[.76rem] uppercase tracking-[.12em] text-text transition-colors hover:text-crimson-text"
                           >
@@ -399,7 +400,7 @@ export function TalkModal({
                         href={talk.cta.url}
                         target={talk.cta.url.startsWith("http") ? "_blank" : undefined}
                         rel={talk.cta.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                        className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-[#f5e8ec]"
+                        className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
                       >
                         <span>{talk.cta.label}</span>
                         <ArrowUpRight size={15} aria-hidden="true" />
