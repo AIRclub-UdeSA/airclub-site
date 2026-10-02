@@ -1,16 +1,51 @@
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, MapPin } from "lucide-react";
-import { getUpcomingEvents } from "@/lib/events";
-import { formatEventDate } from "@/lib/dates";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { getUnifiedCalendarActivities } from "@/lib/calendar";
+import type { CalendarActivity } from "@/lib/calendar-types";
 import { getContactReason } from "@/lib/contact";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
+import { ActivityPanel, activityActionClass } from "@/components/eventos/ActivityPanel";
 
+const MAX_ACTIVITIES = 3;
+
+/** Lleva a /eventos con el detalle de esa actividad abierto (el mismo que abre el calendario). */
+const detailHref = (a: CalendarActivity) => `/eventos?evento=${encodeURIComponent(a.slug)}`;
+
+function DetailLink({ activity, compact = false }: { activity: CalendarActivity; compact?: boolean }) {
+  if (compact) {
+    return (
+      <Link
+        href={detailHref(activity)}
+        className="group inline-flex items-center gap-1.5 font-mono text-[.76rem] font-semibold uppercase tracking-[.12em] text-crimson-text"
+      >
+        Ver detalles
+        <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+      </Link>
+    );
+  }
+  return (
+    <Link href={detailHref(activity)} className={activityActionClass}>
+      Ver detalles y participar
+      <ArrowRight className="h-3.5 w-3.5" />
+    </Link>
+  );
+}
+
+/**
+ * Las próximas actividades salen de la misma fuente y con el mismo panel que /eventos (`ActivityPanel`), así las dos
+ * páginas son idénticas. Hay como máximo 3 y las cajas cambian de forma según cuántas hay: una sola va a todo el ancho;
+ * con dos o tres, una grande y las demás más chicas apiladas al costado.
+ */
 export async function EventsTeaser() {
-  const [upcoming, talk, workshop] = await Promise.all([
-    getUpcomingEvents({ take: 3 }),
+  const [{ activities }, talk, workshop] = await Promise.all([
+    getUnifiedCalendarActivities(),
     getContactReason("charla"),
     getContactReason("workshop"),
   ]);
+  // Mismo criterio que la "próxima actividad" de /eventos: lo que viene o es hoy, en orden cronológico.
+  const upcoming = activities.filter((a) => a.isUpcoming || a.status === "today").slice(0, MAX_ACTIVITIES);
+  const [first, ...rest] = upcoming;
+
   // Las dos formas de proponer una actividad salen del mismo correo del club, con plantilla para completar.
   const PROPOSALS = [
     { title: "Charla", desc: "Tesis, proyectos en desarrollo o casos de la industria.", href: talk.href },
@@ -19,8 +54,7 @@ export async function EventsTeaser() {
 
   return (
     <>
-    <section id="actividades" className="px-6 sm:px-8 md:px-12 pt-20 sm:pt-32 pb-12 max-w-7xl mx-auto">
-      {/* Encabezado minimalista sin micro-etiquetas ni textos sobrantes */}
+    <section id="actividades" className="px-4 sm:px-8 md:px-12 pt-20 sm:pt-32 pb-12 max-w-[1440px] mx-auto">
       <div className="mb-10 sm:mb-14">
         <RevealOnScroll>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border/80">
@@ -38,221 +72,29 @@ export async function EventsTeaser() {
         </RevealOnScroll>
       </div>
 
-      {/* Formato arquitectónico de eventos */}
-      {upcoming.length === 0 ? (
+      {!first ? (
         <div className="py-12 text-center border border-dashed border-border/80 p-8">
           <p className="font-mono text-[.82rem] uppercase tracking-wider text-text3">
             No hay actividades programadas por el momento.
           </p>
         </div>
-      ) : upcoming.length === 1 ? (
-        /* Caso destacado: Evento principal en panel editorial split */
+      ) : rest.length === 0 ? (
+        /* Una sola: a todo el ancho, igual que el destacado de /eventos */
         <RevealOnScroll>
-          {upcoming.map((event) => {
-            const targetHref = event.externalUrl || `/eventos/${event.slug}`;
-            const isExternal = Boolean(event.externalUrl);
-
-            return (
-              <div
-                key={event.slug}
-                className="group relative border border-border/80 hover:border-crimson/80 bg-card/30 dark:bg-card/15 transition-colors p-8 sm:p-12"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
-                  {/* Lado izquierdo: Fecha monumental y estado */}
-                  <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-border/80 pb-6 lg:pb-0 lg:pr-8">
-                    <div className="mb-4">
-                      <span className="font-display text-[clamp(2.4rem,4.5vw,3.6rem)] font-black text-text leading-none tracking-tight block">
-                        {event.startsAt.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }).toUpperCase()}
-                      </span>
-                      <span className="font-mono text-[.78rem] uppercase tracking-[.18em] text-text3 mt-1.5 block">
-                        {formatEventDate(event.startsAt, event.endsAt)}
-                      </span>
-                    </div>
-
-                    {event.location && (
-                      <div className="flex items-center gap-1.5 font-mono text-[.76rem] uppercase tracking-[.14em] text-text2">
-                        <MapPin className="h-3.5 w-3.5 text-crimson" />
-                        <span>{event.location}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Lado derecho: Título, descripción y botón de acción */}
-                  <div className="lg:col-span-8 flex flex-col justify-center">
-                    {event.tagline && (
-                      <span className="font-mono text-[.78rem] uppercase tracking-[.18em] text-mauve font-semibold mb-2 block">
-                        {event.tagline}
-                      </span>
-                    )}
-
-                    <h3 className="font-display text-[clamp(1.7rem,3.2vw,2.4rem)] font-bold text-text group-hover:text-crimson transition-colors leading-[1.08] tracking-tight uppercase mb-4">
-                      {event.title}
-                    </h3>
-
-                    <p className="font-body text-[1rem] sm:text-[1.08rem] leading-relaxed text-text2 mb-8 max-w-2xl">
-                      {event.description}
-                    </p>
-
-                    <div>
-                      {isExternal ? (
-                        <a
-                          href={targetHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-bg transition-all"
-                        >
-                          <span>Acceder al evento</span>
-                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
-                        </a>
-                      ) : (
-                        <Link
-                          href={targetHref}
-                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-bg transition-all"
-                        >
-                          <span>Acceder al evento</span>
-                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          <ActivityPanel activity={first} variant="wide" label="Próxima Actividad" action={<DetailLink activity={first} />} />
         </RevealOnScroll>
       ) : (
-        /* Caso múltiple: Bento asimétrico (1 principal dominante + secundarios apilados en columna) */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
-          {/* Tarjeta principal / destacada */}
-          {(() => {
-            const primary = upcoming[0];
-            const targetHref = primary.externalUrl || `/eventos/${primary.slug}`;
-            const isExternal = Boolean(primary.externalUrl);
-
-            return (
-              <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
-                <RevealOnScroll className="h-full">
-                  <div className="group h-full border border-border/80 hover:border-crimson/80 bg-card/40 dark:bg-card/20 p-8 sm:p-10 flex flex-col justify-between transition-colors">
-                    <div>
-                      {primary.location && (
-                        <div className="flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.14em] text-text3 mb-4">
-                          <MapPin className="h-3.5 w-3.5 text-crimson" />
-                          <span>{primary.location}</span>
-                        </div>
-                      )}
-
-                      <div className="mb-5">
-                        <span className="font-display text-[clamp(2.2rem,4vw,3.2rem)] font-black text-text leading-none tracking-tight block mb-1.5">
-                          {primary.startsAt.toLocaleDateString("es-AR", { day: "2-digit", month: "short" }).toUpperCase()}
-                        </span>
-                        <span className="font-mono text-[.78rem] uppercase tracking-[.18em] text-text3 block">
-                          {formatEventDate(primary.startsAt, primary.endsAt)}
-                        </span>
-                      </div>
-
-                      {primary.tagline && (
-                        <span className="font-mono text-[.76rem] uppercase tracking-[.16em] text-mauve font-semibold mb-2 block">
-                          {primary.tagline}
-                        </span>
-                      )}
-
-                      <h3 className="font-display text-[clamp(1.6rem,2.8vw,2.2rem)] font-bold text-text group-hover:text-crimson transition-colors leading-[1.1] uppercase mb-4">
-                        {primary.title}
-                      </h3>
-
-                      <p className="font-body text-[1rem] sm:text-[1.05rem] leading-relaxed text-text2 mb-8 max-w-xl">
-                        {primary.description}
-                      </p>
-                    </div>
-
-                    <div className="pt-6 border-t border-border/80">
-                      {isExternal ? (
-                        <a
-                          href={targetHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-bg transition-all"
-                        >
-                          <span>Acceder al evento</span>
-                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
-                        </a>
-                      ) : (
-                        <Link
-                          href={targetHref}
-                          className="group/btn inline-flex items-center gap-2.5 rounded-full border-[1.5px] border-text px-7 py-3 font-mono text-[.82rem] uppercase tracking-[.12em] font-semibold text-text hover:bg-text hover:text-bg transition-all"
-                        >
-                          <span>Acceder al evento</span>
-                          <ArrowUpRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 text-crimson" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </RevealOnScroll>
-              </div>
-            );
-          })()}
-
-          {/* Tarjetas secundarias apiladas en columna lateral */}
-          <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
-            {upcoming.slice(1).map((event, idx) => {
-              const targetHref = event.externalUrl || `/eventos/${event.slug}`;
-              const isExternal = Boolean(event.externalUrl);
-
-              return (
-                <RevealOnScroll key={event.slug} delay={(idx + 1) as 1 | 2 | 3} className="h-full">
-                  <div className="group h-full border border-border/80 hover:border-crimson/80 bg-card/30 dark:bg-card/15 p-6 sm:p-7 flex flex-col justify-between transition-colors">
-                    <div>
-                      {event.location && (
-                        <div className="flex items-center gap-1.5 font-mono text-[.72rem] uppercase tracking-[.14em] text-text3 mb-3">
-                          <MapPin className="h-3 w-3 text-crimson" />
-                          <span>{event.location}</span>
-                        </div>
-                      )}
-
-                      {event.tagline && (
-                        <span className="font-mono text-[.72rem] uppercase tracking-[.16em] text-mauve font-semibold mb-1 block">
-                          {event.tagline}
-                        </span>
-                      )}
-
-                      <h3 className="font-display text-[1.25rem] font-bold text-text group-hover:text-crimson transition-colors leading-snug uppercase mb-2">
-                        {event.title}
-                      </h3>
-
-                      <p className="font-body text-[.88rem] leading-relaxed text-text2 line-clamp-3 mb-4">
-                        {event.description}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-border/80 flex items-center justify-between">
-                      <span className="font-mono text-[.72rem] uppercase tracking-wider text-text3">
-                        {formatEventDate(event.startsAt, event.endsAt)}
-                      </span>
-
-                      {isExternal ? (
-                        <a
-                          href={targetHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/80 group-hover:border-crimson group-hover:bg-crimson group-hover:text-white transition-all text-text"
-                          aria-label={`Ver evento: ${event.title}`}
-                        >
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </a>
-                      ) : (
-                        <Link
-                          href={targetHref}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/80 group-hover:border-crimson group-hover:bg-crimson group-hover:text-white transition-all text-text"
-                          aria-label={`Ver evento: ${event.title}`}
-                        >
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </RevealOnScroll>
-              );
-            })}
+        /* Dos o tres: una grande (7 columnas) y las demás, más chicas y apiladas (5 columnas) */
+        <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12">
+          <RevealOnScroll className="h-full lg:col-span-7">
+            <ActivityPanel activity={first} variant="tall" label="Próxima Actividad" action={<DetailLink activity={first} />} />
+          </RevealOnScroll>
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            {rest.map((activity, idx) => (
+              <RevealOnScroll key={activity.id} delay={(idx + 1) as 1 | 2} className="flex-1">
+                <ActivityPanel activity={activity} variant="compact" action={<DetailLink activity={activity} compact />} />
+              </RevealOnScroll>
+            ))}
           </div>
         </div>
       )}
