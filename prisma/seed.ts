@@ -14,16 +14,32 @@ function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: numbe
     type: m.type === "image" ? ("IMAGE" as const) : ("VIDEO" as const),
     src: m.src,
     poster: m.type === "video" ? m.poster : undefined,
+    lightBg: m.type === "image" ? Boolean(m.lightBg) : false,
+    objectFit: m.type === "image" ? (m.objectFit ?? null) : null,
     order,
   };
 }
 
 async function main() {
   for (const event of events) {
+    const eventData = {
+      slug: event.slug,
+      title: event.title,
+      tagline: event.tagline,
+      description: event.description,
+      location: event.location,
+      startsAt: event.startsAt,
+      endsAt: event.endsAt,
+      externalUrl: event.externalUrl,
+      rsvpEnabled: event.rsvpEnabled,
+      capacity: event.capacity,
+      featuredForCountdown: event.featuredForCountdown,
+      imageUrl: event.imageUrl,
+    };
     await prisma.event.upsert({
       where: { slug: event.slug },
-      create: event,
-      update: event,
+      create: eventData,
+      update: eventData,
     });
   }
 
@@ -78,6 +94,7 @@ async function main() {
       speakerAffiliation: speaker?.affiliation,
       speakerAvatar: speaker?.avatar,
       speakerLinkedin: speaker?.linkedin,
+      speakerBio: speaker?.bio,
       ctaLabel: cta?.label,
       ctaUrl: cta?.url,
       order: i,

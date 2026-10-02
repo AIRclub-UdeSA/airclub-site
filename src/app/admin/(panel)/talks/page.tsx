@@ -29,6 +29,7 @@ export default async function AdminTalksPage() {
     speakerAffiliation: talk.speakerAffiliation,
     speakerAvatar: talk.speakerAvatar,
     speakerLinkedin: talk.speakerLinkedin,
+    speakerBio: talk.speakerBio,
     startsAt: talk.startsAt,
     endsAt: talk.endsAt,
     dateLabel: talk.dateLabel,
@@ -37,7 +38,13 @@ export default async function AdminTalksPage() {
     ctaUrl: talk.ctaUrl,
     confirmed: talk.confirmed,
     status: talk.status,
-    media: talk.media.map((m) => ({ type: m.type, src: m.src, poster: m.poster ?? "" })),
+    media: talk.media.map((m) => ({
+      type: m.type,
+      src: m.src,
+      poster: m.poster ?? "",
+      lightBg: m.lightBg,
+      objectFit: (m.objectFit as "contain" | "cover" | null) ?? undefined,
+    })),
     slides: talk.slides.map((s) => ({ title: s.title, embedUrl: s.embedUrl, openUrl: s.openUrl })),
     links: talk.links.map((l) => ({ label: l.label, url: l.url })),
   }));

@@ -12,10 +12,9 @@ export const metadata: Metadata = buildMetadata({
   path: "/talks",
 });
 
-// Se renderiza en cada request (no estática): el contenido sale de la base y puede cambiar en
-// cualquier momento, y ademas next build no tiene acceso a una base real (usa credenciales
-// dummy en CI para no exponer secretos).
-export const dynamic = "force-dynamic";
+// ISR: se pre-renderiza como página estática para navegación instantánea y se revalida
+// cada 60s en segundo plano, o al instante ante cambios desde /admin vía revalidatePath("/talks").
+export const revalidate = 60;
 
 export default async function TalksPage() {
   const { talks, nextSlug, latestPastSlug } = await getTalksTimeline();

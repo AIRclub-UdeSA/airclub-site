@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import type { TalkMedia } from "@/lib/talks";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
+import { cn } from "@/lib/utils";
 
 const IMAGE_SECONDS = 5;
 
@@ -29,6 +30,7 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const count = media.length;
   const active = media[index];
   const isVideo = active.type === "video";
+  const isLight = active.type === "image" && Boolean(active.lightBg);
   const goTo = (i: number) => {
     setVideoProgress(0);
     setIndex(i);
@@ -36,7 +38,11 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const goNext = () => goTo((index + 1) % count);
 
   return (
-    <div className="relative aspect-[16/9] w-full overflow-hidden bg-black text-white sm:aspect-[2/1]"
+    <div
+      className={cn(
+        "relative aspect-[16/9] w-full overflow-hidden sm:aspect-[2/1]",
+        isLight ? "bg-white text-text border-b border-border" : "bg-black text-white",
+      )}
     >
       {active.type === "image" ? (
         <Image
@@ -45,7 +51,11 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
           alt={`${title}, foto ${index + 1} de ${count}`}
           fill
           sizes="(min-width: 1024px) 992px, 100vw"
-          className="object-cover"
+          className={cn(
+            active.objectFit === "contain"
+              ? "object-contain p-3 sm:p-5"
+              : "object-cover",
+          )}
         />
       ) : (
         <video
@@ -69,8 +79,12 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         />
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
+      {!isLight && (
+        <>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
+        </>
+      )}
 
       {count > 1 && !(isVideo && reducedMotion) && (
         <button
@@ -137,7 +151,7 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         </button>
       )}
 
-      {overlay && <div className="pointer-events-none absolute bottom-5 left-5 z-[5] sm:bottom-7 sm:left-8">{overlay}</div>}
+      {overlay && !isLight && <div className="pointer-events-none absolute bottom-5 left-5 z-[5] sm:bottom-7 sm:left-8">{overlay}</div>}
     </div>
   );
 }

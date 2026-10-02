@@ -33,6 +33,7 @@ export type EditingTalk = {
   speakerAffiliation: string | null;
   speakerAvatar: string | null;
   speakerLinkedin: string | null;
+  speakerBio: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
   dateLabel: string | null;
@@ -316,6 +317,16 @@ export function TalkForm({
             LinkedIn
             <input type="url" name="speakerLinkedin" defaultValue={values?.speakerLinkedin ?? ""} className={inputClass} />
           </label>
+          <label className="flex w-full flex-col gap-1 text-sm text-text2">
+            Bio del orador
+            <textarea
+              name="speakerBio"
+              rows={3}
+              defaultValue={values?.speakerBio ?? ""}
+              placeholder="Trayectoria o resumen biográfico del orador..."
+              className={inputClass}
+            />
+          </label>
         </div>
         <p className="text-xs text-text3">
           Rol = el cargo/título de la persona (se ve en rojo debajo del nombre). Afiliación = a qué institución/laboratorio/empresa
@@ -374,6 +385,29 @@ export function TalkForm({
                 pickFile={pickFile}
                 fileName={fileName}
               />
+              {item.type === "IMAGE" && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-text2">
+                  <label className="flex cursor-pointer items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(item.lightBg)}
+                      onChange={(e) => update({ lightBg: e.target.checked })}
+                    />
+                    Fondo claro
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    Ajuste:
+                    <select
+                      value={item.objectFit ?? "cover"}
+                      onChange={(e) => update({ objectFit: e.target.value as "contain" | "cover" })}
+                      className="rounded border border-border bg-card px-1.5 py-0.5 text-xs text-text"
+                    >
+                      <option value="cover">Cubrir (recorta)</option>
+                      <option value="contain">Contener (completo)</option>
+                    </select>
+                  </label>
+                </div>
+              )}
               {item.type === "VIDEO" && (
                 <FileField
                   kind="image"

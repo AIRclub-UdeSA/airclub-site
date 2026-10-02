@@ -69,6 +69,7 @@ const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
   speakerAffiliation: null,
   speakerAvatar: null,
   speakerLinkedin: null,
+  speakerBio: null,
   startsAt: null,
   endsAt: null,
   dateLabel: "",

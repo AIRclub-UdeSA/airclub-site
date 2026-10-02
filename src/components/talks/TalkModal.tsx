@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, ArrowUpRight, ExternalLink, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Download, ExternalLink, X } from "lucide-react";
 import { LinkedinIcon } from "@/components/equipo/SocialIcons";
 import type { TimelineTalk } from "./TalksTimeline";
 import { TalkSlideshow } from "./TalkSlideshow";
-import { talkCover, talkDateParts, talkDateText } from "@/lib/talk-format";
+import { talkDateParts, talkDateText } from "@/lib/talk-format";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
+import { buildGoogleCalendarUrl, buildIcsDataUri } from "@/lib/calendar-types";
 import { cn } from "@/lib/utils";
 
 export type TalkSection = "overview" | "slides" | "recording";
@@ -126,8 +127,8 @@ export function TalkModal({
     ...(hasRecording ? [{ id: "recording" as const, label: "Video" }] : []),
   ];
 
-  const cover = talkCover(talk.media);
   const date = talkDateParts(talk.startsAt, talk.endsAt);
+  const icsDataUri = buildIcsDataUri(talk);
 
   const dateOverlay = date && (
     <div className="flex items-end gap-4">
@@ -158,13 +159,19 @@ export function TalkModal({
       <div className="talk-modal-panel relative flex max-h-[calc(100dvh-2rem)] w-[min(calc(100%-2rem),62rem)] flex-col overflow-hidden border border-border-strong/30 bg-bg max-sm:h-dvh max-sm:max-h-none max-sm:w-full max-sm:border-0">
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-5 py-3 sm:px-8">
           <p className={LABEL}>
-            AIR Talks
+            {talk.category === "workshop"
+              ? "AIR Workshop"
+              : talk.category === "competition"
+              ? "Competencia Robótica"
+              : talk.category === "meetup"
+              ? "Encuentro AIR"
+              : "AIR Talks"}
             <span className="ml-3 text-text">{talk.subtitle}</span>
           </p>
           <button
             type="button"
             onClick={requestClose}
-            aria-label="Cerrar detalle de la charla"
+            aria-label="Cerrar detalle de la actividad"
             className="flex size-11 cursor-pointer items-center justify-center border border-border-strong/30 text-text transition-colors hover:border-text hover:bg-bg2"
           >
             <X size={18} aria-hidden="true" />
@@ -173,18 +180,19 @@ export function TalkModal({
 
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {section === "overview" &&
-            (!upcoming && hasPhotos ? (
+            (hasPhotos ? (
               <TalkSlideshow key={talk.slug} media={talk.media} title={talk.title} overlay={dateOverlay} />
             ) : (
               <div
                 className={cn(
                   "relative aspect-[16/9] w-full overflow-hidden sm:aspect-[3/1]",
-                  !upcoming && cover && "bg-[#140a0e] text-white",
-                  !upcoming && !cover && "bg-bg2 text-text",
-                  upcoming && talk.confirmed && "bg-crimson text-white",
-                  upcoming && !talk.confirmed && "talk-hatch bg-card text-text",
+                  talk.category === "workshop" && "bg-[#740936] text-white",
+                  talk.category === "competition" && "bg-[#5d072b] text-white",
+                  talk.category === "meetup" && "bg-[#bc0e57] text-white",
+                  (!talk.category || talk.category === "talk") && (upcoming && talk.confirmed ? "bg-crimson text-white" : "bg-[#140a0e] text-white"),
                 )}
               >
+                <div className="absolute inset-0 opacity-15 [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:24px_24px]" />
                 <div className="absolute bottom-5 left-5 sm:bottom-7 sm:left-8">{dateOverlay}</div>
               </div>
             ))}
@@ -230,7 +238,7 @@ export function TalkModal({
               </nav>
             )}
 
-            {/* RESUMEN: datos y orador a la izquierda, texto a la derecha */}
+            {/* RESUMEN: datos y oradores a la izquierda, texto a la derecha */}
             {section === "overview" && (
               <div className="mt-8 grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-14">
                 <div className="space-y-8">
@@ -253,51 +261,146 @@ export function TalkModal({
                     )}
                   </dl>
 
-                  {talk.speaker ? (
-                    <div className="border-t border-border pt-7">
-                      {talk.speaker.avatar ? (
-                        <span className="relative block size-16 overflow-hidden rounded-full">
-                          <Image src={talk.speaker.avatar} alt="" fill sizes="64px" className="object-cover" />
-                        </span>
-                      ) : (
-                        <span className="flex size-16 items-center justify-center rounded-full bg-bg2 font-mono text-lg font-bold text-text3">
-                          {talk.speaker.name.slice(0, 2).toUpperCase()}
-                        </span>
-                      )}
-                      <p className="mt-4 font-display text-[1.2rem] font-bold leading-tight">{talk.speaker.name}</p>
-                      <p className="mt-1 text-[.95rem] text-text2">{talk.speaker.role}</p>
-                      {talk.speaker.affiliation && (
-                        <p className="mt-0.5 text-[.88rem] text-text3">{talk.speaker.affiliation}</p>
-                      )}
-                      {talk.speaker.linkedin && (
+                  {/* Oradores o Equipo a cargo */}
+                  {(() => {
+                    const allSpeakers = talk.speakers?.length
+                      ? talk.speakers
+                      : talk.speaker
+                      ? [talk.speaker]
+                      : [];
+
+                    if (allSpeakers.length > 0) {
+                      return (
+                        <div className="border-t border-border pt-7 space-y-6">
+                          <p className={LABEL}>
+                            {allSpeakers.length > 1
+                              ? "Oradores / Equipo a cargo"
+                              : talk.category === "workshop"
+                              ? "Instructor a cargo"
+                              : talk.category === "competition"
+                              ? "Coordinación"
+                              : "Orador"}
+                          </p>
+                          {allSpeakers.map((spk, idx) => (
+                            <div key={spk.name + idx} className="flex items-start gap-4">
+                              {spk.avatar ? (
+                                <span className="relative block size-14 shrink-0 overflow-hidden rounded-full border border-border">
+                                  <Image src={spk.avatar} alt="" fill sizes="56px" className="object-cover" />
+                                </span>
+                              ) : (
+                                <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-bg2 font-mono text-base font-bold text-text3 border border-border">
+                                  {spk.name.slice(0, 2).toUpperCase()}
+                                </span>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="font-display text-[1.12rem] font-bold leading-tight">{spk.name}</p>
+                                <p className="mt-0.5 text-[.9rem] text-text2">{spk.role}</p>
+                                {spk.affiliation && (
+                                  <p className="mt-0.5 text-[.82rem] text-text3">{spk.affiliation}</p>
+                                )}
+                                {spk.bio && (
+                                  <p className="mt-2 text-[.88rem] leading-relaxed text-text2 font-normal">{spk.bio}</p>
+                                )}
+                                {spk.linkedin && (
+                                  <a
+                                    href={spk.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={cn(TEXT_LINK, "mt-2 text-text2 decoration-text/25 hover:text-crimson-text")}
+                                  >
+                                    <LinkedinIcon className="size-3.5" />
+                                    LinkedIn
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    if (upcoming) {
+                      return (
+                        <p className="border-t border-border pt-7 text-[.95rem] italic text-text3">
+                          Orador o equipo a cargo por confirmar en breve.
+                        </p>
+                      );
+                    }
+
+                    return null;
+                  })()}
+
+                  {/* Condiciones, Cupos y Requisitos */}
+                  {(talk.capacity || talk.prerequisites) && (
+                    <div className="border-t border-border pt-6">
+                      <p className={LABEL}>Condiciones y Cupos</p>
+                      <dl className="mt-3 grid grid-cols-[4.5rem_1fr] gap-x-4 gap-y-2.5 text-[.98rem]">
+                        {talk.capacity && (
+                          <>
+                            <dt className={cn(LABEL, "pt-0.5")}>Cupos</dt>
+                            <dd className="font-medium">{talk.capacity} personas</dd>
+                          </>
+                        )}
+                        {talk.prerequisites && (
+                          <>
+                            <dt className={cn(LABEL, "pt-0.5")}>Requisitos</dt>
+                            <dd className="text-[.92rem] leading-snug text-text2">{talk.prerequisites}</dd>
+                          </>
+                        )}
+                      </dl>
+                    </div>
+                  )}
+
+                  {/* Enlaces de Calendario */}
+                  {talk.startsAt && (
+                    <div className="border-t border-border pt-6">
+                      <p className={LABEL}>Guardar en agenda</p>
+                      <div className="mt-3 flex flex-col gap-2.5">
                         <a
-                          href={talk.speaker.linkedin}
+                          href={buildGoogleCalendarUrl(talk)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={cn(TEXT_LINK, "mt-3 text-text2 decoration-text/25 hover:text-crimson-text")}
+                          className="inline-flex items-center gap-2 font-mono text-[.76rem] uppercase tracking-[.12em] text-text transition-colors hover:text-crimson-text"
                         >
-                          <LinkedinIcon className="size-3.5" />
-                          LinkedIn
+                          <Calendar className="size-3.5 text-mauve" />
+                          Google Calendar
+                          <ArrowUpRight size={12} className="text-text3" />
                         </a>
-                      )}
+                        {icsDataUri && (
+                          <a
+                            href={icsDataUri}
+                            download={`${talk.slug}.ics`}
+                            className="inline-flex items-center gap-2 font-mono text-[.76rem] uppercase tracking-[.12em] text-text transition-colors hover:text-crimson-text"
+                          >
+                            <Download className="size-3.5 text-mauve" />
+                            Apple / Outlook (.ics)
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  ) : upcoming ? (
-                    <p className="border-t border-border pt-7 text-[.95rem] italic text-text3">
-                      Orador o equipo de investigación por confirmar en breve.
-                    </p>
-                  ) : null}
+                  )}
                 </div>
 
                 <div className="space-y-8">
                   {upcoming && talk.cta && (
                     <div className="bg-crimson p-6 text-white">
-                      <p className="font-display text-[1.15rem] font-bold">Confirmación de asistencia</p>
+                      <p className="font-display text-[1.15rem] font-bold">
+                        {talk.category === "workshop"
+                          ? "Inscripción al Taller"
+                          : talk.category === "competition"
+                          ? "Registro de Equipos"
+                          : "Confirmación de asistencia"}
+                      </p>
                       <p className="mt-1.5 text-[.95rem] leading-relaxed text-white/85">
-                        Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación.
+                        {talk.capacity
+                          ? `Capacidad limitada a ${talk.capacity} lugares. Confirmá tu asistencia con anticipación.`
+                          : "Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación."}
                       </p>
                       <a
                         href={talk.cta.url}
-                        className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-[#f5e8ec]"
+                        target={talk.cta.url.startsWith("http") ? "_blank" : undefined}
+                        rel={talk.cta.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
                       >
                         <span>{talk.cta.label}</span>
                         <ArrowUpRight size={15} aria-hidden="true" />

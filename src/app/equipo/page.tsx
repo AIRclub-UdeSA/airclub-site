@@ -14,10 +14,9 @@ export const metadata: Metadata = buildMetadata({
   path: "/equipo",
 });
 
-// Se renderiza en cada request (no estática): el contenido sale de la base y puede cambiar en
-// cualquier momento, y ademas next build no tiene acceso a una base real (usa credenciales
-// dummy en CI para no exponer secretos).
-export const dynamic = "force-dynamic";
+// ISR: se pre-renderiza como página estática para navegación instantánea y se revalida
+// cada 60s en segundo plano ante actualizaciones del equipo.
+export const revalidate = 60;
 
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-4 lg:gap-x-4";
 
