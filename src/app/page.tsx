@@ -8,6 +8,12 @@ import { EventsTeaser } from "@/components/home/EventsTeaser";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
+// ISR, igual que /eventos y /talks: la landing se pre-renderiza como página estática y se revalida cada 60s.
+// Sin esto quedaba fija al último deploy, y como "Próximas actividades" se decide al renderizar, una talk que ya
+// pasó seguía apareciendo como próxima hasta el siguiente merge. Los cambios desde /admin/talks la revalidan al
+// instante con revalidatePath("/").
+export const revalidate = 60;
+
 export default async function HomePage() {
   const featuredEvent = await getFeaturedCountdownEvent();
 
