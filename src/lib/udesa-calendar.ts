@@ -46,3 +46,49 @@ const holidaysByDay = new Map(UDESA_HOLIDAYS.map((h) => [h.date, h]));
 export function getUdesaHoliday(dayKey: string): UdesaHoliday | undefined {
   return holidaysByDay.get(dayKey);
 }
+
+// Fechas académicas: un tramo de varios días (parciales, finales...) o un hito de un solo día
+// (inicio de semestre, plazos). `end` es inclusivo; en los hitos coincide con `start`.
+export interface UdesaAcademicDate {
+  start: string;
+  end: string;
+  label: string;
+}
+
+export const UDESA_ACADEMIC_DATES: UdesaAcademicDate[] = [
+  // 2026
+  { start: "2026-02-27", end: "2026-02-27", label: "Acto de apertura" },
+  { start: "2026-03-02", end: "2026-03-02", label: "Inicio de semestre" },
+  { start: "2026-03-20", end: "2026-03-20", label: "Cierre altas/bajas" },
+  { start: "2026-04-24", end: "2026-04-24", label: "Último día de baja" },
+  { start: "2026-04-25", end: "2026-05-09", label: "Parciales" },
+  { start: "2026-06-27", end: "2026-07-11", label: "Finales" },
+  { start: "2026-07-13", end: "2026-07-18", label: "Recuperatorios" },
+  { start: "2026-07-20", end: "2026-08-01", label: "Vacaciones" },
+  { start: "2026-08-03", end: "2026-08-03", label: "Inicio de semestre" },
+  { start: "2026-08-21", end: "2026-08-21", label: "Cierre altas/bajas" },
+  { start: "2026-09-25", end: "2026-09-25", label: "Último día de baja" },
+  { start: "2026-09-26", end: "2026-10-10", label: "Parciales" },
+  { start: "2026-11-28", end: "2026-12-12", label: "Finales" },
+  { start: "2026-12-14", end: "2026-12-19", label: "Recuperatorios" },
+  // 2027
+  { start: "2027-02-26", end: "2027-02-26", label: "Acto de apertura" },
+  { start: "2027-03-01", end: "2027-03-01", label: "Inicio de semestre" },
+  { start: "2027-03-19", end: "2027-03-19", label: "Cierre altas/bajas" },
+  { start: "2027-04-23", end: "2027-04-23", label: "Último día de baja" },
+  { start: "2027-04-24", end: "2027-05-08", label: "Parciales" },
+  { start: "2027-06-26", end: "2027-07-10", label: "Finales" },
+  { start: "2027-07-12", end: "2027-07-17", label: "Recuperatorios" },
+  { start: "2027-07-19", end: "2027-07-31", label: "Vacaciones" },
+  { start: "2027-08-02", end: "2027-08-02", label: "Inicio de semestre" },
+  { start: "2027-08-20", end: "2027-08-20", label: "Cierre altas/bajas" },
+  { start: "2027-09-24", end: "2027-09-24", label: "Último día de baja" },
+  { start: "2027-09-25", end: "2027-10-09", label: "Parciales" },
+  { start: "2027-11-27", end: "2027-12-11", label: "Finales" },
+  { start: "2027-12-13", end: "2027-12-18", label: "Recuperatorios" },
+];
+
+// Las claves YYYY-MM-DD se comparan bien como texto.
+export function getUdesaAcademicDate(dayKey: string): UdesaAcademicDate | undefined {
+  return UDESA_ACADEMIC_DATES.find((d) => d.start <= dayKey && dayKey <= d.end);
+}
