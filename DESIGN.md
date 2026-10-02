@@ -260,3 +260,40 @@ La página es un enrutador: elegís el motivo y te lleva al canal. **El fondo no
 * Una grilla de una sola columna sin `grid-cols-1` toma el ancho mínimo de su contenido: a 320px la URL/asunto en mono ensanchaba todo el viewport. Usar `grid-cols-1` (que es `minmax(0,1fr)`) y `[overflow-wrap:anywhere]` en el texto largo.
 * Los colores de tinta y papel son fijos, no tokens de tema: los tokens cambian en oscuro (por ejemplo `--mauve` se aclara) y le quitarían contraste al texto blanco del panel malva.
 * Al sacar capturas de página completa, esperar a `document.fonts.ready`: si no, una palabra en Anton puede salir en la fuente de reemplazo y verse más chica de lo real.
+
+---
+
+## 11. Landing (`/`): decisiones, rechazos y mapa
+
+Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto` (secciones 8 a 10). `rounded-card` queda descartado también acá ("vibecoded 101").
+
+### Idea rectora
+La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, sin sombras y con botones píldora. **El fondo no cambia** (lienzo, alternando con `bg-bg2`): el color va en lo de arriba. Las únicas bandas oscuras son las que ya lo eran por contenido: el carrusel y la banda de cuenta regresiva.
+
+### Estructura y archivos
+1. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne, con "Competir." en carmesí.
+2. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. El piso del `clamp` del título es `1.2rem`: la palabra más larga ("COMPETENCIAS", 13,8 em) tiene que caber en 320px.
+3. `IdeaCallout.tsx`: "Tengo una idea" como banda recta, frase en Anton con interlineado `1.04`.
+4. `CountdownStrip.tsx`: banda oscura de marca; números en Anton dentro de celdas rectas de 1px; los segundos en carmesí macizo, sin punto que pulsa.
+5. `RosmasterTrack.tsx`: CAD 3D del Rosmaster sobre grilla rosa. Es el único artefacto cinético de la landing (ver sección 4).
+6. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` (`src/components/eventos/ActivityPanel.tsx`) y los mismos datos (`getUnifiedCalendarActivities`), máximo 3. Las cajas cambian de forma según cuántas hay: una sola a todo el ancho; con dos o tres, una grande (7 columnas) y las demás chicas (5 columnas). Debajo, la banda de convocatoria.
+7. `ArmHero.tsx`: el brazo robótico del hero. **No se tocó** en esta pasada; tendrá una pasada propia (su animación "le falta poder").
+
+### Lo que el dueño aprobó (conservar)
+* El carrusel con su luz ambiental ("tono metálico con luz") y en Syne; si algún día se cambia, se pasa **solo** a Anton y no se mezclan.
+* La banda de convocatoria en el oscuro de marca `#0e0407` con rosa `#f0357f`, igual que la cuenta regresiva y `/talks`.
+* La banda del Rosmaster como está (decorativa, sin leyenda ni foto).
+* Cuenta regresiva en Anton, celdas de 1px, segundos en carmesí macizo.
+
+### Rechazado (no reintroducir)
+* **Orbes de luz y el shader de fondo** (`ShaderGradientBg`, eliminado), salvo la luz ambiental del carrusel, que se conserva.
+* **Bandas de color de fondo** y `rounded-card` en la landing.
+* **Anton en el carrusel**: probado lado a lado con Syne y se prefirió Syne por ahora.
+* Los vinos fuera de paleta en la banda de convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
+* Los stickers de `public/stickers` en la landing: varios (robot verde, átomo azul y violeta, píxel art) no están en la paleta.
+
+### Trampas conocidas
+* **Syne en mayúscula es muy ancha**: una palabra larga corta el título o ensancha toda la página en mobile. Medir `scrollWidth - innerWidth` de 320 a 1920px y el ancho de cada palabra del carrusel, no solo la primera.
+* **Acentos con interlineado apretado**: en Anton con `leading-[0.92]` el acento de la É de "SÉ" pisaba la A de "UNA" de la línea de arriba. Usar `1.04` en frases con tildes.
+* **Títulos de `ActivityPanel` con palabras largas** ("DESBLOQUEANDO"): sin permitir el corte de palabra ensanchaban la página en mobile.
+* En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El robot de `RosmasterTrack` cruza la pista en bucle, también con `reducedMotion: "reduce"` (la animación no lo respeta): una captura lo agarra en cualquier punto, a veces cortado en el borde. No es un error de encuadre.

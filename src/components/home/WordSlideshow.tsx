@@ -255,13 +255,13 @@ export function WordSlideshow() {
                       rel="noopener noreferrer"
                       className="inline-block group"
                     >
-                      <h3 className="font-display font-black text-[clamp(2.2rem,6vw,5.2rem)] tracking-tight uppercase leading-[0.92] text-white group-hover:opacity-85 transition-opacity text-left">
+                      <h3 className="font-display font-black text-[clamp(1.2rem,6vw,5.2rem)] tracking-tight uppercase leading-[0.92] text-white group-hover:opacity-85 transition-opacity text-left">
                         {slide.title}
                       </h3>
                     </a>
                   ) : (
                     <Link href={slide.href} className="inline-block group">
-                      <h3 className="font-display font-black text-[clamp(2.2rem,6vw,5.2rem)] tracking-tight uppercase leading-[0.92] text-white group-hover:opacity-85 transition-opacity text-left">
+                      <h3 className="font-display font-black text-[clamp(1.2rem,6vw,5.2rem)] tracking-tight uppercase leading-[0.92] text-white group-hover:opacity-85 transition-opacity text-left">
                         {slide.title}
                       </h3>
                     </Link>

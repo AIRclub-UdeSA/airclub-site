@@ -212,6 +212,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   revalidatePath("/eventos");
+  revalidatePath("/"); // la landing también lista las próximas talks
   return { error: null };
 }
 
@@ -271,6 +272,7 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   revalidatePath("/eventos");
+  revalidatePath("/"); // la landing también lista las próximas talks
   return { error: null };
 }
 
@@ -297,6 +299,7 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   revalidatePath("/eventos");
+  revalidatePath("/"); // la landing también lista las próximas talks
   return { error: null };
 }
 
@@ -396,5 +399,6 @@ export async function toggleConfirmed(_prevState: ActionState, formData: FormDat
   revalidatePath("/admin/talks");
   revalidatePath("/talks");
   revalidatePath("/eventos");
+  revalidatePath("/"); // la landing también lista las próximas talks
   return { error: null };
 }
