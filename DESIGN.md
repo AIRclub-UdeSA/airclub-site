@@ -86,6 +86,7 @@ Sintetizamos tres perspectivas de animación:
 
 ### Reglas de Movimiento:
 * **NO usar `hover:scale-105`**: Es el principal cliché de interfaz generada por IA. Para indicar interacción, usar el `border-trail-hover`, cambio de color en el borde o un ligero desplazamiento en Y (`-translate-y-1`).
+  * *Excepción aceptada:* la barra de eventos multi-día del calendario de `/eventos` (`CalendarMonthGrid.tsx`) usa `hover:scale-[1.015]` junto con `-translate-y-0.5`. Es un escalado mínimo que ayuda a leer la barra como un solo bloque continuo; se mantiene a propósito y respeta `motion-reduce`.
 * **NO usar Stagger-Spam**: Prohibido encadenar retrasos artificiales de 0.1s en cascada infinita que hagan esperar al usuario 2 segundos para ver el contenido.
 * **Física de entrada limpia**: Entradas con fade rápido y desplazamiento corto (`translate-y-4` a `translate-y-0`), nunca desde escalas `scale(0)` o con rebotes elásticos absurdos.
 

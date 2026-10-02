@@ -208,9 +208,6 @@ function NextPanel({
           <h2 className="font-display text-[clamp(1.6rem,2.6vw,2.3rem)] font-bold leading-[1.1] tracking-tight">
             {talk.title}
           </h2>
-          <p className="mt-3 line-clamp-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-white/85">
-            {talk.abstract}
-          </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
             {talk.cta && (
