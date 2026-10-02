@@ -28,16 +28,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/eventos",
-        destination: "/proximamente?de=eventos",
-        permanent: false,
-      },
-      {
-        source: "/eventos/:slug*",
-        destination: "/proximamente?de=eventos",
-        permanent: false,
-      },
-      {
         source: "/proyectos",
         destination: "/proximamente?de=proyectos",
         permanent: false,
