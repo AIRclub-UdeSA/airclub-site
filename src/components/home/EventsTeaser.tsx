@@ -24,7 +24,7 @@ export async function EventsTeaser() {
       <div className="mb-10 sm:mb-14">
         <RevealOnScroll>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-border/80">
-            <h2 className="font-display text-[clamp(2.4rem,5vw,3.8rem)] font-black leading-[0.95] tracking-tight text-text uppercase">
+            <h2 className="font-display text-[clamp(1.2rem,6vw,3.8rem)] sm:text-[clamp(2.4rem,5vw,3.8rem)] font-black leading-[0.95] tracking-tight text-text uppercase">
               Próximas <span className="text-crimson">actividades</span>
             </h2>
             <Link
@@ -259,13 +259,10 @@ export async function EventsTeaser() {
     </section>
 
     {/* Banda "Proponer actividad": ocupa TODO el ancho de la ventana (fuera del contenedor angosto de la
-        sección), con esquinas rectas y el mismo borde fino y resplandores difusos que el carrusel de la landing
-        (WordSlideshow). Fondo rubí #520b2f y rosa de acento #ff4d8d: los de la diapositiva "AIR TALKS". El
+        sección), con esquinas rectas y el mismo borde fino que el carrusel de la landing (WordSlideshow), sin
+        resplandores. Fondo rubí #520b2f y rosa de acento #ff4d8d: los de la diapositiva "AIR TALKS". El
         contenido se alinea con la grilla del resto de la sección (max-w-7xl + mismos paddings). */}
     <div className="relative w-full overflow-hidden border-y border-white/10 bg-[#520b2f] mb-20 sm:mb-32">
-      <div className="pointer-events-none absolute -right-20 -top-24 h-[420px] w-[420px] rounded-full bg-[#ff4d8d] opacity-30 blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-24 -left-20 h-[380px] w-[380px] rounded-full bg-[#ff2a6d] opacity-20 blur-[120px]" />
-
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:px-8 sm:py-16 md:px-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-6">
           <div className="font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-[#ff4d8d]">

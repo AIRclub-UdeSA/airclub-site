@@ -9,7 +9,7 @@ export function AboutSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-24 items-center w-full">
           {/* Lado izquierdo: Declaración tipográfica monumental posicionada con amplio respiro */}
           <div className="lg:col-span-6 xl:col-span-5 text-left">
-            <h2 className="font-display text-[clamp(2.4rem,4.4vw,4.3rem)] font-black leading-[0.94] tracking-tight text-text uppercase text-left">
+            <h2 className="font-display text-[clamp(1.5rem,7.8vw,4.3rem)] sm:text-[clamp(2.4rem,4.4vw,4.3rem)] font-black leading-[0.94] tracking-tight text-text uppercase text-left">
               Construir.
               <br />
               <span className="text-crimson">Competir.</span>
