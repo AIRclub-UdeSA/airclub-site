@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import type { TalkMedia } from "@/lib/talks";
@@ -17,25 +17,38 @@ interface TalkSlideshowProps {
 }
 
 // Fotos que avanzan solas: los puntos de arriba marcan la actual (más ancha) y se va llenando de carmesí hasta
-// que toca cambiar. Tocar un punto salta a esa foto y tocar la foto pasa a la siguiente. El cursor sobre la foto
-// pausa el avance (sobre los puntos no, para que el temporizador arranque al elegir una). Con "menos movimiento"
-// no hay auto-avance.
+// que toca cambiar. Tocar un punto salta a esa foto y tocar la foto pasa a la siguiente. El avance no se pausa
+// con el cursor encima. Con "menos movimiento" no hay auto-avance.
 export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const [index, setIndex] = useState(0);
   const [muted, setMuted] = useState(true);
-  const [paused, setPaused] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoFillRef = useRef<HTMLSpanElement | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   const count = media.length;
   const active = media[index];
   const isVideo = active.type === "video";
   const isLight = active.type === "image" && Boolean(active.lightBg);
-  const goTo = (i: number) => {
-    setVideoProgress(0);
-    setIndex(i);
-  };
+  const goTo = (i: number) => setIndex(i);
   const goNext = () => goTo((index + 1) % count);
+
+  // El punto de un video se llena leyendo el tiempo en cada frame: `timeupdate` solo dispara unas 4 veces por
+  // segundo y la barra avanzaba a saltos, mientras que la de las fotos es una animación CSS fluida.
+  useEffect(() => {
+    if (!isVideo) return;
+    let frame = 0;
+    const tick = () => {
+      const video = videoRef.current;
+      const fill = videoFillRef.current;
+      if (video && fill && video.duration > 0) {
+        fill.style.transform = `scaleX(${video.currentTime / video.duration})`;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [isVideo, index]);
 
   return (
     <div
@@ -61,6 +74,7 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         <video
           key={active.src}
           ref={(el) => {
+            videoRef.current = el;
             if (el) el.muted = muted;
           }}
           src={active.src}
@@ -70,10 +84,6 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
           controls={reducedMotion}
           loop={count === 1}
           playsInline
-          onTimeUpdate={(e) => {
-            const { currentTime, duration } = e.currentTarget;
-            if (duration > 0) setVideoProgress(currentTime / duration);
-          }}
           onEnded={count > 1 ? goNext : undefined}
           className="h-full w-full object-cover"
         />
@@ -90,8 +100,6 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         <button
           type="button"
           onClick={goNext}
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
           aria-label="Foto siguiente"
           className="absolute inset-0 cursor-pointer"
         />
@@ -120,18 +128,14 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
                     <span
                       key={index}
                       className="talk-dot-fill absolute inset-0 origin-left bg-crimson"
-                      style={
-                        {
-                          "--dur": `${IMAGE_SECONDS}s`,
-                          animationPlayState: paused ? "paused" : "running",
-                        } as React.CSSProperties
-                      }
+                      style={{ "--dur": `${IMAGE_SECONDS}s` } as React.CSSProperties}
                       onAnimationEnd={goNext}
                     />
                   ) : (
                     <span
+                      ref={videoFillRef}
                       className="absolute inset-0 origin-left bg-crimson"
-                      style={{ transform: `scaleX(${videoProgress})` }}
+                      style={{ transform: "scaleX(0)" }}
                     />
                   ))}
               </span>
