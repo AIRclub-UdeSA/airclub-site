@@ -17,13 +17,11 @@ interface TalkSlideshowProps {
 }
 
 // Fotos que avanzan solas: los puntos de arriba marcan la actual (más ancha) y se va llenando de carmesí hasta
-// que toca cambiar. Tocar un punto salta a esa foto y tocar la foto pasa a la siguiente. El cursor sobre la foto
-// pausa el avance (sobre los puntos no, para que el temporizador arranque al elegir una). Con "menos movimiento"
-// no hay auto-avance.
+// que toca cambiar. Tocar un punto salta a esa foto y tocar la foto pasa a la siguiente. El avance no se pausa
+// con el cursor encima. Con "menos movimiento" no hay auto-avance.
 export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const [index, setIndex] = useState(0);
   const [muted, setMuted] = useState(true);
-  const [paused, setPaused] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -90,8 +88,6 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         <button
           type="button"
           onClick={goNext}
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
           aria-label="Foto siguiente"
           className="absolute inset-0 cursor-pointer"
         />
@@ -120,12 +116,7 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
                     <span
                       key={index}
                       className="talk-dot-fill absolute inset-0 origin-left bg-crimson"
-                      style={
-                        {
-                          "--dur": `${IMAGE_SECONDS}s`,
-                          animationPlayState: paused ? "paused" : "running",
-                        } as React.CSSProperties
-                      }
+                      style={{ "--dur": `${IMAGE_SECONDS}s` } as React.CSSProperties}
                       onAnimationEnd={goNext}
                     />
                   ) : (
