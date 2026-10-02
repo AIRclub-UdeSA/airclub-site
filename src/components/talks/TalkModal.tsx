@@ -351,8 +351,8 @@ export function TalkModal({
                     </div>
                   )}
 
-                  {/* Enlaces de Calendario */}
-                  {talk.startsAt && (
+                  {/* Enlaces de Calendario: solo para actividades que todavía no pasaron */}
+                  {upcoming && talk.startsAt && (
                     <div className="border-t border-border pt-6">
                       <p className={LABEL}>Guardar en agenda</p>
                       <div className="mt-3 flex flex-col gap-2.5">

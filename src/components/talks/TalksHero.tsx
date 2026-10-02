@@ -30,7 +30,7 @@ export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk }:
       <div
         className={`relative z-10 grid grid-cols-1 gap-3 bg-bg ${
           both ? "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]" : ""
-        } lg:h-[clamp(540px,calc(100dvh-19.5rem),720px)]`}
+        } lg:min-h-[clamp(540px,calc(100dvh-19.5rem),720px)]`}
       >
         {latest && <LatestPanel talk={latest} onOpenTalk={onOpenTalk} />}
 
@@ -208,15 +208,19 @@ function NextPanel({
           <h2 className="font-display text-[clamp(1.6rem,2.6vw,2.3rem)] font-bold leading-[1.1] tracking-tight">
             {talk.title}
           </h2>
-          <p className="mt-3 line-clamp-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-white/85">
+          {/* Resumen en celular y en escritorio ancho (2xl). En escritorio chico (lg a 2xl) se oculta: con títulos
+              largos no entra junto al botón en el alto del panel. */}
+          <p className="mt-3 line-clamp-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-white/85 lg:hidden 2xl:line-clamp-3">
             {talk.abstract}
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          {/* Debajo de 2xl el botón va más compacto (menos relleno y tracking) para que "Ver detalles" entre en la
+              misma fila en notebooks de ~1300px. En anchos menores igual baja a la línea siguiente, sin cortarse. */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 2xl:gap-x-6">
             {talk.cta && (
               <a
                 href={talk.cta.url}
-                className="relative z-10 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-[#f5e8ec]"
+                className="relative z-10 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-crimson 2xl:px-6 2xl:tracking-[.14em] transition-colors hover:bg-[#f5e8ec]"
               >
                 <span>{talk.cta.label}</span>
                 <ArrowUpRight size={15} aria-hidden="true" />
