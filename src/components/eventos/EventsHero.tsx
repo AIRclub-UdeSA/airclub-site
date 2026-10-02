@@ -152,7 +152,7 @@ export function EventsHero({
                       : "border-border bg-bg text-text2 hover:border-text/60 hover:text-text"
                   )}
                 >
-                  [{cat.label}]
+                  {cat.label}
                 </button>
               );
             })}
