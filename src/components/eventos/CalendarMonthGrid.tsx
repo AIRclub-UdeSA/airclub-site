@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin } from "lucide-react";
 import type { CalendarActivity } from "@/lib/calendar-types";
-import { getUdesaAcademicDate, getUdesaHoliday } from "@/lib/udesa-calendar";
+import { getUdesaHoliday } from "@/lib/udesa-calendar";
 import { cn } from "@/lib/utils";
 
 interface CalendarMonthGridProps {
@@ -336,7 +336,6 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                     const dayActs = activitiesByDay.get(cell.dayKey) || [];
                     const hasActivities = dayActs.length > 0;
                     const holiday = getUdesaHoliday(cell.dayKey);
-                    const academicDate = getUdesaAcademicDate(cell.dayKey);
 
                     return (
                       <div
@@ -379,13 +378,6 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                             )
                           )}
                         </div>
-
-                        {/* Fecha académica de UdeSA, abajo del día para no chocar con las barras de eventos */}
-                        {academicDate && (
-                          <span className="mt-auto hidden truncate font-mono text-[.58rem] uppercase tracking-[.08em] text-text3 sm:block">
-                            {academicDate.label}
-                          </span>
-                        )}
 
                         {/* Indicadores en celulares ultra-pequeños */}
                         {hasActivities && (
