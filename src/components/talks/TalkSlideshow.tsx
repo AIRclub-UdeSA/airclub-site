@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Volume2, VolumeX } from "lucide-react";
 import type { TalkMedia } from "@/lib/talks";
@@ -22,18 +22,33 @@ interface TalkSlideshowProps {
 export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
   const [index, setIndex] = useState(0);
   const [muted, setMuted] = useState(true);
-  const [videoProgress, setVideoProgress] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoFillRef = useRef<HTMLSpanElement | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
   const count = media.length;
   const active = media[index];
   const isVideo = active.type === "video";
   const isLight = active.type === "image" && Boolean(active.lightBg);
-  const goTo = (i: number) => {
-    setVideoProgress(0);
-    setIndex(i);
-  };
+  const goTo = (i: number) => setIndex(i);
   const goNext = () => goTo((index + 1) % count);
+
+  // El punto de un video se llena leyendo el tiempo en cada frame: `timeupdate` solo dispara unas 4 veces por
+  // segundo y la barra avanzaba a saltos, mientras que la de las fotos es una animación CSS fluida.
+  useEffect(() => {
+    if (!isVideo) return;
+    let frame = 0;
+    const tick = () => {
+      const video = videoRef.current;
+      const fill = videoFillRef.current;
+      if (video && fill && video.duration > 0) {
+        fill.style.transform = `scaleX(${video.currentTime / video.duration})`;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [isVideo, index]);
 
   return (
     <div
@@ -59,6 +74,7 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
         <video
           key={active.src}
           ref={(el) => {
+            videoRef.current = el;
             if (el) el.muted = muted;
           }}
           src={active.src}
@@ -68,10 +84,6 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
           controls={reducedMotion}
           loop={count === 1}
           playsInline
-          onTimeUpdate={(e) => {
-            const { currentTime, duration } = e.currentTarget;
-            if (duration > 0) setVideoProgress(currentTime / duration);
-          }}
           onEnded={count > 1 ? goNext : undefined}
           className="h-full w-full object-cover"
         />
@@ -121,8 +133,9 @@ export function TalkSlideshow({ media, title, overlay }: TalkSlideshowProps) {
                     />
                   ) : (
                     <span
+                      ref={videoFillRef}
                       className="absolute inset-0 origin-left bg-crimson"
-                      style={{ transform: `scaleX(${videoProgress})` }}
+                      style={{ transform: "scaleX(0)" }}
                     />
                   ))}
               </span>
