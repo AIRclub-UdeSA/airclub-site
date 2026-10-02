@@ -202,6 +202,17 @@ export function WordSlideshow() {
       style={{ backgroundColor: activeSlide.bg }}
       onKeyDown={onKeyDown}
     >
+      {/* Resplandor ambiental dinámico superior derecho */}
+      <div
+        className="absolute -right-20 -top-20 w-[480px] h-[480px] rounded-full blur-[140px] pointer-events-none opacity-35 transition-all duration-700"
+        style={{ backgroundColor: activeSlide.accent }}
+      />
+      {/* Resplandor ambiental complementario inferior izquierdo */}
+      <div
+        className="absolute -left-20 -bottom-20 w-[420px] h-[420px] rounded-full blur-[130px] pointer-events-none opacity-25 transition-all duration-700"
+        style={{ backgroundColor: activeSlide.accent }}
+      />
+
       {/* Pista Horizontal con overflow-hidden. pan-y: el scroll vertical de la página sigue andando con el dedo */}
       <div
         className="overflow-hidden w-full"
