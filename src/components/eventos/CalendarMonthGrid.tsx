@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin } from "lucide-react";
 import type { CalendarActivity } from "@/lib/calendar-types";
+import { getUdesaHoliday } from "@/lib/udesa-calendar";
 import { cn } from "@/lib/utils";
 
 interface CalendarMonthGridProps {
@@ -334,16 +335,18 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                     const isSelected = selectedDayKey === cell.dayKey;
                     const dayActs = activitiesByDay.get(cell.dayKey) || [];
                     const hasActivities = dayActs.length > 0;
+                    const holiday = getUdesaHoliday(cell.dayKey);
 
                     return (
                       <div
                         key={cell.dayKey}
+                        title={holiday ? `Feriado: ${holiday.name}` : undefined}
                         onClick={() => {
                           if (hasActivities) setSelectedDayKey(cell.dayKey);
                         }}
                         className={cn(
                           "flex flex-col justify-between p-1.5 sm:p-2 transition-colors",
-                          cell.isCurrentMonth ? "bg-bg" : "bg-bg2/40 opacity-40",
+                          cell.isCurrentMonth ? (holiday ? "bg-bg2" : "bg-bg") : "bg-bg2/40 opacity-40",
                           hasActivities && "cursor-pointer hover:bg-bg2/40",
                           isSelected && "ring-2 ring-inset ring-crimson"
                         )}
@@ -354,6 +357,8 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                               "font-mono text-[.76rem] font-semibold",
                               isToday
                                 ? "flex h-5 w-5 items-center justify-center rounded-full bg-crimson text-[.7rem] text-white"
+                                : holiday
+                                ? "text-crimson-text"
                                 : cell.isCurrentMonth
                                 ? "text-text"
                                 : "text-text3"
@@ -361,10 +366,16 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
                           >
                             {cell.day}
                           </span>
-                          {isToday && (
+                          {isToday ? (
                             <span className="hidden font-mono text-[.6rem] font-bold uppercase tracking-[.1em] text-crimson-text sm:inline">
                               Hoy
                             </span>
+                          ) : (
+                            holiday && (
+                              <span className="hidden font-mono text-[.6rem] uppercase tracking-[.1em] text-crimson-text sm:inline">
+                                Feriado
+                              </span>
+                            )
                           )}
                         </div>
 
