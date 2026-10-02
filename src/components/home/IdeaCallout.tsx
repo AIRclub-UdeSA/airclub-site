@@ -11,7 +11,7 @@ export function IdeaCallout() {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
         <RevealOnScroll>
           <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">
-            <h3 className="font-logo text-[clamp(3rem,7vw,6.5rem)] uppercase leading-[0.92] tracking-tight text-text lg:col-span-7">
+            <h3 className="font-logo text-[clamp(3rem,7vw,6.5rem)] uppercase leading-[1.04] tracking-tight text-text lg:col-span-7">
               “Tengo una idea,{" "}
               <span className="text-crimson-text">pero no sé por dónde empezar”</span>
             </h3>
