@@ -124,7 +124,7 @@ export function EquipoManager({ members, foundersPhoto }: { members: AdminMember
         foundersPhoto={foundersPhoto}
         edit={{
           renderTile: (m) => (
-            <TeamTile key={m.id} member={m} controls={<PencilButton label={`Editar a ${m.name}`} onClick={() => edit(m)} className="-left-2 -top-2" />} />
+            <TeamTile key={m.id} member={m} controls={<PencilButton label={`Editar a ${m.name}`} onClick={() => edit(m)} className="left-2 top-2" />} />
           ),
           foundersPhotoControls: <PencilButton label="Editar la foto grupal" onClick={() => setEditingGroupPhoto(true)} className="left-3 top-3" />,
           addFounder: <AddTile label="Fundador/a" onClick={() => add("FOUNDER")} />,
@@ -251,7 +251,7 @@ function MemberDrawer({
   const photo = preview ?? member?.photo ?? "";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={member ? `Editar a ${member.name}` : "Agregar persona"}>
+    <div className="fixed inset-0 z-[1100] flex justify-end" role="dialog" aria-modal="true" aria-label={member ? `Editar a ${member.name}` : "Agregar persona"}>
       <button type="button" aria-label="Cerrar" onClick={() => !busy && onClose()} className="absolute inset-0 bg-black/40" />
 
       <form onSubmit={handleSave} className="relative flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto border-l border-border bg-bg p-6 shadow-xl">
@@ -440,7 +440,7 @@ function GroupPhotoDrawer({ current, onClose }: { current: GroupPhoto; onClose: 
   const photo = preview ?? current.photo;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Editar la foto grupal de Fundadores">
+    <div className="fixed inset-0 z-[1100] flex justify-end" role="dialog" aria-modal="true" aria-label="Editar la foto grupal de Fundadores">
       <button type="button" aria-label="Cerrar" onClick={() => !busy && onClose()} className="absolute inset-0 bg-black/40" />
 
       <form onSubmit={handleSave} className="relative flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto border-l border-border bg-bg p-6 shadow-xl">
