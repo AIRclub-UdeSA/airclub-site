@@ -8,21 +8,21 @@ import type { TeamMemberItem } from "@/lib/team";
 import { GithubIcon } from "./SocialIcons";
 
 /** Usuario de GitHub a partir de su link (https://github.com/<usuario>), o undefined. */
-function githubUserOf(url?: string) {
+export function githubUserOf(url?: string) {
   if (!url) return undefined;
   return /github\.com\/([^/?#]+)/i.exec(normalizeUrl(url))?.[1];
 }
 
 /** Primera y última inicial del nombre ("Lucio Luque Materazzi" → "LM"). */
-function initialsOf(name: string) {
+export function initialsOf(name: string) {
   const words = name.trim().split(/\s+/);
   const first = words[0]?.[0] ?? "";
   const last = words.length > 1 ? (words[words.length - 1]?.[0] ?? "") : "";
   return (first + last).toUpperCase();
 }
 
-const FRAME = "relative aspect-square overflow-hidden border border-text bg-bg2 transition-colors duration-200 ease-club";
-const SIZES = "(min-width: 1024px) 190px, (min-width: 640px) 22vw, 46vw";
+export const FRAME = "relative aspect-square overflow-hidden border border-text bg-bg2 transition-colors duration-200 ease-club";
+export const SIZES = "(min-width: 1024px) 190px, (min-width: 640px) 22vw, 46vw";
 
 /**
  * Ficha de una persona: su foto de LinkedIn y, en la esquina, su avatar de GitHub en un círculo. La ficha lleva a
