@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import type { TeamMemberItem } from "@/lib/team";
+import type { GroupPhoto, TeamMemberItem } from "@/lib/team";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { CountHeading } from "@/components/shared/CountHeading";
 import { JoinPanel, TeamTile } from "./TeamTile";
@@ -20,7 +20,7 @@ export function TeamSections<T extends TeamMemberItem>({
 }: {
   founders: T[];
   collaborators: T[];
-  foundersPhoto: string;
+  foundersPhoto: GroupPhoto;
   edit?: {
     renderTile: (member: T) => ReactNode;
     foundersPhotoControls: ReactNode;
@@ -45,16 +45,16 @@ export function TeamSections<T extends TeamMemberItem>({
             <CountHeading n={founders.length} title="Fundadores" />
 
             <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
-              <figure className="group relative aspect-[3/4] overflow-hidden border border-text bg-bg2 lg:col-span-4 lg:aspect-auto lg:min-h-[28rem]">
+              <figure className="relative aspect-[3/4] overflow-hidden border border-text bg-bg2 lg:col-span-4 lg:aspect-auto lg:min-h-[28rem]">
                 <Image
-                  src={foundersPhoto}
+                  src={foundersPhoto.photo}
                   alt="Fundadores del AIR Club UdeSA con sus robots"
                   fill
                   sizes="(min-width: 1024px) 33vw, 100vw"
                   className="object-cover object-[50%_25%]"
                 />
                 <figcaption className="absolute bottom-4 left-4 -rotate-3 border border-text bg-bg px-3 py-2 font-mono text-[.7rem] font-semibold uppercase tracking-[.16em] text-text">
-                  Los fundadores del AIR Club
+                  {foundersPhoto.caption}
                 </figcaption>
                 {edit?.foundersPhotoControls}
               </figure>

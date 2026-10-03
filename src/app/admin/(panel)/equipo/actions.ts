@@ -139,64 +139,36 @@ export async function saveMember(input: MemberInput): Promise<ActionState> {
   return { error: null };
 }
 
-/** Cambia solo la foto (el ✎ sobre la tarjeta), sin tocar el resto de la ficha. */
-export async function setMemberPhoto(id: string, photo: string): Promise<ActionState> {
+/** Cambia la foto grupal de una lista y el texto de su cartel (hoy solo Fundadores la muestra en /equipo). */
+export async function saveGroupPhoto(group: TeamGroup, input: { photo: string; caption: string }): Promise<ActionState> {
   const actor = await requireSectionAccess(SECTION);
-  if (!photo || isPendingUpload(photo)) return { error: "La foto no se terminó de subir. Probá de nuevo." };
-
-  let replaced: string | null = null;
-  try {
-    await prisma.$transaction(async (tx) => {
-      const before = await tx.teamMember.findUniqueOrThrow({ where: { id } });
-      await tx.teamMember.update({ where: { id }, data: { linkedinPhoto: photo } });
-      await tx.auditLog.create({
-        data: {
-          adminUserId: actor.adminId,
-          section: SECTION,
-          entityId: id,
-          action: "update",
-          before: { linkedinPhoto: before.linkedinPhoto },
-          after: { linkedinPhoto: photo },
-        },
-      });
-      replaced = before.linkedinPhoto;
-    });
-  } catch (err) {
-    return { error: errorMessage(err, "No se pudo cambiar la foto.") };
-  }
-
-  if (replaced && replaced !== photo) await removeUnusedTeamFiles([replaced]);
-  revalidateTeam();
-  return { error: null };
-}
-
-/** Cambia la foto grupal de una lista (hoy solo Fundadores la muestra en /equipo). */
-export async function setGroupPhoto(group: TeamGroup, photo: string): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
-  if (!photo || isPendingUpload(photo)) return { error: "La foto no se terminó de subir. Probá de nuevo." };
+  const photoUrl = input.photo.trim();
+  const caption = input.caption.trim();
+  if (!photoUrl || isPendingUpload(photoUrl)) return { error: "La foto no se terminó de subir. Probá de nuevo." };
+  if (!caption) return { error: "Falta el texto del cartel." };
 
   let replaced: string | null = null;
   try {
     await prisma.$transaction(async (tx) => {
       const before = await tx.teamGroupPhoto.findUnique({ where: { group } });
-      await tx.teamGroupPhoto.upsert({ where: { group }, create: { group, photoUrl: photo }, update: { photoUrl: photo } });
+      await tx.teamGroupPhoto.upsert({ where: { group }, create: { group, photoUrl, caption }, update: { photoUrl, caption } });
       await tx.auditLog.create({
         data: {
           adminUserId: actor.adminId,
           section: SECTION,
           entityId: `foto-grupal-${group}`,
           action: before ? "update" : "create",
-          before: before ? { photoUrl: before.photoUrl } : undefined,
-          after: { photoUrl: photo },
+          before: before ? { photoUrl: before.photoUrl, caption: before.caption } : undefined,
+          after: { photoUrl, caption },
         },
       });
       replaced = before?.photoUrl ?? null;
     });
   } catch (err) {
-    return { error: errorMessage(err, "No se pudo cambiar la foto grupal.") };
+    return { error: errorMessage(err, "No se pudo guardar la foto grupal.") };
   }
 
-  if (replaced && replaced !== photo) await removeUnusedTeamFiles([replaced]);
+  if (replaced && replaced !== photoUrl) await removeUnusedTeamFiles([replaced]);
   revalidateTeam();
   return { error: null };
 }

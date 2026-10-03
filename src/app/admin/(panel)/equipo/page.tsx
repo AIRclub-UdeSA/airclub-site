@@ -24,7 +24,7 @@ export default async function AdminEquipoPage() {
   return (
     <>
       <p className="max-w-prose text-sm text-text2">
-        Así se ve /equipo. Pasá el mouse por una foto para cambiarla, o tocá el lápiz para editar los datos. Los cambios se ven en el sitio sin
+        Así se ve /equipo. Tocá el lápiz de una ficha o de la foto grupal para cambiar la foto y los datos. Los cambios se ven en el sitio sin
         redeploy.
       </p>
       {/* A todo el ancho de la ventana, como /equipo, aunque el panel tenga el contenido más angosto. */}

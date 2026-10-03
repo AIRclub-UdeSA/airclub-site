@@ -214,11 +214,12 @@ enum TeamGroup {
   COLLABORATOR // se lista en "Colaboradores"
 }
 
-// Foto grupal de una lista de /equipo (hoy solo Fundadores muestra una). Sin fila, /equipo usa la
-// foto fija del código (/equipo.jpg).
+// Foto grupal de una lista de /equipo y el texto del cartel sobre ella (hoy solo Fundadores muestra una).
+// Sin fila, /equipo usa la foto y el texto fijos del código (/equipo.jpg, "Los fundadores del AIR Club").
 model TeamGroupPhoto {
   group     TeamGroup @id
   photoUrl  String
+  caption   String
   updatedAt DateTime  @updatedAt
 }
 

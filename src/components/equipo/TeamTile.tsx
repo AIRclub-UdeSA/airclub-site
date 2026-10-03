@@ -30,7 +30,7 @@ export const SIZES = "(min-width: 1024px) 190px, (min-width: 640px) 22vw, 46vw";
  * Ficha de una persona: su foto de LinkedIn y, en la esquina, su avatar de GitHub en un círculo. La ficha lleva a
  * LinkedIn y el círculo a GitHub: son dos enlaces hermanos, nunca anidados. Sin foto de LinkedIn, la trama diagonal ("lugar reservado") con sus iniciales.
  * La foto de GitHub se toma en vivo de github.com; la de LinkedIn no se puede obtener sola, viene de `links.linkedinPhoto`.
- * Con `controls` (el panel de /admin/equipo) se ve igual pero no lleva a ningún lado: los controles van encima.
+ * Con `controls` (el lápiz de /admin/equipo) se ve igual pero no lleva a ningún lado: los controles van encima.
  */
 export function TeamTile({ member, controls }: { member: TeamMemberItem; controls?: ReactNode }) {
   const { linkedin, linkedinPhoto, github } = member.links ?? {};
@@ -89,7 +89,7 @@ export function TeamTile({ member, controls }: { member: TeamMemberItem; control
         </a>
       ) : (
         <div>
-          <div className={`${FRAME} ${controls ? "group-hover:border-crimson" : ""}`}>{face}</div>
+          <div className={FRAME}>{face}</div>
           {caption}
         </div>
       )}

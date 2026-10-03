@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { Camera, ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react";
 import { FRAME, SIZES, TeamTile, initialsOf } from "@/components/equipo/TeamTile";
 import { TeamSections } from "@/components/equipo/TeamSections";
-import type { TeamMemberItem } from "@/lib/team";
+import type { GroupPhoto, TeamMemberItem } from "@/lib/team";
 import { uploadToSignedUrl } from "@/lib/admin/upload-client";
 import { uploadError } from "@/lib/upload-rules";
 import {
@@ -14,9 +14,8 @@ import {
   moveMember,
   prepareTeamPhotoUpload,
   saveMember,
-  setGroupPhoto,
+  saveGroupPhoto,
   setMemberActive,
-  setMemberPhoto,
   type ActionState,
   type TeamGroup,
 } from "./actions";
@@ -67,106 +66,18 @@ function Face({ name, photo }: { name: string; photo: string }) {
   return <Image src={photo} alt="" fill sizes={SIZES} className="object-cover" />;
 }
 
-/**
- * Elegir una foto y guardarla en el acto (sin botón "Guardar"): la sube directo al bucket y llama a `save`.
- * Mientras sube muestra la foto elegida; deja de mostrarla sola cuando llega la nueva del servidor.
- */
-function useInstantPhoto(current: string, save: (url: string) => Promise<ActionState>) {
-  const [preview, setPreview] = useState<{ url: string; over: string } | null>(null);
-  const [progress, setProgress] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => () => void (preview && URL.revokeObjectURL(preview.url)), [preview]);
-
-  async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (inputRef.current) inputRef.current.value = "";
-    if (!file) return;
-
-    const invalid = photoError(file);
-    setError(invalid);
-    if (invalid) return;
-
-    setPreview({ url: URL.createObjectURL(file), over: current });
-    setProgress(0);
-    let uploaded: string | null = null;
-    try {
-      uploaded = await uploadPhoto(file, setProgress);
-      const result = await save(uploaded);
-      if (result.error) throw new Error(result.error);
-      uploaded = null; // guardada: ya está en uso
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cambiar la foto.");
-      setPreview(null);
-    } finally {
-      if (uploaded) void discardTeamUpload(uploaded);
-      setProgress(null);
-    }
-  }
-
-  return {
-    previewUrl: preview?.over === current ? preview.url : null,
-    progress,
-    error,
-    input: { ref: inputRef, type: "file", accept: "image/jpeg,image/png,image/webp", disabled: progress !== null, onChange, className: "sr-only" } as const,
-  };
-}
-
-// Los controles aparecen al pasar el mouse; en pantallas táctiles (sin hover) quedan siempre a la vista.
-const REVEAL = "opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100";
-const OVERLAY = "flex cursor-pointer flex-col items-center justify-center gap-1 bg-black/55 text-sm font-semibold text-white transition-opacity duration-200 ease-club";
-
-function UploadOverlay({ label, progress, error }: { label: string; progress: number | null; error: string | null }) {
-  if (progress !== null) return <span>Subiendo… {Math.round(progress * 100)}%</span>;
+/** El lápiz, siempre a la vista: es la única forma de editar (tocar la foto o el nombre no hace nada). */
+function PencilButton({ label, onClick, className }: { label: string; onClick: () => void; className: string }) {
   return (
-    <>
-      <Camera size={22} aria-hidden="true" />
-      <span>{label}</span>
-      {error && <span className="max-w-[90%] text-center text-xs font-normal">{error}</span>}
-    </>
-  );
-}
-
-/** Controles de una ficha: la foto se cambia tocándola, y el lápiz (o el nombre) abre el panel con el resto de los datos. */
-function MemberControls({ member, onEdit }: { member: AdminMember; onEdit: () => void }) {
-  const photo = useInstantPhoto(member.photo, (url) => setMemberPhoto(member.id, url));
-  const showing = photo.progress !== null || photo.error;
-
-  return (
-    <>
-      {/* Debajo de todo: tocar el nombre también abre el panel. */}
-      <button type="button" onClick={onEdit} aria-label={`Editar a ${member.name}`} className="absolute inset-0" />
-      <label className={`absolute inset-x-0 top-0 z-[5] aspect-square ${OVERLAY} ${showing ? "opacity-100" : REVEAL}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {photo.previewUrl && <img src={photo.previewUrl} alt="" className="absolute inset-0 -z-10 size-full object-cover" />}
-        <UploadOverlay label={member.photo ? "Cambiar foto" : "Subir foto"} progress={photo.progress} error={photo.error} />
-        <input {...photo.input} aria-label={`Cambiar la foto de ${member.name}`} />
-      </label>
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label={`Editar los datos de ${member.name}`}
-        className={`absolute -left-2 -top-2 z-20 flex size-11 items-center justify-center rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-opacity duration-200 ease-club hover:border-crimson hover:text-crimson-text ${REVEAL}`}
-      >
-        <Pencil size={18} aria-hidden="true" />
-      </button>
-    </>
-  );
-}
-
-/** Sobre la foto grupal de Fundadores: tocarla la cambia. */
-function GroupPhotoControls({ current }: { current: string }) {
-  const photo = useInstantPhoto(current, (url) => setGroupPhoto("FOUNDER", url));
-  const showing = photo.progress !== null || photo.error;
-
-  return (
-    <label className={`absolute inset-0 z-10 ${OVERLAY} ${showing ? "opacity-100" : REVEAL}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {photo.previewUrl && <img src={photo.previewUrl} alt="" className="absolute inset-0 -z-10 size-full object-cover object-[50%_25%]" />}
-      <UploadOverlay label="Cambiar foto grupal" progress={photo.progress} error={photo.error} />
-      <input {...photo.input} aria-label="Cambiar la foto grupal de Fundadores" />
-    </label>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={`absolute z-20 flex size-11 items-center justify-center rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-colors duration-200 ease-club hover:border-crimson hover:text-crimson-text ${className}`}
+    >
+      <Pencil size={18} aria-hidden="true" />
+    </button>
   );
 }
 
@@ -197,8 +108,9 @@ function toItem(m: AdminMember): AdminMember & TeamMemberItem {
 
 type Editing = { member: AdminMember | null; group: TeamGroup };
 
-export function EquipoManager({ members, foundersPhoto }: { members: AdminMember[]; foundersPhoto: string }) {
+export function EquipoManager({ members, foundersPhoto }: { members: AdminMember[]; foundersPhoto: GroupPhoto }) {
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [editingGroupPhoto, setEditingGroupPhoto] = useState(false);
   const visible = (group: TeamGroup) => members.filter((m) => m.active && m.group === group).map(toItem);
   const hidden = members.filter((m) => !m.active);
   const edit = (m: AdminMember) => setEditing({ member: m, group: m.group });
@@ -211,8 +123,10 @@ export function EquipoManager({ members, foundersPhoto }: { members: AdminMember
         collaborators={visible("COLLABORATOR")}
         foundersPhoto={foundersPhoto}
         edit={{
-          renderTile: (m) => <TeamTile key={m.id} member={m} controls={<MemberControls member={m} onEdit={() => edit(m)} />} />,
-          foundersPhotoControls: <GroupPhotoControls current={foundersPhoto} />,
+          renderTile: (m) => (
+            <TeamTile key={m.id} member={m} controls={<PencilButton label={`Editar a ${m.name}`} onClick={() => edit(m)} className="-left-2 -top-2" />} />
+          ),
+          foundersPhotoControls: <PencilButton label="Editar la foto grupal" onClick={() => setEditingGroupPhoto(true)} className="left-3 top-3" />,
           addFounder: <AddTile label="Fundador/a" onClick={() => add("FOUNDER")} />,
           addCollaborator: <AddTile label="Colaborador/a" onClick={() => add("COLLABORATOR")} />,
         }}
@@ -246,10 +160,11 @@ export function EquipoManager({ members, foundersPhoto }: { members: AdminMember
           onClose={() => setEditing(null)}
         />
       )}
+
+      {editingGroupPhoto && <GroupPhotoDrawer current={foundersPhoto} onClose={() => setEditingGroupPhoto(false)} />}
     </>
   );
 }
-
 
 function positionOf(members: AdminMember[], member: AdminMember) {
   const list = members.filter((m) => m.active && m.group === member.group);
@@ -467,6 +382,107 @@ function MemberDrawer({
               )}
             </div>
           )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/** Panel lateral de la foto grupal de Fundadores: la foto y el texto del cartel. */
+function GroupPhotoDrawer({ current, onClose }: { current: GroupPhoto; onClose: () => void }) {
+  const [caption, setCaption] = useState(current.caption);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
+
+  useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
+
+  function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files?.[0];
+    e.target.value = "";
+    if (!picked) return;
+    const invalid = photoError(picked);
+    setError(invalid);
+    if (invalid) return;
+    setFile(picked);
+    setPreview(URL.createObjectURL(picked));
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    let uploaded: string | null = null;
+    try {
+      if (file) {
+        setBusy("Subiendo foto…");
+        uploaded = await uploadPhoto(file, (f) => setBusy(`Subiendo foto… ${Math.round(f * 100)}%`));
+      }
+      setBusy("Guardando…");
+      const result = await saveGroupPhoto("FOUNDER", { photo: uploaded ?? current.photo, caption });
+      if (result.error) return setError(result.error);
+      uploaded = null;
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar.");
+    } finally {
+      if (uploaded) void discardTeamUpload(uploaded);
+      setBusy(null);
+    }
+  }
+
+  const photo = preview ?? current.photo;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Editar la foto grupal de Fundadores">
+      <button type="button" aria-label="Cerrar" onClick={() => !busy && onClose()} className="absolute inset-0 bg-black/40" />
+
+      <form onSubmit={handleSave} className="relative flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto border-l border-border bg-bg p-6 shadow-xl">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold text-text">Foto grupal de Fundadores</h3>
+          <button type="button" onClick={onClose} disabled={!!busy} aria-label="Cerrar" className="text-text3 hover:text-crimson-text">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Vista previa con el mismo encuadre y cartel que en /equipo. */}
+        <div className="relative aspect-[3/4] w-full overflow-hidden border border-text bg-bg2">
+          {photo.startsWith("blob:") ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photo} alt="" className="absolute inset-0 size-full object-cover object-[50%_25%]" />
+          ) : (
+            <Image src={photo} alt="" fill sizes="28rem" className="object-cover object-[50%_25%]" />
+          )}
+          <span className="absolute bottom-4 left-4 -rotate-3 border border-text bg-bg px-3 py-2 font-mono text-[.7rem] font-semibold uppercase tracking-[.16em] text-text">
+            {caption || "…"}
+          </span>
+        </div>
+
+        <label className="w-fit cursor-pointer rounded-[var(--r-sm)] border border-border bg-card px-3 py-1.5 text-sm font-medium text-text hover:border-crimson">
+          Cambiar foto
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickFile} className="sr-only" />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm font-medium text-text">
+          Texto del cartel
+          <input required value={caption} onChange={(e) => setCaption(e.target.value)} className={INPUT} placeholder="Los fundadores del AIR Club" />
+        </label>
+
+        {error && <p className="text-sm text-crimson">{error}</p>}
+
+        <div className="mt-auto flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          <button type="submit" disabled={!!busy} className="rounded-full bg-crimson px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60">
+            {busy ?? "Guardar"}
+          </button>
+          <button type="button" onClick={onClose} disabled={!!busy} className="text-sm font-medium text-text2 hover:text-crimson-text">
+            Cancelar
+          </button>
         </div>
       </form>
     </div>
