@@ -60,10 +60,10 @@ async function main() {
     });
   }
 
-  // El equipo todavía no tiene sección en /admin: la verdad sigue en seed-data/team.ts, así que acá
-  // el seed sí actualiza. Cuando exista /admin/equipo, pasar a `update: {}` como las charlas.
-  // Upsert por slug, no borrar y recrear: así el id de cada persona no cambia entre seeds y otras
-  // tablas pueden apuntarle sin romperse. El grupo sale del array en el que está cada persona.
+  // El equipo se edita desde /admin/equipo: la verdad está en la base, no en seed-data. El seed solo
+  // crea a quien falta (update vacío) y nunca pisa una ficha existente, igual que las charlas.
+  // Upsert por slug: así el id de cada persona no cambia y otras tablas pueden apuntarle sin romperse.
+  // El grupo sale del array en el que está cada persona.
   const people = [
     ...founders.map((m) => ({ ...m, group: "FOUNDER" as const })),
     ...collaborators.map((m) => ({ ...m, group: "COLLABORATOR" as const })),
@@ -79,7 +79,7 @@ async function main() {
       github: links?.github,
       order: i,
     };
-    await prisma.teamMember.upsert({ where: { slug }, create: { slug, ...data }, update: data });
+    await prisma.teamMember.upsert({ where: { slug }, create: { slug, ...data }, update: {} });
   }
 
   // Las charlas se editan desde /admin/talks: la verdad está en la base, no en seed-data. El seed solo

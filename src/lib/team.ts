@@ -69,3 +69,18 @@ export async function getCollaborators(): Promise<TeamMemberItem[]> {
     return seedCollaborators.map(fromSeed);
   }
 }
+
+/** Foto grupal de Fundadores y el texto de su cartel. */
+export type GroupPhoto = { photo: string; caption: string };
+
+/** Lo fijo del código, que se usa mientras no se cambie desde /admin/equipo. */
+export const DEFAULT_FOUNDERS_PHOTO: GroupPhoto = { photo: "/equipo.jpg", caption: "Los fundadores del AIR Club" };
+
+export async function getFoundersPhoto(): Promise<GroupPhoto> {
+  try {
+    const row = await prisma.teamGroupPhoto.findUnique({ where: { group: "FOUNDER" } });
+    return row ? { photo: row.photoUrl, caption: row.caption } : DEFAULT_FOUNDERS_PHOTO;
+  } catch {
+    return DEFAULT_FOUNDERS_PHOTO;
+  }
+}

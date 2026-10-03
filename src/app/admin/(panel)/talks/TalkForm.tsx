@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createTalk, discardTalkUploads, prepareTalkUploads, updateTalk, validateTalkForm } from "./actions";
 import { FileField } from "./FileField";
 import { ListEditor } from "./ListEditor";
-import { uploadToSignedUrl } from "./upload";
+import { uploadToSignedUrl } from "@/lib/admin/upload-client";
 import type { MediaItem, SlideItem, LinkItem } from "./types";
 import { PENDING_PREFIX } from "@/lib/upload-rules";
 

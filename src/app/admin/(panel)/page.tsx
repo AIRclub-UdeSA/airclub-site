@@ -11,6 +11,12 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     section: "talks",
   },
   {
+    href: "/admin/equipo",
+    title: "Equipo",
+    description: "Sumar gente a /equipo, cambiar fotos y links, y ocultar a quien ya no esté.",
+    section: "equipo",
+  },
+  {
     href: "/admin/usuarios",
     title: "Usuarios",
     description: "Quién puede entrar al panel y qué secciones puede editar cada persona.",
