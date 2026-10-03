@@ -214,6 +214,14 @@ enum TeamGroup {
   COLLABORATOR // se lista en "Colaboradores"
 }
 
+// Foto grupal de una lista de /equipo (hoy solo Fundadores muestra una). Sin fila, /equipo usa la
+// foto fija del código (/equipo.jpg).
+model TeamGroupPhoto {
+  group     TeamGroup @id
+  photoUrl  String
+  updatedAt DateTime  @updatedAt
+}
+
 model TeamMember {
   id            String    @id @default(cuid())
   // Identificador estable (ej. "juan-kaplan"): el seed actualiza por slug en vez de borrar y

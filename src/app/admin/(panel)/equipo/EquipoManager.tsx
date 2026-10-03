@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react";
-import { FRAME, SIZES, githubUserOf, initialsOf } from "@/components/equipo/TeamTile";
-import { GithubIcon } from "@/components/equipo/SocialIcons";
+import { FRAME, SIZES, TeamTile, initialsOf } from "@/components/equipo/TeamTile";
+import { TeamSections } from "@/components/equipo/TeamSections";
+import type { TeamMemberItem } from "@/lib/team";
 import { uploadToSignedUrl } from "@/lib/admin/upload-client";
 import { uploadError } from "@/lib/upload-rules";
 import {
@@ -13,6 +14,7 @@ import {
   moveMember,
   prepareTeamPhotoUpload,
   saveMember,
+  setGroupPhoto,
   setMemberActive,
   setMemberPhoto,
   type ActionState,
@@ -34,8 +36,6 @@ const GROUPS: { id: TeamGroup; title: string; one: string }[] = [
   { id: "FOUNDER", title: "Fundadores", one: "fundador/a" },
   { id: "COLLABORATOR", title: "Colaboradores", one: "colaborador/a" },
 ];
-
-const GRID = "grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-4 lg:gap-x-4";
 
 /** Sube la foto directo al bucket y devuelve su URL pública. */
 async function uploadPhoto(file: File, onProgress: (fraction: number) => void): Promise<string> {
@@ -67,25 +67,11 @@ function Face({ name, photo }: { name: string; photo: string }) {
   return <Image src={photo} alt="" fill sizes={SIZES} className="object-cover" />;
 }
 
-function GithubBadge({ github }: { github: string }) {
-  const user = githubUserOf(github);
-  const [failed, setFailed] = useState(false);
-  if (!github) return null;
-  return (
-    <span className="pointer-events-none absolute -right-2 -top-2 z-10 flex size-11 items-center justify-center overflow-hidden rounded-full border border-text bg-bg text-text ring-2 ring-bg">
-      {user && !failed ? (
-        <Image src={`https://github.com/${user}.png?size=96`} alt="" width={44} height={44} unoptimized onError={() => setFailed(true)} className="size-full object-cover" />
-      ) : (
-        <GithubIcon className="size-5" />
-      )}
-    </span>
-  );
-}
-
-/** La misma ficha de /equipo, con "Cambiar foto" al pasar el mouse y el nombre como botón para editar. */
-function MemberTile({ member, onEdit }: { member: AdminMember; onEdit: () => void }) {
-  // Vista previa local mientras sube; `over` es la foto que tapa, así deja de mostrarse sola cuando
-  // llega la nueva del servidor.
+/**
+ * Elegir una foto y guardarla en el acto (sin botón "Guardar"): la sube directo al bucket y llama a `save`.
+ * Mientras sube muestra la foto elegida; deja de mostrarla sola cuando llega la nueva del servidor.
+ */
+function useInstantPhoto(current: string, save: (url: string) => Promise<ActionState>) {
   const [preview, setPreview] = useState<{ url: string; over: string } | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +79,7 @@ function MemberTile({ member, onEdit }: { member: AdminMember; onEdit: () => voi
 
   useEffect(() => () => void (preview && URL.revokeObjectURL(preview.url)), [preview]);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (inputRef.current) inputRef.current.value = "";
     if (!file) return;
@@ -102,12 +88,12 @@ function MemberTile({ member, onEdit }: { member: AdminMember; onEdit: () => voi
     setError(invalid);
     if (invalid) return;
 
-    setPreview({ url: URL.createObjectURL(file), over: member.photo });
+    setPreview({ url: URL.createObjectURL(file), over: current });
     setProgress(0);
     let uploaded: string | null = null;
     try {
       uploaded = await uploadPhoto(file, setProgress);
-      const result = await setMemberPhoto(member.id, uploaded);
+      const result = await save(uploaded);
       if (result.error) throw new Error(result.error);
       uploaded = null; // guardada: ya está en uso
     } catch (err) {
@@ -119,91 +105,121 @@ function MemberTile({ member, onEdit }: { member: AdminMember; onEdit: () => voi
     }
   }
 
-  const busy = progress !== null;
+  return {
+    previewUrl: preview?.over === current ? preview.url : null,
+    progress,
+    error,
+    input: { ref: inputRef, type: "file", accept: "image/jpeg,image/png,image/webp", disabled: progress !== null, onChange, className: "sr-only" } as const,
+  };
+}
+
+// Los controles aparecen al pasar el mouse; en pantallas táctiles (sin hover) quedan siempre a la vista.
+const REVEAL = "opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100";
+const OVERLAY = "flex cursor-pointer flex-col items-center justify-center gap-1 bg-black/55 text-sm font-semibold text-white transition-opacity duration-200 ease-club";
+
+function UploadOverlay({ label, progress, error }: { label: string; progress: number | null; error: string | null }) {
+  if (progress !== null) return <span>Subiendo… {Math.round(progress * 100)}%</span>;
+  return (
+    <>
+      <Camera size={22} aria-hidden="true" />
+      <span>{label}</span>
+      {error && <span className="max-w-[90%] text-center text-xs font-normal">{error}</span>}
+    </>
+  );
+}
+
+/** Controles de una ficha: la foto se cambia tocándola, y el lápiz (o el nombre) abre el panel con el resto de los datos. */
+function MemberControls({ member, onEdit }: { member: AdminMember; onEdit: () => void }) {
+  const photo = useInstantPhoto(member.photo, (url) => setMemberPhoto(member.id, url));
+  const showing = photo.progress !== null || photo.error;
 
   return (
-    <li className="group relative">
-      <div className={`${FRAME} group-hover:border-crimson`}>
-        <Face name={member.name} photo={preview?.over === member.photo ? preview.url : member.photo} />
-        <label
-          className={`absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-1 bg-black/55 text-sm font-semibold text-white transition-opacity duration-200 focus-within:opacity-100 ${busy ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-        >
-          {busy ? (
-            <span>Subiendo… {Math.round((progress ?? 0) * 100)}%</span>
-          ) : (
-            <>
-              <Camera size={22} aria-hidden="true" />
-              <span>{member.photo ? "Cambiar foto" : "Subir foto"}</span>
-            </>
-          )}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            disabled={busy}
-            onChange={handleFile}
-            aria-label={`Cambiar la foto de ${member.name}`}
-            className="sr-only"
-          />
-        </label>
-      </div>
-      <GithubBadge github={member.github} />
-
-      <button type="button" onClick={onEdit} className="mt-3 flex w-full items-start justify-between gap-2 text-left">
-        <span className="font-display text-[1rem] font-bold leading-[1.15] tracking-tight text-text group-hover:text-crimson-text">{member.name}</span>
-        <Pencil size={14} className="mt-0.5 shrink-0 text-text3" aria-label="Editar" />
+    <>
+      {/* Debajo de todo: tocar el nombre también abre el panel. */}
+      <button type="button" onClick={onEdit} aria-label={`Editar a ${member.name}`} className="absolute inset-0" />
+      <label className={`absolute inset-x-0 top-0 z-[5] aspect-square ${OVERLAY} ${showing ? "opacity-100" : REVEAL}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {photo.previewUrl && <img src={photo.previewUrl} alt="" className="absolute inset-0 -z-10 size-full object-cover" />}
+        <UploadOverlay label={member.photo ? "Cambiar foto" : "Subir foto"} progress={photo.progress} error={photo.error} />
+        <input {...photo.input} aria-label={`Cambiar la foto de ${member.name}`} />
+      </label>
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Editar los datos de ${member.name}`}
+        className={`absolute -left-2 -top-2 z-20 flex size-11 items-center justify-center rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-opacity duration-200 ease-club hover:border-crimson hover:text-crimson-text ${REVEAL}`}
+      >
+        <Pencil size={18} aria-hidden="true" />
       </button>
-      <span className="mt-1 block font-mono text-[.7rem] uppercase tracking-[.14em] text-text3">
-        {member.role || (member.linkedin ? "LinkedIn" : "Sin LinkedIn")}
-      </span>
-      {error && <p className="mt-1 text-xs text-crimson">{error}</p>}
+    </>
+  );
+}
+
+/** Sobre la foto grupal de Fundadores: tocarla la cambia. */
+function GroupPhotoControls({ current }: { current: string }) {
+  const photo = useInstantPhoto(current, (url) => setGroupPhoto("FOUNDER", url));
+  const showing = photo.progress !== null || photo.error;
+
+  return (
+    <label className={`absolute inset-0 z-10 ${OVERLAY} ${showing ? "opacity-100" : REVEAL}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {photo.previewUrl && <img src={photo.previewUrl} alt="" className="absolute inset-0 -z-10 size-full object-cover object-[50%_25%]" />}
+      <UploadOverlay label="Cambiar foto grupal" progress={photo.progress} error={photo.error} />
+      <input {...photo.input} aria-label="Cambiar la foto grupal de Fundadores" />
+    </label>
+  );
+}
+
+/** "Agregar" con la forma de una ficha vacía de /equipo (la trama de "lugar reservado"). */
+function AddTile({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <li className="group relative">
+      <button type="button" onClick={onClick} className="block w-full text-left">
+        <span className={`${FRAME} talk-hatch flex items-center justify-center text-text group-hover:border-crimson group-hover:text-crimson-text`}>
+          <Plus size={56} strokeWidth={1.5} aria-hidden="true" />
+        </span>
+        <span className="mt-3 block font-display text-[1rem] font-bold leading-[1.15] tracking-tight text-text transition-colors group-hover:text-crimson-text">
+          Agregar
+        </span>
+        <span className="mt-1 block font-mono text-[.7rem] uppercase tracking-[.14em] text-text3">{label}</span>
+      </button>
     </li>
   );
 }
 
-function AddTile({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        className="talk-hatch flex aspect-square w-full flex-col items-center justify-center gap-2 border border-dashed border-text text-text3 transition-colors duration-200 ease-club hover:border-crimson hover:text-crimson-text"
-      >
-        <Plus size={28} aria-hidden="true" />
-        <span className="bg-bg px-2 text-sm font-semibold">{label}</span>
-      </button>
-    </li>
-  );
+function toItem(m: AdminMember): AdminMember & TeamMemberItem {
+  return {
+    ...m,
+    role: m.role || undefined,
+    links: { linkedin: m.linkedin || undefined, linkedinPhoto: m.photo || undefined, github: m.github || undefined },
+  } as AdminMember & TeamMemberItem;
 }
 
 type Editing = { member: AdminMember | null; group: TeamGroup };
 
-export function EquipoManager({ members }: { members: AdminMember[] }) {
+export function EquipoManager({ members, foundersPhoto }: { members: AdminMember[]; foundersPhoto: string }) {
   const [editing, setEditing] = useState<Editing | null>(null);
+  const visible = (group: TeamGroup) => members.filter((m) => m.active && m.group === group).map(toItem);
   const hidden = members.filter((m) => !m.active);
+  const edit = (m: AdminMember) => setEditing({ member: m, group: m.group });
+  const add = (group: TeamGroup) => setEditing({ member: null, group });
 
   return (
     <>
-      {GROUPS.map((group) => {
-        const list = members.filter((m) => m.active && m.group === group.id);
-        return (
-          <section key={group.id} className="flex flex-col gap-5">
-            <h3 className="flex items-baseline gap-3 font-display text-lg font-bold uppercase text-text">
-              {group.title}
-              <span className="font-mono text-sm font-normal text-text3">{list.length}</span>
-            </h3>
-            <ul className={GRID}>
-              {list.map((m) => (
-                <MemberTile key={m.id} member={m} onEdit={() => setEditing({ member: m, group: m.group })} />
-              ))}
-              <AddTile label={`Agregar ${group.one}`} onClick={() => setEditing({ member: null, group: group.id })} />
-            </ul>
-          </section>
-        );
-      })}
+      <TeamSections
+        founders={visible("FOUNDER")}
+        collaborators={visible("COLLABORATOR")}
+        foundersPhoto={foundersPhoto}
+        edit={{
+          renderTile: (m) => <TeamTile key={m.id} member={m} controls={<MemberControls member={m} onEdit={() => edit(m)} />} />,
+          foundersPhotoControls: <GroupPhotoControls current={foundersPhoto} />,
+          addFounder: <AddTile label="Fundador/a" onClick={() => add("FOUNDER")} />,
+          addCollaborator: <AddTile label="Colaborador/a" onClick={() => add("COLLABORATOR")} />,
+        }}
+      />
 
       {hidden.length > 0 && (
-        <section className="flex flex-col gap-3 border-t border-border pt-6">
+        <section className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-12 sm:px-8 md:px-12">
           <h3 className="font-display text-base font-bold text-text">Ocultos</h3>
           <p className="text-sm text-text3">No aparecen en /equipo. Su ficha queda guardada por si vuelven.</p>
           <ul className="flex flex-wrap gap-2">
@@ -211,7 +227,7 @@ export function EquipoManager({ members }: { members: AdminMember[] }) {
               <li key={m.id}>
                 <button
                   type="button"
-                  onClick={() => setEditing({ member: m, group: m.group })}
+                  onClick={() => edit(m)}
                   className="rounded-[var(--r-sm)] border border-border bg-card px-3 py-1.5 text-sm text-text2 hover:border-crimson hover:text-crimson-text"
                 >
                   {m.name}
@@ -233,6 +249,7 @@ export function EquipoManager({ members }: { members: AdminMember[] }) {
     </>
   );
 }
+
 
 function positionOf(members: AdminMember[], member: AdminMember) {
   const list = members.filter((m) => m.active && m.group === member.group);

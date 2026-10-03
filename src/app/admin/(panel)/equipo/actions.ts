@@ -170,6 +170,37 @@ export async function setMemberPhoto(id: string, photo: string): Promise<ActionS
   return { error: null };
 }
 
+/** Cambia la foto grupal de una lista (hoy solo Fundadores la muestra en /equipo). */
+export async function setGroupPhoto(group: TeamGroup, photo: string): Promise<ActionState> {
+  const actor = await requireSectionAccess(SECTION);
+  if (!photo || isPendingUpload(photo)) return { error: "La foto no se terminó de subir. Probá de nuevo." };
+
+  let replaced: string | null = null;
+  try {
+    await prisma.$transaction(async (tx) => {
+      const before = await tx.teamGroupPhoto.findUnique({ where: { group } });
+      await tx.teamGroupPhoto.upsert({ where: { group }, create: { group, photoUrl: photo }, update: { photoUrl: photo } });
+      await tx.auditLog.create({
+        data: {
+          adminUserId: actor.adminId,
+          section: SECTION,
+          entityId: `foto-grupal-${group}`,
+          action: before ? "update" : "create",
+          before: before ? { photoUrl: before.photoUrl } : undefined,
+          after: { photoUrl: photo },
+        },
+      });
+      replaced = before?.photoUrl ?? null;
+    });
+  } catch (err) {
+    return { error: errorMessage(err, "No se pudo cambiar la foto grupal.") };
+  }
+
+  if (replaced && replaced !== photo) await removeUnusedTeamFiles([replaced]);
+  revalidateTeam();
+  return { error: null };
+}
+
 /** Ocultar en vez de borrar: la ficha queda (y vuelve con un click), pero deja de verse en /equipo. */
 export async function setMemberActive(id: string, active: boolean): Promise<ActionState> {
   const actor = await requireSectionAccess(SECTION);
@@ -249,11 +280,14 @@ export async function deleteMember(id: string): Promise<ActionState> {
 async function removeUnusedTeamFiles(urls: string[]): Promise<void> {
   if (urls.length === 0) return;
   try {
-    const used = await prisma.teamMember.findMany({
-      where: { OR: [{ linkedinPhoto: { in: urls } }, { photoUrl: { in: urls } }] },
-      select: { linkedinPhoto: true, photoUrl: true },
-    });
-    const stillUsed = new Set(used.flatMap((m) => [m.linkedinPhoto, m.photoUrl]));
+    const [members, groupPhotos] = await Promise.all([
+      prisma.teamMember.findMany({
+        where: { OR: [{ linkedinPhoto: { in: urls } }, { photoUrl: { in: urls } }] },
+        select: { linkedinPhoto: true, photoUrl: true },
+      }),
+      prisma.teamGroupPhoto.findMany({ where: { photoUrl: { in: urls } }, select: { photoUrl: true } }),
+    ]);
+    const stillUsed = new Set([...members.flatMap((m) => [m.linkedinPhoto, m.photoUrl]), ...groupPhotos.map((g) => g.photoUrl)]);
     await removeStorageFiles(urls.filter((url) => !stillUsed.has(url)));
   } catch (err) {
     console.error("No se pudieron limpiar fotos del equipo:", err);

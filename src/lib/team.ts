@@ -69,3 +69,15 @@ export async function getCollaborators(): Promise<TeamMemberItem[]> {
     return seedCollaborators.map(fromSeed);
   }
 }
+
+/** Foto fija de Fundadores, la que se usa mientras no se suba otra desde /admin/equipo. */
+export const DEFAULT_FOUNDERS_PHOTO = "/equipo.jpg";
+
+export async function getFoundersPhoto(): Promise<string> {
+  try {
+    const row = await prisma.teamGroupPhoto.findUnique({ where: { group: "FOUNDER" } });
+    return row?.photoUrl ?? DEFAULT_FOUNDERS_PHOTO;
+  } catch {
+    return DEFAULT_FOUNDERS_PHOTO;
+  }
+}

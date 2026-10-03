@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { normalizeUrl } from "@/lib/links";
 import type { TeamMemberItem } from "@/lib/team";
@@ -22,15 +22,19 @@ export function initialsOf(name: string) {
 }
 
 export const FRAME = "relative aspect-square overflow-hidden border border-text bg-bg2 transition-colors duration-200 ease-club";
+const GITHUB_CIRCLE =
+  "absolute -right-2 -top-2 z-10 flex size-11 items-center justify-center overflow-hidden rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-colors duration-200 ease-club";
 export const SIZES = "(min-width: 1024px) 190px, (min-width: 640px) 22vw, 46vw";
 
 /**
  * Ficha de una persona: su foto de LinkedIn y, en la esquina, su avatar de GitHub en un círculo. La ficha lleva a
  * LinkedIn y el círculo a GitHub: son dos enlaces hermanos, nunca anidados. Sin foto de LinkedIn, la trama diagonal ("lugar reservado") con sus iniciales.
  * La foto de GitHub se toma en vivo de github.com; la de LinkedIn no se puede obtener sola, viene de `links.linkedinPhoto`.
+ * Con `controls` (el panel de /admin/equipo) se ve igual pero no lleva a ningún lado: los controles van encima.
  */
-export function TeamTile({ member }: { member: TeamMemberItem }) {
+export function TeamTile({ member, controls }: { member: TeamMemberItem; controls?: ReactNode }) {
   const { linkedin, linkedinPhoto, github } = member.links ?? {};
+  const linked = !controls;
   const photo = linkedinPhoto ?? member.photoUrl;
   const githubUser = githubUserOf(github);
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -55,9 +59,24 @@ export function TeamTile({ member }: { member: TeamMemberItem }) {
     </>
   );
 
+  const githubAvatar =
+    githubUser && !avatarFailed ? (
+      <Image
+        src={`https://github.com/${githubUser}.png?size=96`}
+        alt=""
+        width={44}
+        height={44}
+        unoptimized
+        onError={() => setAvatarFailed(true)}
+        className="size-full object-cover"
+      />
+    ) : (
+      <GithubIcon className="size-5" />
+    );
+
   return (
     <li className="group relative">
-      {linkedin ? (
+      {linked && linkedin ? (
         <a
           href={normalizeUrl(linkedin)}
           target="_blank"
@@ -70,34 +89,28 @@ export function TeamTile({ member }: { member: TeamMemberItem }) {
         </a>
       ) : (
         <div>
-          <div className={FRAME}>{face}</div>
+          <div className={`${FRAME} ${controls ? "group-hover:border-crimson" : ""}`}>{face}</div>
           {caption}
         </div>
       )}
 
-      {github && (
+      {github && !linked && (
+        <span className={`${GITHUB_CIRCLE} pointer-events-none`} aria-hidden="true">
+          {githubAvatar}
+        </span>
+      )}
+      {github && linked && (
         <a
           href={normalizeUrl(github)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`GitHub de ${member.name} (se abre en una pestaña nueva)`}
-          className="absolute -right-2 -top-2 z-10 flex size-11 items-center justify-center overflow-hidden rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-colors duration-200 ease-club hover:border-crimson focus-visible:border-crimson"
+          className={`${GITHUB_CIRCLE} hover:border-crimson focus-visible:border-crimson`}
         >
-          {githubUser && !avatarFailed ? (
-            <Image
-              src={`https://github.com/${githubUser}.png?size=96`}
-              alt=""
-              width={44}
-              height={44}
-              unoptimized
-              onError={() => setAvatarFailed(true)}
-              className="size-full object-cover"
-            />
-          ) : (
-            <GithubIcon className="size-5" />
-          )}
+          {githubAvatar}
         </a>
       )}
+      {controls}
     </li>
   );
 }
