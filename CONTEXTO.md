@@ -1,5 +1,7 @@
 # Contexto para retomar este proyecto
 
+> **Histórico (escrito el 2026-09-10).** Donde difiera de `DESIGN.md` (§3 y §8-11) o del `README.md`, valen esos.
+
 Este documento es para quien (persona o agente) se sume a trabajar en esta rama sin
 haber estado en la conversación donde se tomaron estas decisiones. Léelo antes de tocar
 nada — especialmente si venís a trabajar en diseño/frontend.
@@ -30,7 +32,7 @@ por PR contra `v2`, no contra `main` — ver README.md para el flujo completo.
   como acentos (`--crimson #a40c4c`, `--rose #ddaabc`, `--mauve #8f5261`). El dueño del
   proyecto rechazó explícitamente reemplazar esto por una paleta nueva.
 - **Tipografía**: Syne (headings) + Outfit (body) + JetBrains Mono (labels/datos) + Anton
-  (reservada para las letras del logo en el hero). Ya están cargadas vía `next/font/google`
+  (ver reglas en DESIGN.md §3). Ya están cargadas vía `next/font/google`
   en `src/app/layout.tsx`.
 - Contenido y commits en **español** (ver README.md, sección Convenciones).
 

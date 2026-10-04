@@ -70,7 +70,7 @@ JETBRAINS MONO (font-mono)► Datos técnicos, fechas, métricas, botones técni
 ```
 
 ### Reglas de Aplicación Tipográfica:
-1. **Anton (`var(--font-anton)`)**: Reservada para el hero ("AIR"), las letras del brazo robótico y palabras monumentales en mayúsculas sostenidas.
+1. **Anton (`var(--font-anton)`)**: el hero ("AIR") y las letras del brazo robótico; el título de cada subpágina (`AIR TALKS`, `EQUIPO`, `CONTACTO`); los numerales grandes (fechas, conteos, cuenta regresiva); los títulos de sección de `/contacto` y las frases insignia (`IdeaCallout`). No para cuerpo ni etiquetas. Las excepciones por página están en §8-11 (por ejemplo, el carrusel de la landing va en Syne).
 2. **Syne (`var(--font-syne)`)**: Pesos 800/900 (`font-extrabold` / `font-black`), tracking tight (`tracking-tight`), interlineado compacto (`leading-[0.95]`). Siempre mayúsculas en encabezados principales.
 3. **Outfit (`var(--font-outfit)`)**: Para el cuerpo de texto. Mantener un ancho de línea óptimo (`max-w-[65ch]` a `max-w-[75ch]`) con `leading-[1.7]`.
 4. **JetBrains Mono (`var(--font-jbmono)`)**: Metadatos, etiquetas de estado `[EN DESARROLLO]`, botones de acción y coordenadas. Siempre en mayúsculas cuando se use como etiqueta técnica (`uppercase tracking-[0.14em]`).
