@@ -1,4 +1,4 @@
-// Sube un archivo directo a Supabase Storage con la URL firmada que devuelve prepareTalkUploads.
+// Sube un archivo directo a Supabase Storage con la URL firmada de signUpload (ver storage.ts).
 // XMLHttpRequest y no fetch: fetch no informa el progreso de subida, y con videos de decenas de MB
 // hace falta la barra para que nadie cierre la pestaña creyendo que se colgó.
 export function uploadToSignedUrl(signedUrl: string, file: File, onProgress: (fraction: number) => void): Promise<void> {

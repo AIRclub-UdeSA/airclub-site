@@ -5,6 +5,7 @@ import { requireAdminSession } from "@/lib/admin/permissions";
 const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
   { href: "/admin", label: "Inicio", section: null },
   { href: "/admin/talks", label: "Charlas", section: "talks" },
+  { href: "/admin/equipo", label: "Equipo", section: "equipo" },
 ];
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
