@@ -4,7 +4,6 @@ import "./globals.css";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { ScrollTopButton } from "@/components/layout/ScrollTopButton";
 import { ParticlesBackground } from "@/components/shared/ParticlesBackground";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
@@ -50,7 +49,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Nav />
         <main id="main-content">{children}</main>
         <Footer />
-        <ThemeToggle />
         <ScrollTopButton />
       </body>
     </html>

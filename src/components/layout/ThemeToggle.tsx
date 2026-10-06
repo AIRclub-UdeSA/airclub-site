@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { cn } from "@/lib/utils";
 
 function subscribe(callback: () => void) {
   const observer = new MutationObserver(callback);
@@ -18,7 +19,7 @@ function getServerSnapshot() {
   return false;
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const dark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggle() {
@@ -35,10 +36,22 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label="Cambiar tema claro/oscuro"
-      className="fixed bottom-20 right-6 z-[200] flex h-[42px] w-[42px] items-center justify-center rounded-full border-[1.5px] border-border bg-bg2 text-[1.1rem] shadow-[0_2px_12px_rgba(164,12,76,.15)] transition-all hover:scale-110 hover:border-crimson"
+      aria-label={dark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center rounded-full text-text2 transition-colors hover:text-crimson-text",
+        className
+      )}
     >
-      {dark ? "☀️" : "🌙"}
+      {/* Parche de contraste, como el de densidad de una prueba de imprenta. El giro sale de la
+          clase `dark` y no del estado, así no se anima al cargar con el tema oscuro guardado. */}
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        className="h-8 w-8 transition-transform duration-200 ease-out motion-reduce:transition-none dark:rotate-180"
+      >
+        <circle cx="12" cy="12" r="11.625" fill="none" stroke="currentColor" strokeWidth="0.75" />
+        <path d="M12 .375a11.625 11.625 0 0 1 0 23.25z" fill="currentColor" />
+      </svg>
     </button>
   );
 }
