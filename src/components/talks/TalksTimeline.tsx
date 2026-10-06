@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Presentation } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff, Presentation } from "lucide-react";
 import type { TalkMedia, TalkSlide, TalkSpeaker } from "@/lib/talks";
 import type { TalkSection } from "./TalkModal";
 import { talkCover, talkDateParts } from "@/lib/talk-format";
@@ -30,19 +30,33 @@ export type TimelineTalk = {
   category?: "talk" | "workshop" | "competition" | "meetup";
   capacity?: number;
   prerequisites?: string;
+  /** Borrador: solo llega a /admin/talks, que lo muestra apagado. */
+  draft?: boolean;
+};
+
+/**
+ * Lo que /admin/talks suma sobre la misma vista de /talks (ver TalksHub): sin esto, todo se ve
+ * exactamente como el sitio.
+ */
+export type TalksEdit = {
+  /** Controles de una charla (el lápiz) sobre su tarjeta. Arriba no van: la próxima y la última salen solas de las fechas. */
+  controls: (talk: TimelineTalk) => ReactNode;
+  /** Contenido de la columna extra al final de la línea de tiempo, para agregar una charla. */
+  add: ReactNode;
 };
 
 interface TalksTimelineProps {
   talks: TimelineTalk[];
   nextSlug: string | null;
   onOpenTalk: (slug: string, section?: TalkSection) => void;
+  edit?: TalksEdit;
 }
 
 type Item = { kind: "talk"; talk: TimelineTalk } | { kind: "today" };
 
 const GUTTER = "px-4 sm:px-8 md:px-12";
 
-export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProps) {
+export function TalksTimeline({ talks, nextSlug, onOpenTalk, edit }: TalksTimelineProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -131,7 +145,8 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
       >
         <ol className="flex items-stretch">
           {items.map((item, i) => {
-            const edge = i === 0 ? "first" : i === items.length - 1 ? "last" : undefined;
+            // En el panel la última es la columna de agregar.
+            const edge = i === 0 ? "first" : i === items.length - 1 && !edit ? "last" : undefined;
             if (item.kind === "today") {
               return <TodayColumn key="today" edge={edge} />;
             }
@@ -142,9 +157,18 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk }: TalksTimelineProp
                 isNext={item.talk.slug === nextSlug}
                 edge={edge}
                 onOpenTalk={onOpenTalk}
+                controls={edit?.controls(item.talk)}
               />
             );
           })}
+          {edit && (
+            <li data-edge="last" className="flex w-[min(80vw,23rem)] shrink-0 snap-start flex-col pr-5">
+              <div className="relative h-10" aria-hidden="true">
+                <span className="absolute inset-x-0 top-1/2 border-t border-dashed border-crimson-text/60" />
+              </div>
+              {edit.add}
+            </li>
+          )}
         </ol>
       </div>
     </section>
@@ -202,11 +226,13 @@ function TalkColumn({
   isNext,
   edge,
   onOpenTalk,
+  controls,
 }: {
   talk: TimelineTalk;
   isNext: boolean;
   edge?: "first" | "last";
   onOpenTalk: TalksTimelineProps["onOpenTalk"];
+  controls?: ReactNode;
 }) {
   const upcoming = Boolean(talk.isUpcoming);
   const cover = talkCover(talk.media);
@@ -241,12 +267,23 @@ function TalkColumn({
         className={cn(
           "group relative flex flex-1 flex-col border border-text bg-card transition-transform duration-200 ease-out hover:-translate-y-1",
           cover && !upcoming && "talk-photo-host",
+          talk.draft && "border-dashed",
         )}
       >
+        {controls}
+        {talk.draft && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex aspect-[4/3] items-center justify-center">
+            <span className="flex items-center gap-2 border border-text bg-card px-3 py-1.5 font-mono text-[.72rem] font-bold uppercase tracking-[.12em] text-text">
+              <EyeOff size={16} aria-hidden="true" />
+              Borrador
+            </span>
+          </div>
+        )}
         {/* Cuerpo de la entrada: la fecha manda. Foto en blanco y negro (pasado), carmesí (la próxima) o trama (por confirmar). */}
         <div
           className={cn(
             "relative aspect-[4/3] overflow-hidden border-b border-text",
+            talk.draft && "opacity-40",
             cover && !upcoming && "bg-[#140a0e] text-white",
             !cover && !upcoming && "bg-bg2 text-text",
             isNext && "bg-crimson text-white",
@@ -300,7 +337,7 @@ function TalkColumn({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col p-5">
+        <div className={cn("flex flex-1 flex-col p-5", talk.draft && "opacity-50")}>
           <p className="font-mono text-[.74rem] uppercase tracking-[.14em] text-text3">{talk.subtitle}</p>
           <h3 className="mt-2 line-clamp-3 font-display text-[1.3rem] font-bold leading-[1.15] tracking-tight text-text">
             <button

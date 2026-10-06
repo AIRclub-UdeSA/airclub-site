@@ -78,11 +78,18 @@ function slugify(text: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+// Slug de una charla nueva: título + día, así dos "Charla a confirmar" no chocan (el slug es único).
+// No se muestra: es un identificador interno, y el de una charla ya creada no cambia.
+function autoSlug(title: string, date: string): string {
+  return [slugify(title) || "charla", date].filter(Boolean).join("-");
+}
+
 export function TalkForm({
   editingId,
   initialValues,
   storagePrefix,
   onDone,
+  onSavingChange,
 }: {
   /** Presente sólo cuando se edita una charla existente (dispara updateTalk en vez de createTalk). */
   editingId?: string;
@@ -91,6 +98,8 @@ export function TalkForm({
   /** Prefijo de las URLs públicas de nuestro bucket, para avisar cuando se pega un link de foto de otro sitio. */
   storagePrefix: string | null;
   onDone: () => void;
+  /** Avisa cuando empieza y termina de guardar (el panel lateral no se cierra mientras sube). */
+  onSavingChange?: (saving: boolean) => void;
 }) {
   const isEditing = !!editingId;
   const values = initialValues;
@@ -100,13 +109,15 @@ export function TalkForm({
   const [progress, setProgress] = useState<string | null>(null);
   // Archivos elegidos pero todavía no subidos, por marcador (ver FileField).
   const pendingFiles = useRef(new Map<string, File>());
-  const slugTouched = useRef(isEditing);
   const titleRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
   const [speakerAvatar, setSpeakerAvatar] = useState(values?.speakerAvatar ?? "");
   const [multiDay, setMultiDay] = useState(() => isDifferentDay(values?.startsAt ?? null, values?.endsAt ?? null));
 
   // Mientras sube, cerrar la pestaña cortaría la subida a la mitad: el navegador pide confirmación.
+  useEffect(() => onSavingChange?.(saving), [saving, onSavingChange]);
+
   useEffect(() => {
     if (!saving) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -120,7 +131,13 @@ export function TalkForm({
     return placeholder;
   }
 
-  const fileName = (placeholder: string) => pendingFiles.current.get(placeholder)?.name;
+  const pendingFile = (placeholder: string) => pendingFiles.current.get(placeholder);
+
+  // En una charla nueva, el slug sigue al título y al día.
+  function updateSlug() {
+    if (isEditing || !slugRef.current) return;
+    slugRef.current.value = autoSlug(titleRef.current?.value ?? "", dateRef.current?.value ?? "");
+  }
 
   // Orden: validar los datos, recién ahí subir los archivos (directo a Storage) y por último guardar.
   // Si algo falla después de subir, se borra lo recién subido para no dejar archivos sueltos.
@@ -174,6 +191,12 @@ export function TalkForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[var(--r-md)] border border-border bg-card-muted p-5">
       {isEditing && <input type="hidden" name="id" value={editingId} />}
+      <input
+        ref={slugRef}
+        type="hidden"
+        name="slug"
+        defaultValue={values?.slug || (isEditing ? "" : autoSlug(values?.title ?? "", toDatePart(values?.startsAt ?? null)))}
+      />
 
       <fieldset className="flex flex-col gap-3">
         <legend className="font-mono text-xs uppercase tracking-wide text-text3">Básico</legend>
@@ -186,31 +209,13 @@ export function TalkForm({
               name="title"
               required
               defaultValue={values?.title ?? ""}
-              onChange={(e) => {
-                if (!slugTouched.current && slugRef.current) slugRef.current.value = slugify(e.target.value);
-              }}
+              onChange={updateSlug}
               className={inputClass}
             />
           </label>
           <label className={labelClass}>
             Subtítulo
             <input type="text" name="subtitle" required defaultValue={values?.subtitle ?? ""} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            Slug
-            <input
-              ref={slugRef}
-              type="text"
-              name="slug"
-              required
-              pattern="[a-z0-9\-]+"
-              title="Solo minúsculas, números y guiones"
-              defaultValue={values?.slug ?? ""}
-              onChange={() => {
-                slugTouched.current = true;
-              }}
-              className={inputClass}
-            />
           </label>
         </div>
         <label className="flex flex-col gap-1 text-sm text-text2">
@@ -234,7 +239,14 @@ export function TalkForm({
         <div className="flex flex-wrap gap-3">
           <label className={labelClass}>
             Día
-            <input type="date" name="date" defaultValue={toDatePart(values?.startsAt ?? null)} className={inputClass} />
+            <input
+              ref={dateRef}
+              type="date"
+              name="date"
+              defaultValue={toDatePart(values?.startsAt ?? null)}
+              onChange={updateSlug}
+              className={inputClass}
+            />
           </label>
           <label className={labelClass}>
             Hora de inicio (opcional)
@@ -310,7 +322,7 @@ export function TalkForm({
               placeholder="https://…"
               storagePrefix={storagePrefix}
               pickFile={pickFile}
-              fileName={fileName}
+              pendingFile={pendingFile}
             />
           </div>
           <label className={labelClass}>
@@ -357,6 +369,24 @@ export function TalkForm({
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
+        <legend className="font-mono text-xs uppercase tracking-wide text-text3">Inscripción (antes de la charla)</legend>
+        <div className="flex flex-wrap gap-3">
+          <label className={labelClass}>
+            Texto del botón
+            <input type="text" name="ctaLabel" placeholder="Inscribirse a la charla" defaultValue={values?.ctaLabel ?? ""} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Link del botón
+            <input type="url" name="ctaUrl" placeholder="https://forms.gle/…" defaultValue={values?.ctaUrl ?? ""} className={inputClass} />
+          </label>
+        </div>
+        <p className="text-xs text-text3">
+          El botón aparece en el panel de la próxima charla, en su tarjeta del cronograma y en su detalle. Cuando la charla termina se
+          oculta solo, así que en una charla pasada no hace falta borrarlo.
+        </p>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
         <legend className="font-mono text-xs uppercase tracking-wide text-text3">Fotos y videos (la primera es la portada)</legend>
         <ListEditor<MediaItem>
           name="media"
@@ -383,7 +413,7 @@ export function TalkForm({
                 placeholder="URL de la foto/video"
                 storagePrefix={storagePrefix}
                 pickFile={pickFile}
-                fileName={fileName}
+                pendingFile={pendingFile}
               />
               {item.type === "IMAGE" && (
                 <div className="flex flex-wrap items-center gap-3 text-xs text-text2">
@@ -418,7 +448,7 @@ export function TalkForm({
                   placeholder="URL del poster (miniatura)"
                   storagePrefix={storagePrefix}
                   pickFile={pickFile}
-                  fileName={fileName}
+                  pendingFile={pendingFile}
                 />
               )}
             </>
@@ -470,6 +500,15 @@ export function TalkForm({
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
+        <legend className="font-mono text-xs uppercase tracking-wide text-text3">Grabación (después de la charla)</legend>
+        <label className="flex flex-col gap-1 text-sm text-text2">
+          Link del video completo en YouTube
+          <input type="url" name="recordingUrl" placeholder="https://www.youtube.com/watch?v=…" defaultValue={values?.recordingUrl ?? ""} className={inputClass} />
+        </label>
+        <p className="text-xs text-text3">Si está, el detalle de la charla suma una pestaña &ldquo;Video&rdquo; con el video incrustado.</p>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
         <legend className="font-mono text-xs uppercase tracking-wide text-text3">Links de interés</legend>
         <ListEditor<LinkItem>
           name="links"
@@ -498,24 +537,6 @@ export function TalkForm({
             </>
           )}
         />
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-3">
-        <legend className="font-mono text-xs uppercase tracking-wide text-text3">Grabación y botón principal</legend>
-        <div className="flex flex-wrap gap-3">
-          <label className={labelClass}>
-            Grabación completa (YouTube)
-            <input type="url" name="recordingUrl" defaultValue={values?.recordingUrl ?? ""} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            Texto del botón
-            <input type="text" name="ctaLabel" defaultValue={values?.ctaLabel ?? ""} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            URL del botón
-            <input type="url" name="ctaUrl" defaultValue={values?.ctaUrl ?? ""} className={inputClass} />
-          </label>
-        </div>
       </fieldset>
 
       <div className="flex items-center gap-4">

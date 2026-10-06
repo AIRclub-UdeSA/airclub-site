@@ -1,58 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useRef, useState } from "react";
-import { formatEventDate } from "@/lib/dates";
-import { deleteTalk, toggleConfirmed, type ActionState } from "./actions";
+import { useEffect, useState, type ComponentProps } from "react";
+import { Plus, X } from "lucide-react";
+import { TalksHub } from "@/components/talks/TalksHub";
+import { deleteTalk } from "./actions";
 import { TalkForm, type EditingTalk } from "./TalkForm";
-
-const initialState: ActionState = { error: null };
-
-function formatTalkDate(talk: { startsAt: Date | null; dateLabel: string | null }): string {
-  // dateLabel es el texto curado a mano para cuando el día/horario exacto no está cerrado
-  // (ej. "Semana del 12 al 16 de octubre") — más preciso que formatear el startsAt crudo.
-  if (talk.dateLabel) return talk.dateLabel;
-  if (talk.startsAt) return formatEventDate(talk.startsAt);
-  return "Sin fecha";
-}
-
-function ToggleConfirmedButton({ id, confirmed }: { id: string; confirmed: boolean }) {
-  const [state, formAction, pending] = useActionState(toggleConfirmed, initialState);
-  return (
-    <form action={formAction} className="flex flex-col items-end gap-1">
-      <input type="hidden" name="id" value={id} />
-      <input type="hidden" name="confirmed" value={String(!confirmed)} />
-      <button
-        type="submit"
-        disabled={pending}
-        className={confirmed ? "text-xs text-text3 hover:text-crimson-text" : "text-xs font-semibold text-crimson-text hover:underline"}
-      >
-        {pending ? "…" : confirmed ? "Marcar a confirmar" : "Marcar confirmada"}
-      </button>
-      {state.error && <p className="text-xs text-crimson">{state.error}</p>}
-    </form>
-  );
-}
-
-function RemoveTalkButton({ id, title }: { id: string; title: string }) {
-  const [state, formAction, pending] = useActionState(deleteTalk, initialState);
-  return (
-    <form action={formAction} className="flex flex-col items-end gap-1">
-      <input type="hidden" name="id" value={id} />
-      <button
-        type="submit"
-        disabled={pending}
-        onClick={(e) => {
-          if (!confirm(`¿Borrar "${title}"? Esta acción no se puede deshacer.`)) e.preventDefault();
-        }}
-        className="text-sm font-medium text-crimson-text hover:underline disabled:opacity-60"
-      >
-        {pending ? "Borrando…" : "Borrar"}
-      </button>
-      {state.error && <p className="max-w-[16rem] text-right text-xs text-crimson">{state.error}</p>}
-    </form>
-  );
-}
+import { PencilButton } from "../PencilButton";
 
 // Plantilla para "nueva charla a confirmar": mismo patrón que las charlas placeholder que ya
 // existían (segundo-air-talk/tercer-air-talk) — título/resumen genéricos, sin orador todavía,
@@ -83,82 +37,160 @@ const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
   links: [],
 };
 
-type FormSeed = { kind: "blank" } | { kind: "template" } | { kind: "edit"; talk: EditingTalk };
+type HubProps = Omit<ComponentProps<typeof TalksHub>, "edit">;
+
+/** "Agregar" con la forma de una tarjeta del cronograma todavía sin datos (la trama de "a confirmar"). */
+function AddTalk({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex flex-1 flex-col border border-dashed border-text bg-card text-left transition-colors hover:border-crimson"
+    >
+      <span className="talk-hatch flex aspect-[4/3] items-center justify-center border-b border-dashed border-text text-text group-hover:text-crimson-text">
+        <Plus size={64} strokeWidth={1.5} aria-hidden="true" />
+      </span>
+      <span className="flex flex-col p-5">
+        <span className="font-display text-[1.3rem] font-bold leading-[1.15] tracking-tight text-text transition-colors group-hover:text-crimson-text">
+          Agregar charla
+        </span>
+        <span className="mt-2 text-[.92rem] leading-snug text-text3">Arranca como &ldquo;a confirmar&rdquo;: alcanza con la fecha.</span>
+      </span>
+    </button>
+  );
+}
 
 export function TalksManager({
+  hub,
   talks,
   showLogsLink,
   storagePrefix,
 }: {
+  hub: HubProps;
   talks: EditingTalk[];
   showLogsLink: boolean;
   storagePrefix: string | null;
 }) {
-  const [seed, setSeed] = useState<FormSeed>({ kind: "blank" });
-  const formRef = useRef<HTMLDivElement>(null);
-
-  function startEditing(talk: EditingTalk) {
-    setSeed({ kind: "edit", talk });
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function startTemplate() {
-    setSeed({ kind: "template" });
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  const editingId = seed.kind === "edit" ? seed.talk.id : undefined;
-  const initialValues = seed.kind === "edit" ? seed.talk : seed.kind === "template" ? NEW_TBD_TEMPLATE : null;
-  const formKey = seed.kind === "edit" ? seed.talk.id : seed.kind;
+  // null = cerrado; { talk: null } = charla nueva.
+  const [editing, setEditing] = useState<{ talk: EditingTalk | null } | null>(null);
+  const bySlug = new Map(talks.map((t) => [t.slug, t]));
 
   return (
-    <div className="flex flex-col gap-8">
-      <div ref={formRef} className="flex flex-col gap-3">
-        {seed.kind === "blank" && (
-          <button type="button" onClick={startTemplate} className="w-fit text-sm font-medium text-text2 hover:text-crimson-text">
-            + Nueva charla &ldquo;a confirmar&rdquo; (plantilla, sin llenar todo a mano)
-          </button>
-        )}
-        <TalkForm
-          key={formKey}
-          editingId={editingId}
-          initialValues={initialValues}
-          storagePrefix={storagePrefix}
-          onDone={() => setSeed({ kind: "blank" })}
-        />
-      </div>
+    <>
+      <TalksHub
+        {...hub}
+        edit={{
+          controls: (t) => {
+            const talk = bySlug.get(t.slug);
+            if (!talk) return null;
+            return (
+              <PencilButton
+                label={`Editar "${t.title}"`}
+                onClick={() => setEditing({ talk })}
+                className="left-3 top-3"
+              />
+            );
+          },
+          add: <AddTalk onClick={() => setEditing({ talk: null })} />,
+        }}
+      />
 
-      {talks.length === 0 ? (
-        <p className="text-sm text-text3">Todavía no hay charlas cargadas.</p>
-      ) : (
-        <ul className="divide-y divide-border/60 border-y border-border/60">
-          {talks.map((talk) => (
-            <li key={talk.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <div>
-                <p className="font-medium text-text">{talk.title}</p>
-                <p className="font-mono text-xs text-text3">
-                  {talk.slug} · {formatTalkDate(talk)} · {talk.media.length} media · {talk.slides.length} slides · {talk.links.length} links
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="font-mono text-xs uppercase tracking-wide text-text2">
-                  {talk.status === "PUBLISHED" ? "Publicada" : "Borrador"}
-                </span>
-                <ToggleConfirmedButton id={talk.id} confirmed={talk.confirmed} />
-                <button type="button" onClick={() => startEditing(talk)} className="text-sm font-medium text-text2 hover:text-crimson-text">
-                  Editar
-                </button>
-                {showLogsLink && (
-                  <Link href={`/admin/logs?entityId=${talk.id}`} className="text-sm font-medium text-text2 hover:text-crimson-text">
-                    Historial
-                  </Link>
-                )}
-                <RemoveTalkButton id={talk.id} title={talk.title} />
-              </div>
-            </li>
-          ))}
-        </ul>
+      {editing && (
+        <TalkDrawer
+          key={editing.talk?.id ?? "new"}
+          talk={editing.talk}
+          showLogsLink={showLogsLink}
+          storagePrefix={storagePrefix}
+          onClose={() => setEditing(null)}
+        />
       )}
+    </>
+  );
+}
+
+/** Panel lateral con el formulario de una charla (o de una nueva), más borrar e historial. */
+function TalkDrawer({
+  talk,
+  showLogsLink,
+  storagePrefix,
+  onClose,
+}: {
+  talk: EditingTalk | null;
+  showLogsLink: boolean;
+  storagePrefix: string | null;
+  onClose: () => void;
+}) {
+  const [blank, setBlank] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
+
+  async function remove(target: EditingTalk) {
+    if (!confirm(`¿Borrar "${target.title}"? Esta acción no se puede deshacer.`)) return;
+    setBusy(true);
+    setError(null);
+    const formData = new FormData();
+    formData.set("id", target.id);
+    try {
+      const result = await deleteTalk({ error: null }, formData);
+      if (result.error) setError(result.error);
+      else onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo borrar la charla.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[1100] flex justify-end" role="dialog" aria-modal="true" aria-label={talk ? `Editar "${talk.title}"` : "Agregar charla"}>
+      <button type="button" aria-label="Cerrar" onClick={() => !busy && onClose()} className="absolute inset-0 bg-black/40" />
+
+      <div className="relative flex h-full w-full max-w-2xl flex-col gap-5 overflow-y-auto border-l border-border bg-bg p-6 shadow-xl">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="font-display text-lg font-bold text-text">{talk ? talk.title : "Agregar charla"}</h3>
+          <button type="button" onClick={onClose} disabled={busy} aria-label="Cerrar" className="text-text3 hover:text-crimson-text">
+            <X size={20} />
+          </button>
+        </div>
+
+        {!talk && (
+          <p className="text-sm text-text2">
+            {blank ? "Formulario en blanco." : "Arranca como “Charla a confirmar”: completá la fecha y guardá; el resto se carga cuando se confirme."}{" "}
+            <button type="button" disabled={busy} onClick={() => setBlank(!blank)} className="font-medium text-crimson-text hover:underline">
+              {blank ? "Usar la plantilla “a confirmar”" : "Empezar en blanco"}
+            </button>
+          </p>
+        )}
+
+        <TalkForm
+          key={blank ? "blank" : "template"}
+          editingId={talk?.id}
+          initialValues={talk ?? (blank ? null : NEW_TBD_TEMPLATE)}
+          storagePrefix={storagePrefix}
+          onDone={onClose}
+          onSavingChange={setBusy}
+        />
+
+        {talk && (
+          <div className="flex flex-wrap items-center justify-end gap-4 border-t border-border pt-4">
+            {error && <p className="mr-auto text-sm text-crimson">{error}</p>}
+            {showLogsLink && (
+              <Link href={`/admin/logs?entityId=${talk.id}`} className="text-sm font-medium text-text2 hover:text-crimson-text">
+                Historial
+              </Link>
+            )}
+            <button type="button" disabled={busy} onClick={() => remove(talk)} className="text-sm font-medium text-crimson-text hover:underline disabled:opacity-60">
+              Borrar charla
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

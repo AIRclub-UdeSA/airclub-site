@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Pencil, Plus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { FRAME, SIZES, TeamTile, initialsOf } from "@/components/equipo/TeamTile";
 import { TeamSections } from "@/components/equipo/TeamSections";
 import type { GroupPhoto, TeamMemberItem } from "@/lib/team";
@@ -19,6 +19,7 @@ import {
   type ActionState,
   type TeamGroup,
 } from "./actions";
+import { PencilButton } from "../PencilButton";
 
 export type AdminMember = {
   id: string;
@@ -64,21 +65,6 @@ function Face({ name, photo }: { name: string; photo: string }) {
     return <img src={photo} alt="" className="absolute inset-0 size-full object-cover" />;
   }
   return <Image src={photo} alt="" fill sizes={SIZES} className="object-cover" />;
-}
-
-/** El lápiz, siempre a la vista: es la única forma de editar (tocar la foto o el nombre no hace nada). */
-function PencilButton({ label, onClick, className }: { label: string; onClick: () => void; className: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`absolute z-20 flex size-11 items-center justify-center rounded-full border border-text bg-bg text-text ring-2 ring-bg transition-colors duration-200 ease-club hover:border-crimson hover:text-crimson-text ${className}`}
-    >
-      <Pencil size={18} aria-hidden="true" />
-    </button>
-  );
 }
 
 /** "Agregar" con la forma de una ficha vacía de /equipo (la trama de "lugar reservado"). */
