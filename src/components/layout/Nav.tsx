@@ -10,6 +10,7 @@ import { signInAction } from "@/lib/admin/auth-actions";
 import { cn } from "@/lib/utils";
 import { NavHoverHighlight } from "./NavHoverHighlight";
 import { SignOutButton } from "./SignOutButton";
+import { ThemeToggle } from "./ThemeToggle";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -34,6 +35,9 @@ function NavContent() {
   const isHome = pathname === "/";
   const [visible, setVisible] = useState(!isHome);
   const [scrolled, setScrolled] = useState(false);
+  // Fuera de la landing se oculta al bajar y reaparece apenas se sube un poco.
+  const [hiddenByScroll, setHiddenByScroll] = useState(false);
+  const lastY = useRef(0);
   const [open, setOpen] = useState(false);
 
   // Cierra el menu mobile en cuanto cambia la ruta, ajustando el estado en el
@@ -43,6 +47,7 @@ function NavContent() {
     setPrevPathname(pathname);
     setOpen(false);
     setVisible(pathname !== "/");
+    setHiddenByScroll(false);
   }
 
   useEffect(() => {
@@ -55,12 +60,20 @@ function NavContent() {
         setVisible(true);
       }
       setScrolled(window.scrollY > 50);
+
+      // En la landing la barra ya tiene su propia lógica de aparición (el umbral de arriba).
+      const y = window.scrollY;
+      const dy = y - lastY.current;
+      lastY.current = y;
+      if (isHome || y < 80 || dy < -4) setHiddenByScroll(false);
+      else if (dy > 0) setHiddenByScroll(true);
     }
 
     function onEnter() {
       setVisible(true);
     }
 
+    lastY.current = window.scrollY;
     checkVisibility();
     window.addEventListener("scroll", checkVisibility, { passive: true });
     window.addEventListener("air-enter-club", onEnter);
@@ -70,19 +83,20 @@ function NavContent() {
     };
   }, [isHome]);
 
-  const shown = visible || open;
+  // Con el menú mobile abierto la barra no se esconde, aunque se scrollee.
+  const shown = (visible && !hiddenByScroll) || open;
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-3.5 z-[1000] px-4 pointer-events-none transition-all duration-300 ease-out focus-within:translate-y-0 focus-within:opacity-100",
+        "fixed inset-x-0 top-3.5 z-[1000] px-4 pointer-events-none transition-all duration-200 ease-out motion-reduce:transition-none has-[:focus-visible]:translate-y-0 has-[:focus-visible]:opacity-100",
         shown ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0"
       )}
     >
       <nav
         aria-label="Navegación principal"
         className={cn(
-          "mx-auto flex max-w-4xl items-center justify-between rounded-full border border-border bg-bg/85 px-4 py-2 backdrop-blur-xl transition-all duration-300 focus-within:pointer-events-auto",
+          "mx-auto flex max-w-4xl items-center justify-between rounded-full border border-border bg-bg/85 px-4 py-2 backdrop-blur-xl transition-all duration-300 has-[:focus-visible]:pointer-events-auto",
           shown ? "pointer-events-auto" : "pointer-events-none",
           scrolled ? "border-border-strong/20 shadow-[0_4px_24px_rgba(0,0,0,0.06)] bg-bg/95" : ""
         )}
@@ -110,6 +124,8 @@ function NavContent() {
         </NavHoverHighlight>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           <AccountMenu className="hidden sm:block" />
 
           <Link

@@ -297,3 +297,23 @@ La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, si
 * **Acentos con interlineado apretado**: en Anton con `leading-[0.92]` el acento de la É de "SÉ" pisaba la A de "UNA" de la línea de arriba. Usar `1.04` en frases con tildes.
 * **Títulos de `ActivityPanel` con palabras largas** ("DESBLOQUEANDO"): sin permitir el corte de palabra ensanchaban la página en mobile.
 * En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El robot de `RosmasterTrack` cruza la pista en bucle, también con `reducedMotion: "reduce"` (la animación no lo respeta): una captura lo agarra en cualquier punto, a veces cortado en el borde. No es un error de encuadre.
+
+---
+
+## 12. Barra de navegación (`Nav.tsx`) y toggle de tema
+
+### Comportamiento
+* **Landing (`/`)**: la barra aparece recién al pasar el umbral de scroll (`min(35% del alto de la ventana, 260 px)`) o con "Entrar al club" (evento `air-enter-club`), y después no se esconde.
+* **Resto de las páginas**: se esconde al bajar y reaparece apenas se sube 4 px. Siempre se ve a menos de 80 px del tope, con el menú mobile abierto o con foco de teclado adentro. Transición de 200 ms, sin animación con `prefers-reduced-motion`.
+* **Toggle de tema** (`ThemeToggle.tsx`): vive en la píldora, a la izquierda del botón de cuenta (en mobile, al lado de la hamburguesa). Es un parche de contraste (círculo con una mitad rellena, como el de densidad de una prueba de imprenta) del mismo tamaño que el botón de cuenta (32 px, anillo de 1 px). Al cambiar de tema la mitad rellena gira 180°. El giro sale de la clase `dark` y no del estado de React, así no se anima al cargar con el tema oscuro guardado.
+
+### Rechazado (no reintroducir)
+* El botón flotante con emojis (🌙 / ☀️) y `hover:scale-110`.
+* Sol y luna de `lucide-react`: obligan a pensar si el ícono muestra el tema actual o el que viene.
+* Halo alrededor del toggle (luz en oscuro, sombra en claro): se probó y no se eligió.
+
+### Pendiente
+* El dueño no está del todo conforme con el toggle; es lo mejor que se encontró por ahora. Se puede cambiar si aparece una idea mejor.
+
+### Trampas conocidas
+* **`focus-within` traba la barra**: al hacer clic en un link de la barra el foco queda en él, y como Next navega sin recargar, en la página nueva la barra seguía "con foco" y no se escondía hasta recargar. Por eso la condición es `has-[:focus-visible]` (solo foco de teclado).
