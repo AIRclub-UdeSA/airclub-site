@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { TimelineTalk } from "./TalksTimeline";
+import type { TalksEdit, TimelineTalk } from "./TalksTimeline";
 import { TalksHero } from "./TalksHero";
 import { TalksTimeline } from "./TalksTimeline";
 import { CallForSpeakers } from "./CallForSpeakers";
@@ -14,9 +14,11 @@ interface TalksHubProps {
   /** ISO del momento del render en el servidor; alimenta el marcador HOY. */
   todayIso: string;
   daysUntilNext: string | null;
+  /** Solo /admin/talks: lápices y "agregar" sobre el cronograma (ver TalksEdit). */
+  edit?: TalksEdit;
 }
 
-export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilNext }: TalksHubProps) {
+export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilNext, edit }: TalksHubProps) {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<TalkSection>("overview");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,7 +48,7 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
         onOpenTalk={handleOpenTalk}
       />
 
-      <TalksTimeline talks={talks} nextSlug={nextSlug} onOpenTalk={handleOpenTalk} />
+      <TalksTimeline talks={talks} nextSlug={nextSlug} onOpenTalk={handleOpenTalk} edit={edit} />
 
       <CallForSpeakers />
 

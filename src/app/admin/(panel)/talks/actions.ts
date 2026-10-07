@@ -204,7 +204,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return { error: "Ya existe una charla con ese slug." };
+      return { error: "Ya hay una charla con el mismo título y día." };
     }
     return { error: err instanceof Error ? err.message : "No se pudo crear la charla." };
   }
@@ -347,7 +347,7 @@ export async function validateTalkForm(formData: FormData): Promise<ActionState>
 
   const id = str(formData, "id");
   const sameSlug = await prisma.talk.findFirst({ where: { slug: data.slug, ...(id && { NOT: { id } }) }, select: { id: true } });
-  if (sameSlug) return { error: id ? "Ya existe otra charla con ese slug." : "Ya existe una charla con ese slug." };
+  if (sameSlug) return { error: id ? "Ya existe otra charla con ese slug." : "Ya hay una charla con el mismo título y día." };
   return { error: null };
 }
 
@@ -370,35 +370,4 @@ export async function prepareTalkUploads(files: { type: string; size: number }[]
 export async function discardTalkUploads(urls: string[]): Promise<void> {
   await requireSectionAccess(SECTION);
   await removeUnusedTalkFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
-}
-
-export async function toggleConfirmed(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
-  const id = str(formData, "id");
-  const confirmed = formData.get("confirmed") === "true";
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      const before = await tx.talk.findUniqueOrThrow({ where: { id } });
-      const after = await tx.talk.update({ where: { id }, data: { confirmed } });
-      await tx.auditLog.create({
-        data: {
-          adminUserId: actor.adminId,
-          section: SECTION,
-          entityId: id,
-          action: "update",
-          before: { confirmed: before.confirmed },
-          after: { confirmed: after.confirmed },
-        },
-      });
-    });
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "No se pudo actualizar." };
-  }
-
-  revalidatePath("/admin/talks");
-  revalidatePath("/talks");
-  revalidatePath("/eventos");
-  revalidatePath("/"); // la landing también lista las próximas talks
-  return { error: null };
 }
