@@ -1,14 +1,24 @@
 "use client";
 
-import { useRef, useMemo, useState, useSyncExternalStore } from "react";
+import { useRef, useMemo, useState, useEffect, useSyncExternalStore } from "react";
+import type { RefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 // Precarga del modelo CAD oficial
 useGLTF.preload("/models/rosmaster_unified.glb");
 
-function CadRobot({ speedBoost }: { speedBoost: boolean }) {
+/** Avance de la banda por la ventana: 0 cuando asoma por abajo, 1 cuando sale por arriba. */
+function bandProgress(el: HTMLElement | null) {
+  if (!el) return 0.5;
+  const r = el.getBoundingClientRect();
+  return Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight + r.height)));
+}
+
+/** El tramo se recorre con el scroll de la página: el robot entra por la izquierda, cruza y sale por la derecha. */
+function CadRobot({ bandRef, reduced }: { bandRef: RefObject<HTMLElement | null>; reduced: boolean }) {
   const { scene } = useGLTF("/models/rosmaster_unified.glb");
   const robotRigRef = useRef<THREE.Group>(null);
 
@@ -91,24 +101,23 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
     return root;
   }, [scene]);
 
-  // Animación continua de avance a alta velocidad y cabeceo dinámico
-  const progressRef = useRef(-4);
+  // La posición sale del scroll (no del reloj): al frenar el scroll el robot frena, y al volver hacia arriba retrocede.
+  const xRef = useRef<number | null>(null);
 
   useFrame((state, delta) => {
-    const speed = speedBoost ? 7.2 : 4.4;
     // Ancho visible exacto del viewport a z=0 para que entre y salga sin pausas vacías
     const bound = Math.max(state.viewport.width / 2 + 1.5, 4.8);
-
-    // Avance de la pista en X
-    progressRef.current += delta * speed;
-    if (progressRef.current > bound) {
-      progressRef.current = -bound; // Reinicio dinámico exacto al salir por la derecha
-    }
+    const target = reduced ? 0 : -bound + bandProgress(bandRef.current) * bound * 2;
+    const prev = xRef.current ?? target;
+    // Amortiguado: el robot tiene masa y no copia el scroll de golpe
+    const x = prev + (target - prev) * (1 - Math.exp(-delta * 7));
+    xRef.current = x;
+    const speed = Math.abs(x - prev) / Math.max(delta, 1e-3);
 
     if (robotRigRef.current) {
-      robotRigRef.current.position.x = progressRef.current;
-      // Posicionado estrictamente encima de la grilla (-0.75) con vibración de suspensión
-      robotRigRef.current.position.y = -0.745 + Math.abs(Math.sin(state.clock.elapsedTime * 24)) * 0.008;
+      robotRigRef.current.position.x = x;
+      // Posicionado estrictamente encima de la grilla (-0.75); la suspensión vibra solo mientras avanza
+      robotRigRef.current.position.y = -0.745 + Math.abs(Math.sin(state.clock.elapsedTime * 24)) * 0.008 * Math.min(1, speed);
       robotRigRef.current.rotation.z = -0.03; // Pitch leve hacia adelante
       // Rotado hacia la derecha (+X) con ligera inclinación hacia la cámara (3/4 dinámico)
       robotRigRef.current.rotation.y = Math.PI / 2 + 0.28;
@@ -122,16 +131,14 @@ function CadRobot({ speedBoost }: { speedBoost: boolean }) {
   );
 }
 
-function RunwayGrid() {
+/** La pista corre con el scroll: avanza exactamente lo que se scrollea, así el robot parece rodar sobre ella. */
+function RunwayGrid({ reduced }: { reduced: boolean }) {
   const gridRef = useRef<THREE.Group>(null);
 
-  useFrame((_, delta) => {
-    if (gridRef.current) {
-      gridRef.current.position.x -= delta * 3.8;
-      if (gridRef.current.position.x < -4) {
-        gridRef.current.position.x = 0;
-      }
-    }
+  useFrame(() => {
+    if (!gridRef.current) return;
+    // La grilla se repite cada 4 unidades: el módulo hace el bucle sin saltos
+    gridRef.current.position.x = reduced ? 0 : -((window.scrollY * 0.012) % 4);
   });
 
   return (
@@ -160,23 +167,31 @@ export function RosmasterTrack() {
     () => true,
     () => false
   );
-  const [speedBoost, setSpeedBoost] = useState(false);
+  const reduced = usePrefersReducedMotion();
+  const bandRef = useRef<HTMLElement>(null);
+  // Sin banda a la vista no se dibuja nada: el canvas deja de gastar GPU fuera de pantalla.
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { rootMargin: "200px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <section
+      ref={bandRef}
       id="rosmaster-track"
       className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
-      <div
-        className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] cursor-grab active:cursor-grabbing"
-        onMouseEnter={() => setSpeedBoost(true)}
-        onMouseLeave={() => setSpeedBoost(false)}
-      >
+      <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px]">
         {mounted ? (
           <Canvas
             camera={{ position: [0, 1.8, 6.2], fov: 42 }}
             shadows
+            frameloop={inView ? "always" : "never"}
             gl={{ antialias: true, alpha: true }}
           >
             <ambientLight intensity={1.4} />
@@ -191,10 +206,10 @@ export function RosmasterTrack() {
             <pointLight position={[4, 2, -2]} intensity={1.5} color="#a40c4c" />
 
             {/* Grid de pista continua en rosa */}
-            <RunwayGrid />
+            <RunwayGrid reduced={reduced} />
 
-            {/* Robot CAD animado sin círculos ni elementos sobrantes */}
-            <CadRobot speedBoost={speedBoost} />
+            {/* Robot CAD: avanza con el scroll de la página */}
+            <CadRobot bandRef={bandRef} reduced={reduced} />
           </Canvas>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
