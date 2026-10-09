@@ -61,7 +61,7 @@ export function RosmasterTrack() {
       className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
-      <div className="relative w-full h-[260px] sm:h-[320px] md:h-[380px]">
+      <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px]">
         {mounted ? (
           <Canvas
             camera={{ position: [0, 1.8, 6.2], fov: 42 }}

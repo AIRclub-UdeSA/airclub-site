@@ -1,24 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { RefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useRosmasterModel, ROSMASTER_UNITS } from "./RosmasterModel";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
- * Un solo Rosmaster, un solo canvas fijo sobre toda la ventana, que protagoniza una escena distinta en cada unión entre
- * secciones. Cada unión se marca en la página con `data-seam` y su escena se recorre con el scroll (se puede ir y volver):
+ * El Rosmaster como mascota de la página: un solo robot en un canvas fijo sobre toda la ventana que se asoma por las
+ * uniones entre secciones, juega un rato y se vuelve a esconder. Cada unión se marca con `data-seam` y su escena se
+ * recorre con el scroll (se puede ir y volver). El canvas se recorta con la forma de la unión (la colina o las
+ * almenas), así que el robot sale de *atrás* de ella: lo que queda por debajo de la línea no se ve.
  *
- *  - summit:  sube la primera colina, se frena en la cima, mira a cámara, da dos saltitos y baja por el otro lado.
- *  - slalom:  cruza la pista del JAR de derecha a izquierda esquivando tres conos, con el LiDAR barriendo adelante.
- *  - jump:    en la cima de la segunda colina salta, da una vuelta en el aire y aterriza en la bajada.
- *  - drop:    cae desde arriba sobre las almenas de la convocatoria, rebota tres veces, mira alrededor y se va.
+ *  - summit:  se asoma por detrás de la primera colina, mira a los lados, se esconde, vuelve a asomarse, sube a la cima,
+ *             saluda con dos saltitos y baja por el otro lado.
+ *  - slalom:  entra por el borde derecho de la pista, mira la cuenta regresiva y la cruza de derecha a izquierda
+ *             esquivando tres conos, con el LiDAR barriendo adelante.
+ *  - jump:    se asoma por detrás de la segunda colina, mira hacia adelante y sale disparado en un salto con vuelta, como
+ *             un delfín, para zambullirse del otro lado.
+ *  - peek:    se asoma por encima de las almenas de la convocatoria, mira a los lados, se agacha, vuelve a subir, saluda y
+ *             se va rodando por las almenas.
  *
  * Todo pasa en espacio vacío, así que el robot nunca tapa texto. No recibe clics (`pointer-events-none`).
  */
 
-type Kind = "summit" | "slalom" | "jump" | "drop";
+type Kind = "summit" | "slalom" | "jump" | "peek";
 type Crossing = { kind: Kind; el: HTMLElement; s0: number; s1: number };
 
 const clamp = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n));
@@ -27,6 +34,15 @@ const smooth = (a: number, b: number, x: number) => {
   const t = clamp((x - a) / (b - a));
   return t * t * (3 - 2 * t);
 };
+
+/** Valor en `u` de una pista de puntos [u, valor]; entre puntos arranca y frena suave (como un personaje, no una máquina). */
+function track(u: number, keys: [number, number][]) {
+  if (u <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) {
+    if (u <= keys[i][0]) return lerp(keys[i - 1][1], keys[i][1], smooth(keys[i - 1][0], keys[i][0], u));
+  }
+  return keys[keys.length - 1][1];
+}
 
 // Hacia dónde mira el robot (rotación en Y): derecha y izquierda en tres cuartos, o casi de frente a cámara.
 const FACE_R = Math.PI / 2 + 0.5;
@@ -42,12 +58,13 @@ function findCrossings(): Crossing[] {
     const r = el.getBoundingClientRect();
     const top = r.top + window.scrollY;
     if (kind === "slalom") {
-      // la pista: mientras la banda sube desde el borde inferior hasta la parte baja de la pantalla
+      // la pista: mientras la banda sube desde el borde inferior hasta un poco más de la mitad de la pantalla
       const k = H + r.height;
-      out.push({ kind, el, s0: top - H + 0.06 * k, s1: top - H + 0.4 * k });
+      out.push({ kind, el, s0: top - H + 0.02 * k, s1: top - H + 0.42 * k });
     } else {
-      // colinas y almenas: mientras la unión recorre casi toda la pantalla
-      out.push({ kind, el, s0: top - 0.9 * H, s1: top - 0.2 * H });
+      // colinas y almenas: mientras la unión recorre casi toda la pantalla (largo, para que sea pausado). La colina de
+      // salida arranca un poco más tarde porque queda al pie de la pista y su ventana no puede pisar la del slalom.
+      out.push({ kind, el, s0: top - (kind === "jump" ? 0.8 : 1.0) * H, s1: top - (kind === "jump" ? 0.2 : 0.1) * H });
     }
   });
   out.sort((a, b) => a.s0 - b.s0);
@@ -91,6 +108,55 @@ function hillAt(path: SVGPathElement, rect: DOMRect, screenX: number) {
   return { y: toY(a.y), angle: Math.atan2(-(toY(b.y) - toY(a.y)), toX(b.x) - toX(a.x)) };
 }
 
+function hillScene(c: Crossing) {
+  const svg = c.el.querySelector("svg");
+  const path = svg?.querySelector("path");
+  const rect = svg?.getBoundingClientRect();
+  const W = window.innerWidth;
+  const crestX = rect ? rect.left + parseFloat(c.el.dataset.peak ?? "0.5") * rect.width : W / 2;
+  const ground = (x: number) => (svg && path && rect ? hillAt(path, rect, x) : { y: c.el.getBoundingClientRect().top, angle: 0 });
+  return { W, crestX, ground };
+}
+
+// Recorte del canvas: la región por encima de la unión, para que el robot salga de atrás de ella.
+function hillClip(c: Crossing) {
+  const svg = c.el.querySelector("svg");
+  const path = svg?.querySelector("path");
+  if (!svg || !path) return "none";
+  const rect = svg.getBoundingClientRect();
+  const end = path.getTotalLength() - VIEWBOX_W - 1;
+  const N = 64;
+  const pts: string[] = [];
+  let first = "";
+  let last = "";
+  for (let i = 0; i <= N; i++) {
+    const pt = path.getPointAtLength(1 + ((end - 1) * i) / N);
+    const p = `${(rect.left + (pt.x / VIEWBOX_W) * rect.width).toFixed(1)}px ${(rect.top + (pt.y / VIEWBOX_H) * rect.height).toFixed(1)}px`;
+    if (i === 0) first = p;
+    if (i === N) last = p;
+    pts.push(p);
+  }
+  const yStart = first.split(" ")[1];
+  const yEnd = last.split(" ")[1];
+  return `polygon(0px 0px, ${window.innerWidth}px 0px, ${window.innerWidth}px ${yEnd}, ${pts.reverse().join(", ")}, 0px ${yStart})`;
+}
+
+// Las almenas (TalksBattlement): 14px de alto, merlones de 24 y huecos de 24 en un viewBox de 1440, centradas y "slice".
+const MERLON = 24;
+const BATTLEMENT_H = 14;
+function battlementClip(el: HTMLElement) {
+  const W = window.innerWidth;
+  const top = el.getBoundingClientRect().top;
+  const s = Math.max(W / 1440, 1);
+  const offset = (W - 1440 * s) / 2;
+  const pts: string[] = [];
+  for (let k = Math.floor(-offset / (MERLON * s)) - 1; offset + k * MERLON * s < W; k++) {
+    const y = (k % 2 === 0 ? top - BATTLEMENT_H : top).toFixed(1);
+    pts.push(`${(offset + k * MERLON * s).toFixed(1)}px ${y}px`, `${(offset + (k + 1) * MERLON * s).toFixed(1)}px ${y}px`);
+  }
+  return `polygon(0px 0px, ${pts.join(", ")}, ${W}px 0px)`;
+}
+
 type Pose = {
   x: number;
   y: number;
@@ -105,116 +171,76 @@ type Pose = {
   scan: boolean;
 };
 
-const START = -0.12;
-const END = 1.12;
-
-function hillScene(c: Crossing) {
-  const svg = c.el.querySelector("svg");
-  const path = svg?.querySelector("path");
-  const rect = svg?.getBoundingClientRect();
-  const W = window.innerWidth;
-  const crestX = rect ? rect.left + parseFloat(c.el.dataset.peak ?? "0.5") * rect.width : W / 2;
-  const ground = (x: number) => (svg && path && rect ? hillAt(path, rect, x) : { y: c.el.getBoundingClientRect().top, angle: 0 });
-  return { W, crestX, ground };
-}
+const SINK = 0.95; // cuánto de su alto baja el robot para esconderse del todo (sink = 1)
 
 function poseFor(c: Crossing, u: number): Pose {
   const W = window.innerWidth;
   const seamSize = clamp(W * 0.07 + 20, 80, 120);
-  const r = c.el.getBoundingClientRect();
 
   if (c.kind === "summit") {
     const { crestX, ground } = hillScene(c);
-    let x: number;
-    if (u < 0.4) {
-      const t = u / 0.4;
-      x = lerp(START * W, crestX, 1 - (1 - t) * (1 - t)); // llega frenando
-    } else if (u < 0.64) {
-      x = crestX;
-    } else {
-      const t = (u - 0.64) / 0.36;
-      x = lerp(crestX, END * W, t * t); // arranca de a poco
-    }
-    // mira a cámara durante la pausa
-    const toCam = smooth(0.4, 0.47, u) - smooth(0.57, 0.64, u);
+    const x0 = crestX - 0.12 * W;
+    const x = track(u, [[0, x0], [0.5, x0], [0.62, crestX], [0.8, crestX], [1, crestX + 0.16 * W]]);
+    // asoma, se agacha, vuelve a asomar, sube, saluda y se zambulle del otro lado
+    const sink = track(u, [[0, 1], [0.12, 1], [0.28, 0.55], [0.36, 0.55], [0.42, 0.85], [0.5, 0.2], [0.62, 0], [0.8, 0], [0.95, 0.6], [1, 1]]);
+    const yaw = track(u, [[0, 0.25], [0.12, 0.25], [0.2, -0.7], [0.28, 0.9], [0.36, 0.2], [0.62, FACE_CAM], [0.8, FACE_CAM], [0.92, FACE_R]]);
     const g = ground(x);
-    // dos saltitos mientras saluda
-    const hop = u > 0.47 && u < 0.57 ? Math.abs(Math.sin(((u - 0.47) / 0.1) * Math.PI * 2)) * seamSize * 0.16 : 0;
-    return { x, y: g.y - hop, angle: g.angle * (1 - toCam * 0.7), size: seamSize, yaw: lerp(FACE_R, FACE_CAM, toCam), depth: 0, scan: false };
+    const hop = u > 0.62 && u < 0.8 ? Math.abs(Math.sin(((u - 0.62) / 0.18) * Math.PI * 2)) * seamSize * 0.18 : 0;
+    const cam = smooth(0.45, 0.6, u) * (1 - smooth(0.8, 0.93, u));
+    return { x, y: g.y + sink * seamSize * SINK - hop, angle: g.angle * (1 - cam * 0.6), size: seamSize, yaw, depth: 0, scan: false };
   }
 
   if (c.kind === "jump") {
     const { crestX, ground } = hillScene(c);
-    const landX = Math.min(crestX + 0.26 * W, 0.95 * W);
-    let x: number;
-    let lift = 0;
-    let flip = 0;
-    if (u < 0.34) {
-      x = lerp(START * W, crestX, u / 0.34);
-    } else if (u < 0.66) {
-      const t = (u - 0.34) / 0.32;
-      x = lerp(crestX, landX, t);
-      lift = 4 * t * (1 - t) * seamSize * 1.3; // parábola
-      flip = -Math.PI * 2 * smooth(0.1, 0.9, t); // vuelta hacia adelante
-    } else {
-      const t = (u - 0.66) / 0.34;
-      x = lerp(landX, END * W, t);
-    }
+    const x0 = crestX - 0.1 * W;
+    const x1 = Math.min(crestX + 0.22 * W, 0.95 * W);
+    const x = track(u, [[0, x0], [0.3, x0], [0.8, x1], [1, x1]]);
+    // se asoma, mira adelante, sale disparado en un arco con vuelta y se zambulle del otro lado
+    const sink = track(u, [[0, 1], [0.08, 1], [0.2, 0.55], [0.3, 0.55], [0.38, 0], [0.7, 0], [0.8, 0.9], [0.86, 1], [1, 1]]);
+    const t = clamp((u - 0.3) / 0.5);
+    const arc = Math.sin(Math.PI * t) * seamSize * 1.5;
+    const flip = -Math.PI * 2 * smooth(0.15, 0.85, t);
+    const yaw = track(u, [[0, FACE_CAM], [0.08, FACE_CAM], [0.18, FACE_R], [1, FACE_R]]);
     const g = ground(x);
-    return { x, y: g.y - lift, angle: g.angle + flip, size: seamSize, yaw: FACE_R, depth: 0, scan: false };
+    return { x, y: g.y + sink * seamSize * SINK - arc, angle: g.angle + flip, size: seamSize, yaw, depth: 0, scan: false };
   }
 
-  if (c.kind === "drop") {
-    const groundY = r.top - 14; // la punta de las almenas
-    // cae en un hueco entre columnas de texto; en pantallas angostas, al centro
-    const dropX = (W >= 768 ? 0.53 : 0.5) * W;
-    let x = dropX;
-    let off = 0;
-    let tilt = 0;
-    let yaw = FACE_R;
-    if (u < 0.45) {
-      const t = u / 0.45;
-      if (t < 0.5) {
-        const s = t / 0.5;
-        off = (groundY + seamSize * 1.2) * (1 - s * s); // caída libre desde arriba de la ventana
-        tilt = -0.5 * (1 - s); // entra con la trompa para abajo
-      } else if (t < 0.76) {
-        off = seamSize * 1.5 * 4 * ((t - 0.5) / 0.26) * (1 - (t - 0.5) / 0.26);
-      } else if (t < 0.9) {
-        off = seamSize * 0.55 * 4 * ((t - 0.76) / 0.14) * (1 - (t - 0.76) / 0.14);
-      } else {
-        off = seamSize * 0.18 * 4 * ((t - 0.9) / 0.1) * (1 - (t - 0.9) / 0.1);
-      }
-    } else if (u < 0.62) {
-      // mira alrededor
-      yaw = FACE_R + Math.sin(((u - 0.45) / 0.17) * Math.PI * 2) * 0.9;
-    } else {
-      const t = (u - 0.62) / 0.38;
-      x = lerp(dropX, END * W, t * t);
-    }
-    return { x, y: groundY - off, angle: tilt, size: seamSize, yaw, depth: 0, scan: false };
+  if (c.kind === "peek") {
+    // se asoma en un hueco entre columnas de texto; en pantallas angostas, al centro
+    const peekX = (W >= 768 ? 0.53 : 0.5) * W;
+    const groundY = c.el.getBoundingClientRect().top - BATTLEMENT_H; // la punta de las almenas
+    const x = track(u, [[0, peekX], [0.74, peekX], [1, peekX + 0.2 * W]]);
+    // asoma la cabeza, mira a los lados, se agacha, sube del todo, saluda y se va rodando
+    const sink = track(u, [[0, 1], [0.12, 1], [0.3, 0.6], [0.4, 0.6], [0.46, 0.9], [0.56, 0.1], [0.66, 0], [0.9, 0], [1, 0.9]]);
+    const yaw = track(u, [[0, 0.25], [0.12, 0.25], [0.18, -0.8], [0.26, 0.9], [0.34, 0.25], [0.66, FACE_CAM], [0.76, FACE_R], [1, FACE_R]]);
+    const hop = u > 0.66 && u < 0.78 ? Math.abs(Math.sin(((u - 0.66) / 0.12) * Math.PI * 2)) * seamSize * 0.18 : 0;
+    return { x, y: groundY + sink * seamSize * SINK - hop, angle: 0, size: seamSize, yaw, depth: 0, scan: false };
   }
 
-  // slalom: de derecha a izquierda, esquivando tres conos; más abajo en pantalla = más cerca = más grande
-  const weave = Math.sin(u * Math.PI * 3);
-  const heading = Math.cos(u * Math.PI * 3);
+  // slalom: entra por el borde derecho, mira la cuenta regresiva y cruza esquivando tres conos;
+  // más abajo en pantalla = más cerca = más grande
+  const r = c.el.getBoundingClientRect();
   const base = r.top + r.height * 0.64;
   const trackSize = clamp(W * 0.22, 130, 300);
+  const wu = clamp((u - 0.18) / 0.82); // avance del zigzag (arranca después de mirar)
+  const weave = Math.sin(wu * Math.PI * 3);
+  const heading = Math.cos(wu * Math.PI * 3);
+  const look = smooth(0.02, 0.08, u) - smooth(0.12, 0.2, u);
   return {
-    x: W * (END - u * (END - START)),
+    x: W * (1.0 - wu * 1.12),
     y: base + weave * r.height * 0.12,
     angle: -0.03,
     size: trackSize * (1 + weave * 0.16),
-    yaw: FACE_L + heading * 0.45, // gira hacia donde va: más hacia cámara cuando se acerca
+    yaw: lerp(FACE_L + heading * 0.45, FACE_CAM, look), // gira hacia donde va: más hacia cámara cuando se acerca
     depth: weave * 80,
-    scan: true,
+    scan: u > 0.2,
   };
 }
 
 // Conos de la pista: fijos en pantalla, en los tres puntos donde el robot está en el extremo del zigzag.
 const CONE_U = [1 / 6, 1 / 2, 5 / 6];
 
-function Robot({ reduced }: { reduced: boolean }) {
+function Robot({ reduced, clipRef }: { reduced: boolean; clipRef: RefObject<HTMLDivElement | null> }) {
   const model = useRosmasterModel();
   const rig = useRef<THREE.Group>(null);
   const yawGroup = useRef<THREE.Group>(null);
@@ -233,20 +259,32 @@ function Robot({ reduced }: { reduced: boolean }) {
       return;
     }
     const s = state.current;
+    const kind = hit.crossing.kind;
     // Al empezar una escena nueva se arranca desde su posición (nada de volar desde la anterior)
     if (s.el !== hit.crossing.el) {
       s.el = hit.crossing.el;
       s.u = hit.u;
     }
     // Amortiguado sobre el avance (no sobre la posición): así el robot sigue pegado a la unión aunque la página se mueva
-    s.u += (hit.u - s.u) * (1 - Math.exp(-delta * 9));
+    s.u += (hit.u - s.u) * (1 - Math.exp(-delta * 6));
     const pose = poseFor(hit.crossing, s.u);
     const speed = Math.abs(pose.x - s.x) / Math.max(delta, 1e-3);
     s.x = pose.x;
 
+    // El canvas se recorta con la forma de la unión: el robot sale de atrás de la colina o de las almenas
+    if (clipRef.current) {
+      clipRef.current.style.clipPath = reduced
+        ? "none"
+        : kind === "summit" || kind === "jump"
+          ? hillClip(hit.crossing)
+          : kind === "peek"
+            ? battlementClip(hit.crossing.el)
+            : "none";
+    }
+
     const { width: W, height: H } = frame.size;
     // La suspensión vibra solo mientras avanza por el piso (no en el aire ni parado)
-    const rolling = hit.crossing.kind === "slalom" || hit.crossing.kind === "summit";
+    const rolling = kind === "slalom";
     const rumble = reduced || !rolling ? 0 : Math.abs(Math.sin(frame.clock.elapsedTime * 22)) * 2.5 * Math.min(1, speed / 300);
     g.visible = true;
     g.position.set(pose.x - W / 2, H / 2 - pose.y + rumble, pose.depth);
@@ -261,16 +299,16 @@ function Robot({ reduced }: { reduced: boolean }) {
     }
 
     // Conos de la pista
-    if (hit.crossing.kind === "slalom") {
+    if (kind === "slalom") {
       const r = hit.crossing.el.getBoundingClientRect();
       const base = r.top + r.height * 0.64;
       const size = clamp(window.innerWidth * 0.22, 130, 300) * 0.2;
       CONE_U.forEach((cu, i) => {
         const m = cones.current[i];
         if (!m) return;
-        const appear = smooth(0, 0.08, hit.u) * (1 - smooth(0.92, 1, hit.u));
+        const appear = smooth(0.05, 0.2, hit.u) * (1 - smooth(0.92, 1, hit.u));
         m.visible = appear > 0.01;
-        m.position.set(window.innerWidth * (END - cu * (END - START)) - W / 2, H / 2 - base + size * 0.5, 0);
+        m.position.set(window.innerWidth * (1.0 - cu * 1.12) - W / 2, H / 2 - base + size * 0.5, 0);
         m.scale.setScalar(size * appear);
       });
     }
@@ -316,6 +354,7 @@ export function SeamRobot() {
     () => false,
   );
   const reduced = usePrefersReducedMotion();
+  const clipRef = useRef<HTMLDivElement>(null);
   // Fuera de una escena el canvas no dibuja ni se ve: no gasta GPU mientras el robot no está en pantalla
   const [active, setActive] = useState(false);
   const activeRef = useRef(false);
@@ -347,6 +386,7 @@ export function SeamRobot() {
 
   return (
     <div
+      ref={clipRef}
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-40"
       style={{ visibility: active ? "visible" : "hidden" }}
@@ -363,7 +403,7 @@ export function SeamRobot() {
         <hemisphereLight args={["#ffffff", "#f5ccd8", 1.2]} />
         <directionalLight position={[300, 500, 400]} intensity={2.4} />
         <directionalLight position={[-400, 200, 300]} intensity={1.8} color="#ff2a6d" />
-        <Robot reduced={reduced} />
+        <Robot reduced={reduced} clipRef={clipRef} />
       </Canvas>
     </div>
   );
