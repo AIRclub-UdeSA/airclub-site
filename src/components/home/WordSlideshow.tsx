@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "
 import type { KeyboardEvent, PointerEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { SectionEdge } from "@/components/shared/SectionEdge";
 
 interface WordSlide {
   title: string;
@@ -194,11 +195,13 @@ export function WordSlideshow() {
   };
 
   return (
+    <>
+    <SectionEdge color={activeSlide.bg} transition={700} peak={[0.78, 0.3]} amp={[1, 0.65]} />
     <section
       id="slideshow-palabras"
       aria-roledescription="carrusel"
       aria-label="Qué hacemos en AIR Club"
-      className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out border-y border-white/10 my-16 select-none"
+      className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out select-none"
       style={{ backgroundColor: activeSlide.bg }}
       onKeyDown={onKeyDown}
     >
@@ -243,7 +246,7 @@ export function WordSlideshow() {
               // las que no se ven no reciben foco ni clics (si no, el Tab podría llevar el foco afuera de pantalla)
               inert={idx !== current}
               aria-hidden={idx === N && current !== N ? true : undefined}
-              className="w-full shrink-0 min-w-full px-6 sm:px-12 md:px-20 pt-16 pb-28 sm:pt-24 sm:pb-32 min-h-[440px] sm:min-h-[500px] flex items-center justify-start"
+              className="w-full shrink-0 min-w-full px-6 sm:px-12 md:px-20 pt-16 pb-[calc(var(--edge-h)_+_5rem)] sm:pt-24 sm:pb-[calc(var(--edge-h)_+_4rem)] min-h-[440px] sm:min-h-[500px] flex items-center justify-start"
             >
               <div className="max-w-6xl mx-auto w-full flex flex-col items-start text-left">
                 {/* PALABRA MONUMENTAL ALINEADA A LA IZQUIERDA */}
@@ -308,7 +311,7 @@ export function WordSlideshow() {
       <div
         role="group"
         aria-label="Elegir diapositiva"
-        className="absolute inset-x-0 bottom-4 sm:bottom-6 z-10 flex items-center justify-center"
+        className="absolute inset-x-0 bottom-[calc(var(--edge-h)_+_0.25rem)] z-10 flex items-center justify-center"
       >
         {SLIDES.map((slide, idx) => {
           const isActive = idx === activeIdx;
@@ -348,5 +351,6 @@ export function WordSlideshow() {
         })}
       </div>
     </section>
+    </>
   );
 }

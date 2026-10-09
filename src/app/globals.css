@@ -3,6 +3,8 @@
 
 /* ===== Design tokens ===== */
 :root {
+  /* Alto de las curvas entre secciones (SectionEdge); las secciones de arriba dejan al menos esto de padding inferior. */
+  --edge-h: clamp(48px, 7.5vw, 110px);
   --bg: #faf8f8;
   --bg2: #f4efef;
   --card: #ffffff;

@@ -6,6 +6,7 @@ import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
 import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
+import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
@@ -30,13 +31,22 @@ export default async function HomePage() {
         <WordSlideshow />
 
         {/* Acto II, el desafío: un solo bloque oscuro continuo (cuenta regresiva y CAD del Rosmaster). */}
-        {featuredEvent && <CountdownStrip event={featuredEvent} />}
+        {featuredEvent && (
+          <>
+            <SectionEdge color="#0e0407" peak={[0.2, 0.62]} amp={[1, 0.6]} />
+            <CountdownStrip event={featuredEvent} />
+          </>
+        )}
         <RosmasterTrack />
 
         {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}
+        <SectionEdge color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
         <EventsTeaser />
+        <SectionEdge color="var(--bg2)" peak={[0.3, 0.8]} amp={[0.8, 0.5]} />
         <IdeaCallout />
+        <SectionEdge color="#0e0407" peak={[0.7, 0.25]} amp={[1, 0.6]} />
         <ConvocatoriaBand />
+        <SectionEdge color="var(--bg)" peak={[0.15, 0.55]} amp={[0.9, 0.55]} />
         <SponsorStrip />
       </div>
     </>
