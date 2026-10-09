@@ -18,6 +18,7 @@ export function SectionEdge({
   peak = [0.22, 0.7],
   amp = [1, 0.6],
   transition,
+  seam,
 }: {
   /** Color de la sección que sigue (cualquier valor de `fill` CSS, por ejemplo `var(--bg2)`). */
   color: string;
@@ -27,6 +28,8 @@ export function SectionEdge({
   amp?: [number, number];
   /** Duración (ms) de la transición de color, para las secciones que cambian de color (el carrusel). */
   transition?: number;
+  /** Si la colina es un tramo del recorrido de SeamRobot (`data-seam`). */
+  seam?: "hill";
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -62,7 +65,7 @@ export function SectionEdge({
   }, [peak, amp]);
 
   return (
-    <div ref={wrapRef} aria-hidden="true" className="pointer-events-none relative z-20 h-0">
+    <div ref={wrapRef} aria-hidden="true" data-seam={seam} className="pointer-events-none relative z-20 h-0">
       <svg
         viewBox={`0 0 ${W} ${H + 1}`}
         preserveAspectRatio="none"

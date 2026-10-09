@@ -6,6 +6,7 @@ import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
 import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
+import { SeamRobot } from "@/components/home/SeamRobot";
 import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
@@ -25,6 +26,8 @@ export default async function HomePage() {
           este h1 le da a lectores de pantalla y buscadores el titulo real de la pagina. */}
       <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
       <ArmHero />
+      {/* El Rosmaster viaja por las uniones entre secciones (ver SeamRobot). */}
+      <SeamRobot />
       <div id="contenido" className="scroll-mt-20">
         {/* Las uniones no llevan todas el mismo tratamiento: la curva solo abre y cierra el tramo oscuro (carrusel y
             salida del Rosmaster), la convocatoria usa el borde almenado de /talks y el resto son cambios de tono rectos. */}
@@ -37,7 +40,7 @@ export default async function HomePage() {
         <RosmasterTrack />
 
         {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}
-        <SectionEdge color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
+        <SectionEdge seam="hill" color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
         <EventsTeaser />
         <IdeaCallout />
         <ConvocatoriaBand />
