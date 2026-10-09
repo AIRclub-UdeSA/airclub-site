@@ -165,7 +165,7 @@ export function RosmasterTrack() {
   return (
     <section
       id="rosmaster-track"
-      className="relative w-full bg-white dark:bg-[#0e0407] border-y border-border py-4 sm:py-8 overflow-hidden select-none"
+      className="relative w-full bg-[#0e0407] border-b border-white/10 py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
       <div

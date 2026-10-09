@@ -5,6 +5,7 @@ import { IdeaCallout } from "@/components/home/IdeaCallout";
 import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
+import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
@@ -24,25 +25,18 @@ export default async function HomePage() {
       <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
       <ArmHero />
       <div id="contenido" className="scroll-mt-20">
-        {/* 01. Manifiesto del Club */}
+        {/* Acto I, quiénes somos: el manifiesto en claro y el carrusel, que es el puente hacia lo oscuro. */}
         <AboutSection />
-
-        {/* 02. Slideshow Horizontal con Palabras Monumentales & Fondo Dinámico */}
         <WordSlideshow />
 
-        {/* 03. "Tengo una idea, pero no sé por dónde empezar" */}
-        <IdeaCallout />
-
-        {/* 04. Hito Nacional + Cronómetro sobre ShaderGradient */}
+        {/* Acto II, el desafío: un solo bloque oscuro continuo (cuenta regresiva y CAD del Rosmaster). */}
         {featuredEvent && <CountdownStrip event={featuredEvent} />}
-
-        {/* 05. Plataforma Oficial JAR 2026: ROSMASTER X3 CAD en pista minimalista (fondo blanco + grilla rosa) */}
         <RosmasterTrack />
 
-        {/* 06. Próximas Actividades */}
+        {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}
         <EventsTeaser />
-
-        {/* 07. Alianzas y Empresas (solo en landing) */}
+        <IdeaCallout />
+        <ConvocatoriaBand />
         <SponsorStrip />
       </div>
     </>

@@ -64,7 +64,7 @@ export function CountdownStrip({ event }: { event: EventItem }) {
   return (
     <section
       id="cuenta-regresiva"
-      className="relative border-y border-white/10 bg-[#0e0407] text-[#f5e8ec] overflow-hidden my-16 py-16 sm:py-24"
+      className="relative border-t border-white/10 bg-[#0e0407] text-[#f5e8ec] overflow-hidden pt-16 sm:pt-24 pb-8 sm:pb-12"
     >
       {/* Banda plana: el tiempo que falta es el diseño (números en Anton, el de los segundos en carmesí macizo). */}
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
