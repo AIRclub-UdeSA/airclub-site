@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ArrowDown } from "lucide-react";
 import { ARM_HERO_STILL, ARM_HERO_STILL_LAYOUT } from "./arm-hero-still";
 import type { ArmView } from "./RobotArm3D";
+import { scrollToTarget } from "@/lib/smooth-scroll";
 
 // El canvas 3D real cubre TODA la seccion del hero (para que la pelota se pueda arrastrar por toda
 // la pantalla, sin quedar acotada al ancho angosto de la "I"), pero el brazo tiene que dibujarse
@@ -169,11 +170,9 @@ export function ArmHero() {
     setIsClicked(true);
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("air-enter-club"));
+      scrollToTarget("#contenido");
     }
-    setTimeout(() => {
-      document.getElementById("contenido")?.scrollIntoView({ behavior: "smooth" });
-      setTimeout(() => setIsClicked(false), 800);
-    }, 150);
+    setTimeout(() => setIsClicked(false), 800);
   };
 
   return (

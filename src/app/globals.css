@@ -93,6 +93,10 @@ html {
   scrollbar-width: thin;
   scrollbar-color: rgba(164, 12, 76, 0.2) transparent;
 }
+/* Con Lenis activo el scroll suave lo hace él; el nativo encima lo haría arrastrar y vibrar. */
+html.lenis {
+  scroll-behavior: auto;
+}
 body {
   background: var(--bg);
   color: var(--text);

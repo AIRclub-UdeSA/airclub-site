@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { scrollToTarget } from "@/lib/smooth-scroll";
 
 export function ScrollTopButton() {
   const [visible, setVisible] = useState(false);
@@ -19,7 +20,7 @@ export function ScrollTopButton() {
     <button
       type="button"
       aria-label="Volver arriba"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => scrollToTarget(0)}
       className={cn(
         "fixed bottom-6 right-6 z-[100] flex h-10 w-10 items-center justify-center rounded-full bg-crimson text-white shadow-[0_4px_16px_rgba(164,12,76,0.3)] transition-all hover:-translate-y-0.5 hover:bg-magenta",
         visible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
