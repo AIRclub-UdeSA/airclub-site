@@ -7,7 +7,7 @@ import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
  */
 export function IdeaCallout() {
   return (
-    <section id="portal-ideas" className="bg-bg2 pt-16 pb-24 sm:pt-24 sm:pb-32">
+    <section id="portal-ideas" className="bg-bg2 py-16 sm:py-24">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
         <RevealOnScroll>
           <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">

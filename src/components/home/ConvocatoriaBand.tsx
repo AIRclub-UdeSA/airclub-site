@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { getContactReason } from "@/lib/contact";
+import { TalksBattlement } from "@/components/talks/TalksBattlement";
 
 /** Banda oscura de marca a todo el ancho: invita a proponer una charla o un workshop. Cierra la landing junto con "Tengo una idea". */
 export async function ConvocatoriaBand() {
@@ -15,8 +16,9 @@ export async function ConvocatoriaBand() {
   // #0e0407 y rosa #f0357f: los mismos de la cuenta regresiva y de la convocatoria de /talks. El contenido se alinea con
   // la grilla del resto de la landing (max-w-7xl + mismos paddings).
   return (
-  <div className="relative w-full overflow-hidden bg-[#0e0407]">
-    <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 pt-14 pb-[calc(var(--edge-h)_+_2.5rem)] sm:px-8 sm:pt-16 md:px-12 lg:grid-cols-12 lg:gap-16">
+  <div className="relative w-full bg-[#0e0407]">
+    <TalksBattlement className="text-[#0e0407]" />
+    <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:px-8 sm:py-16 md:px-12 lg:grid-cols-12 lg:gap-16">
       <div className="lg:col-span-6">
         <div className="font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-[#f0357f]">
           Convocatoria abierta
