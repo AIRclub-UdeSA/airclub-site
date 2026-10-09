@@ -1,6 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { ScrubText } from "@/components/shared/ScrubText";
 
 /**
  * "Tengo una idea, pero no sé por dónde empezar": banda a todo el ancho (alterna con el lienzo, como en /equipo y
@@ -12,11 +11,10 @@ export function IdeaCallout() {
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
         <RevealOnScroll>
           <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">
-            <ScrubText
-              as="h3"
-              className="font-logo text-[clamp(3rem,7vw,6.5rem)] uppercase leading-[1.04] tracking-tight text-text lg:col-span-7"
-              parts={["“Tengo una idea, ", { text: "pero no sé por dónde empezar”", className: "text-crimson-text" }]}
-            />
+            <h3 className="font-logo text-[clamp(3rem,7vw,6.5rem)] uppercase leading-[1.04] tracking-tight text-text lg:col-span-7">
+              “Tengo una idea,{" "}
+              <span className="text-crimson-text">pero no sé por dónde empezar”</span>
+            </h3>
 
             <div className="lg:col-span-5">
               <p className="max-w-[46ch] font-body text-[1.08rem] leading-[1.75] text-text2 sm:text-[1.18rem]">

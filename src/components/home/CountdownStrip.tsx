@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { EventItem } from "@/lib/events";
-import { ScrubText } from "@/components/shared/ScrubText";
 
 function diffParts(targetMs: number) {
   const diff = targetMs - Date.now();
@@ -72,10 +71,11 @@ export function CountdownStrip({ event }: { event: EventItem }) {
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12 xl:gap-16">
           {/* Lado izquierdo: Título, descripción y botones oficiales */}
           <div className="lg:col-span-5">
-            <ScrubText
-              className="font-display text-[clamp(1.5rem,7.8vw,3.6rem)] sm:text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#f5e8ec] leading-[0.94] uppercase mb-5"
-              parts={["Challenge JAR 2026,\n", { text: "Rosario", className: "text-[#f0357f]" }]}
-            />
+            <h2 className="font-display text-[clamp(1.5rem,7.8vw,3.6rem)] sm:text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#f5e8ec] leading-[0.94] uppercase mb-5">
+              Challenge JAR 2026,
+              <br />
+              <span className="text-[#f0357f]">Rosario</span>
+            </h2>
 
             <p className="font-body text-[1rem] sm:text-[1.08rem] text-[#f5e8ec]/85 leading-[1.75] mb-8 max-w-lg">
               El AIR Club UdeSA presenta un desafío nacional de comportamiento autónomo con robots móviles en la Jornada Argentina de Robótica. Desarrollá en Gazebo y competí en pista física.
