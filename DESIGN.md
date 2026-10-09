@@ -82,7 +82,7 @@ JETBRAINS MONO (font-mono)► Datos técnicos, fechas, métricas, botones técni
 Sintetizamos tres perspectivas de animación:
 * **Emil Kowalski (Restricción & Velocidad)**: *¿Esto realmente necesita animarse?* Si no comunica cambio de estado o continuidad espacial, **se elimina**. Transiciones instantáneas y secas (150ms a 240ms con `--ease-club: cubic-bezier(0.4, 0, 0.2, 1)`).
 * **Jakub Krehel (Pulido de Producción)**: Profundidad sutil, trazo de luz rotatorio en el borde (`border-trail-hover`) y micro-elevación de 2px sin sombras infladas.
-* **Jhey Tompkins (Sensación Táctil / Mecánica)**: El movimiento cinético se reserva exclusivamente para los artefactos de laboratorio: el brazo robótico articulado al scrollear y el CAD del Rosmaster.
+* **Jhey Tompkins (Sensación Táctil / Mecánica)**: El movimiento cinético se reserva exclusivamente para los artefactos de laboratorio: el brazo robótico articulado al scrollear y el CAD del Rosmaster, que además viaja por las uniones de la landing (ver sección 11).
 
 ### Reglas de Movimiento:
 * **NO usar `hover:scale-105`**: Es el principal cliché de interfaz generada por IA. Para indicar interacción, usar el `border-trail-hover`, cambio de color en el borde o un ligero desplazamiento en Y (`-translate-y-1`).
@@ -106,7 +106,9 @@ Estos son los patrones que construyen la identidad visual de AIR Club:
    * Borde con destello de luz cónica rotativa que se activa en hover. Comunica interacción sin mover el layout.
 4. **Botón Mono Técnico (`Button.tsx`)**:
    * Borde fino, esquinas redondeadas (`rounded-full`), tipografía `font-mono text-[.8rem] uppercase` y flecha `ArrowUpRight` en hover.
-5. **Eje Temporal con Nodo ("HOY")**:
+5. **`SectionEdge` y `SeamRobot` (landing, ver sección 11)**:
+   * `SectionEdge` es la curva que une dos secciones en lugar de un corte recto; `SeamRobot` es el Rosmaster que protagoniza una escena distinta en cada unión.
+6. **Eje Temporal con Nodo ("HOY")**:
    * Ancla los eventos pasados a la izquierda (línea sólida) y los futuros a la derecha (línea punteada), con el marcador HOY en el corte. Implementado en `TalksTimeline.tsx`, solo horizontal (en mobile se desliza lateralmente; no hay versión vertical).
 
 ---
@@ -122,7 +124,7 @@ Para no regresar a los patrones mediocres de IA, queda **estrictamente prohibido
 * ❌ **Emojis en lugar de íconos**: Cero emojis para ilustrar conceptos de ingeniería. Usar íconos vectoriales SVG limpios (`lucide-react`) con trazo parejo.
 * ❌ **Bloques "Sponsor / Empresa" fuera de la landing**: El bloque de vinculación empresarial pertenece únicamente al final de la portada, no a los footers de subpáginas.
 * ❌ **Paréntesis en rótulos de conteo** ("Fotos (5)", "Diapositivas (2)"): el dueño los rechazó. Usar el rótulo solo, o una cifra aparte.
-* ❌ **Divisores decorativos entre secciones** (reglas de vernier, cintas de texto, dibujos de circuito): todos se probaron en `/talks` y se descartaron, ver sección 8. Las secciones se separan con bandas de color a todo el ancho.
+* ❌ **Divisores decorativos entre secciones** (reglas de vernier, cintas de texto, dibujos de circuito): todos se probaron en `/talks` y se descartaron, ver sección 8. Las secciones se separan con bandas de color a todo el ancho. **Excepción en la landing:** las uniones pueden ser curvas (`SectionEdge`) o almenadas, con la regla de la sección 11 (la curva no va en todas).
 * ❌ **Hardcodear datos dentro de los componentes**: Todo contenido estructurado debe residir en `prisma/seed-data/*.ts` y consumirse a través de `src/lib/*.ts`, preparado para su migración a Supabase.
 
 ---
@@ -265,38 +267,99 @@ La página es un enrutador: elegís el motivo y te lleva al canal. **El fondo no
 
 ## 11. Landing (`/`): decisiones, rechazos y mapa
 
-Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto` (secciones 8 a 10). `rounded-card` queda descartado también acá ("vibecoded 101").
+Paneles y tarjetas rectos con contorno de 1px, sin sombras y con botones píldora, igual que `/talks`, `/equipo` y `/contacto` (secciones 8 a 10). `rounded-card` queda descartado también acá ("vibecoded 101"). **Lo nuevo de esta pasada son las uniones entre secciones**, que ya no son todas cortes rectos (ver "Uniones").
 
 ### Idea rectora
-La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, sin sombras y con botones píldora. **El fondo no cambia** (lienzo, alternando con `bg-bg2`): el color va en lo de arriba. Las únicas bandas oscuras son las que ya lo eran por contenido: el carrusel y la banda de cuenta regresiva.
+La landing es una sola recorrida en **tres actos**, y la conexión entre secciones es **invisible**: no hay numeración ni índice. La dan el orden, el tono, uniones que no se repiten y un personaje (el Rosmaster) que pasa de una sección a otra. Las referencias fueron Slush, Wise, Intercom y Flying Papers: ninguna pone un tratamiento en cada unión; casi todas son cambios de tono rectos y se reserva lo especial para uno o dos momentos.
 
-### Estructura y archivos
-1. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne, con "Competir." en carmesí.
-2. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. El piso del `clamp` del título es `1.2rem`: la palabra más larga ("COMPETENCIAS", 13,8 em) tiene que caber en 320px.
-3. `IdeaCallout.tsx`: "Tengo una idea" como banda recta, frase en Anton con interlineado `1.04`.
-4. `CountdownStrip.tsx`: banda oscura de marca; números en Anton dentro de celdas rectas de 1px; los segundos en carmesí macizo, sin punto que pulsa.
-5. `RosmasterTrack.tsx`: CAD 3D del Rosmaster sobre grilla rosa. Es el único artefacto cinético de la landing (ver sección 4).
-6. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` (`src/components/eventos/ActivityPanel.tsx`) y los mismos datos (`getUnifiedCalendarActivities`), máximo 3. Las cajas cambian de forma según cuántas hay: una sola a todo el ancho; con dos o tres, una grande (7 columnas) y las demás chicas (5 columnas). Debajo, la banda de convocatoria.
-7. `ArmHero.tsx`: el brazo robótico del hero. **No se tocó** en esta pasada; tendrá una pasada propia (su animación "le falta poder").
+| Acto | Tono | Contenido |
+| :--- | :--- | :--- |
+| I. Quiénes somos | Claro | Hero con el brazo, manifiesto y carrusel (el carrusel hace de puente hacia lo oscuro) |
+| II. El desafío | Un solo bloque oscuro `#0e0407` | Cuenta regresiva del Challenge JAR y pista del Rosmaster, sin borde entre ellas |
+| III. Sumate | Claro | Actividades, "Tengo una idea", convocatoria y alianzas |
+
+Antes la landing tenía seis cambios claro/oscuro y "Tengo una idea" salía antes del hito principal; ahora son dos cambios y los pedidos de participación quedan juntos.
+
+### Estructura y archivos (de arriba hacia abajo)
+1. `ArmHero.tsx`: el brazo robótico del hero. Sigue sin tener pasada propia ("le falta poder"); lo único que cambió es que "Entrar al club" baja con `scrollToTarget` (Lenis).
+2. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne. Deja `--edge-h` de padding inferior extra para la colina del carrusel y para el robot.
+3. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. Lleva su propio `SectionEdge` arriba, con el color de la diapositiva activa (transición de 700 ms). El piso del `clamp` del título es `1.2rem`: "COMPETENCIAS" (13,8 em) tiene que caber en 320px.
+4. `CountdownStrip.tsx` + `RosmasterTrack.tsx`: un bloque oscuro continuo. Cuenta regresiva con números en Anton en celdas de 1px y segundos en carmesí macizo; debajo, la pista rosa. `RosmasterTrack` dibuja **solo la pista** (se desplaza con el scroll); el robot lo dibuja `SeamRobot`.
+5. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` y los mismos datos (`getUnifiedCalendarActivities`), máximo 3; las cajas cambian de forma según cuántas hay. Ya no incluye la convocatoria.
+6. `IdeaCallout.tsx`: "Tengo una idea" como banda `bg-bg2`, frase en Anton con interlineado `1.04`.
+7. `ConvocatoriaBand.tsx`: banda oscura con el borde almenado de `/talks` (`TalksBattlement`), "Proponé una charla o un workshop" con dos filas (charla, workshop).
+8. `SponsorStrip.tsx` (en `layout/`): alianzas, solo en la landing.
+9. Archivos de soporte: `src/components/shared/SectionEdge.tsx` (curvas), `src/components/home/SeamRobot.tsx` (el robot), `src/components/home/RosmasterModel.tsx` (el CAD repintado, compartido), `src/lib/smooth-scroll.ts` y `src/components/shared/SmoothScrollProvider.tsx` (Lenis).
+
+### Uniones: la curva no va en todas
+| Unión | Tratamiento |
+| :--- | :--- |
+| Hero → manifiesto | ninguno (mismo lienzo) |
+| Manifiesto → carrusel | **curva** (abre el tramo oscuro) |
+| Carrusel → JAR + Rosmaster | corte recto, de ciruela a negro |
+| Rosmaster → actividades | **curva** (cierra el tramo oscuro) |
+| Actividades → "Tengo una idea" | cambio de tono recto |
+| "Tengo una idea" → convocatoria | **borde almenado** de `/talks` |
+| Convocatoria → alianzas | cambio de tono recto |
+
+**Regla:** la curva solo abre y cierra el tramo oscuro. Si se agrega otra unión especial, que sea de otro tipo; no repetir el mismo arco en toda la página.
+
+`SectionEdge` es la colina de la sección que sigue, pintada de su color, que sube sobre el final de la anterior. Con el scroll la cima se desliza de lado y se aplana un poco, pero nunca llega a ser una recta. Cada borde tiene su propia forma (`peak`, `amp`). Se coloca **entre** dos secciones y las de arriba necesitan al menos `--edge-h` de padding inferior (`--edge-h: clamp(48px, 7.5vw, 110px)` en `globals.css`); sin eso la curva tapa texto. Se saca el `border` recto de las secciones que tienen curva arriba. Con movimiento reducido la curva queda quieta. Publica la posición de su cima en `data-peak`.
+
+### El robot que viaja (`SeamRobot`)
+Un solo Rosmaster en **un canvas fijo** sobre la ventana (`pointer-events-none`, `z-40`, debajo de la barra de navegación, ortográfico con 1 unidad = 1 px). Cada unión se marca con `data-seam` y su escena se recorre con el scroll (se puede ir y volver): la posición sale de `window.scrollY`, amortiguada sobre el avance y no sobre la posición, para que el robot siga pegado a la unión. Fuera de una escena el canvas no dibuja ni se ve.
+
+| `data-seam` | Dónde | Escena |
+| :--- | :--- | :--- |
+| `summit` | colina que abre el tramo oscuro | sube, se frena en la cima, mira a cámara, da dos saltitos y baja por el otro lado |
+| `slalom` | pista del JAR | cruza de derecha a izquierda esquivando tres conos, con el LiDAR barriendo adelante; más abajo en pantalla = más cerca = más grande |
+| `jump` | colina que cierra el tramo oscuro | salta en la cima, da una vuelta en el aire y aterriza en la bajada |
+| `drop` | almenas de la convocatoria | cae desde arriba, rebota tres veces, mira alrededor y se va |
+
+* **Regla:** cada escena tiene que ser *otra cosa*, no el mismo recorrido de izquierda a derecha con otro tamaño. Todas pasan por espacio vacío para no tapar texto.
+* En las colinas el robot sigue el trazado real del SVG (se muestrea con `getPointAtLength`) y se inclina con la pendiente.
+* Con movimiento reducido solo queda quieto sobre la pista mientras la banda está a la vista.
+* El hover sobre la pista ya no acelera nada.
+
+### Scroll suave (Lenis)
+`SmoothScrollProvider` (en el layout) crea la instancia; el resto de la app pasa por `scrollToTarget` (`src/lib/smooth-scroll.ts`), que cae al scroll nativo si Lenis no está activo. No colgar la instancia de `window`. `allowNestedScroll` evita que Lenis trabe el modal de `/talks` y los paneles de `/admin`, y `html.lenis { scroll-behavior: auto }` evita que compita con el `scroll-behavior: smooth` nativo. Se desactiva con `prefers-reduced-motion`.
 
 ### Lo que el dueño aprobó (conservar)
 * El carrusel con su luz ambiental ("tono metálico con luz") y en Syne; si algún día se cambia, se pasa **solo** a Anton y no se mezclan.
-* La banda de convocatoria en el oscuro de marca `#0e0407` con rosa `#f0357f`, igual que la cuenta regresiva y `/talks`.
-* La banda del Rosmaster como está (decorativa, sin leyenda ni foto).
+* La convocatoria en el oscuro de marca `#0e0407` con rosa `#f0357f`, igual que la cuenta regresiva y `/talks`.
+* La pista del Rosmaster oscura y pegada a la cuenta regresiva (antes era una banda blanca aparte).
 * Cuenta regresiva en Anton, celdas de 1px, segundos en carmesí macizo.
+* Las curvas "con onda" en las dos uniones del tramo oscuro y el borde almenado: "me gustó el vibe, pero no abusar".
+* El Rosmaster como personaje de la página, siempre que no repita el mismo movimiento.
 
 ### Rechazado (no reintroducir)
 * **Orbes de luz y el shader de fondo** (`ShaderGradientBg`, eliminado), salvo la luz ambiental del carrusel, que se conserva.
 * **Bandas de color de fondo** y `rounded-card` en la landing.
+* **Curvas en todas las uniones**: se probó (seis colinas seguidas) y se pidió variar.
+* **Titulares que se "leen" con el scroll** (cada palabra pasa de tenue a plena, como Slush): con poco recorrido casi no se notaba y con más obligaba a scrollear para ver las últimas palabras. Se probó en tres titulares y se revirtió.
+* **El robot cruzando siempre de izquierda a derecha** en distintos tamaños: "siempre repetimos el mismo patrón".
 * **Anton en el carrusel**: probado lado a lado con Syne y se prefirió Syne por ahora.
-* Los vinos fuera de paleta en la banda de convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
+* Los vinos fuera de paleta en la convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
 * Los stickers de `public/stickers` en la landing: varios (robot verde, átomo azul y violeta, píxel art) no están en la paleta.
+* Numeración o índice visible entre secciones: la conexión tiene que ser invisible.
 
 ### Trampas conocidas
 * **Syne en mayúscula es muy ancha**: una palabra larga corta el título o ensancha toda la página en mobile. Medir `scrollWidth - innerWidth` de 320 a 1920px y el ancho de cada palabra del carrusel, no solo la primera.
 * **Acentos con interlineado apretado**: en Anton con `leading-[0.92]` el acento de la É de "SÉ" pisaba la A de "UNA" de la línea de arriba. Usar `1.04` en frases con tildes.
 * **Títulos de `ActivityPanel` con palabras largas** ("DESBLOQUEANDO"): sin permitir el corte de palabra ensanchaban la página en mobile.
-* En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El robot de `RosmasterTrack` cruza la pista en bucle, también con `reducedMotion: "reduce"` (la animación no lo respeta): una captura lo agarra en cualquier punto, a veces cortado en el borde. No es un error de encuadre.
+* **Tailwind descarta `calc()` sin espacios**: `pb-[calc(var(--edge-h)+2rem)]` no aplica nada (sin error). Escribirlo con guiones bajos: `pb-[calc(var(--edge-h)_+_2rem)]`.
+* **Las curvas tapan lo que esté cerca del borde**: dejar `--edge-h` de padding inferior en la sección de arriba y subir los puntos del carrusel si hay curva debajo.
+* **El robot también tapa texto si no hay lugar**: en las colinas necesita unos 200px libres sobre la unión y en las almenas unos 130px (por eso `AboutSection` e `IdeaCallout` tienen más padding inferior). En mobile la escena `drop` cae sobre la columna única de "Tengo una idea".
+* **Dos escenas del robot no pueden pisarse**: las ventanas de scroll se calculan por unión y, si se superponen (pantallas muy altas), la anterior termina donde empieza la siguiente.
+* **`next dev` guarda un candado en `.next/dev/lock`**: si se mata el servidor a medias, borrarlo antes de volver a levantarlo.
+* En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El canvas del robot necesita WebGL (en Playwright headless: `--use-gl=swiftshader --enable-unsafe-swiftshader`).
+
+### Pendientes
+* Probar el scroll con rueda y táctil reales (todo se verificó con capturas en posiciones fijas) y ajustar el ritmo de las escenas del robot. El dueño dijo que "falta trabajo".
+* Revisar si el robot en `drop` tiene que esquivar el texto en mobile.
+* El brazo robótico del hero sigue pendiente de su pasada propia.
+* La sección 8 todavía dice que "la landing conserva `rounded-card`" (línea de "Forma"): quedó vieja desde la decisión de la sección 11.
+* Abrir el PR contra `v2` cuando el dueño lo apruebe.
 
 ---
 
