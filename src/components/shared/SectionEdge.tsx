@@ -29,7 +29,7 @@ export function SectionEdge({
   /** Duración (ms) de la transición de color, para las secciones que cambian de color (el carrusel). */
   transition?: number;
   /** Si la colina es un tramo del recorrido de SeamRobot (`data-seam`). */
-  seam?: "hill";
+  seam?: "summit" | "jump";
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -47,7 +47,9 @@ export function SectionEdge({
       // p = 0 cuando el borde asoma por abajo de la ventana, 1 cuando llega al tope.
       const vh = window.innerHeight;
       const p = reduced ? 0.5 : Math.min(1, Math.max(0, 1 - wrap.getBoundingClientRect().top / vh));
-      path.setAttribute("d", edgePath(lerp(amp[0], amp[1], p), lerp(peak[0], peak[1], p)));
+      const peakNow = lerp(peak[0], peak[1], p);
+      path.setAttribute("d", edgePath(lerp(amp[0], amp[1], p), peakNow));
+      wrap.dataset.peak = String(peakNow); // SeamRobot lee de acá dónde está la cima
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -65,7 +67,7 @@ export function SectionEdge({
   }, [peak, amp]);
 
   return (
-    <div ref={wrapRef} aria-hidden="true" data-seam={seam} className="pointer-events-none relative z-20 h-0">
+    <div ref={wrapRef} aria-hidden="true" data-seam={seam} data-peak={peak[0]} className="pointer-events-none relative z-20 h-0">
       <svg
         viewBox={`0 0 ${W} ${H + 1}`}
         preserveAspectRatio="none"

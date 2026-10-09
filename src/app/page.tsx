@@ -40,7 +40,7 @@ export default async function HomePage() {
         <RosmasterTrack />
 
         {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}
-        <SectionEdge seam="hill" color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
+        <SectionEdge seam="jump" color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
         <EventsTeaser />
         <IdeaCallout />
         <ConvocatoriaBand />

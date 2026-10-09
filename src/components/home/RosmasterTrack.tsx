@@ -57,7 +57,7 @@ export function RosmasterTrack() {
     <section
       ref={bandRef}
       id="rosmaster-track"
-      data-seam="grid"
+      data-seam="slalom"
       className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
