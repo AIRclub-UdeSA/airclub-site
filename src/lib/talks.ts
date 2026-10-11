@@ -47,6 +47,10 @@ export type TalkItem = {
   slides?: TalkSlide[];
   links?: { label: string; url: string }[];
   cta?: { label: string; url: string };
+  /** true = inscripcion propia del sitio en vez de un link externo (ver #50). Excluyente con `cta`. */
+  registrationOpen: boolean;
+  /** Texto del boton de inscripcion propia (viene de ctaLabel). Si no se cargo, el boton usa "Inscribirme". */
+  registrationLabel?: string;
   /** true = borrador: no aparece en /talks. Solo lo ve /admin/talks. */
   draft?: boolean;
 };
@@ -113,6 +117,8 @@ export function toTalkItem(row: TalkRow): TalkItem {
     slides: row.slides.length ? row.slides.map(({ title, embedUrl, openUrl }) => ({ title, embedUrl, openUrl })) : undefined,
     links: row.links.length ? row.links.map(({ label, url }) => ({ label, url })) : undefined,
     cta: row.ctaUrl ? { label: row.ctaLabel ?? "", url: row.ctaUrl } : undefined,
+    registrationOpen: row.registrationOpen,
+    registrationLabel: row.ctaLabel ?? undefined,
     draft: row.status === "DRAFT" || undefined,
   };
 }
@@ -137,6 +143,8 @@ function fromSeed(t: SeedTalk): TalkItem {
     slides: t.slides?.length ? t.slides : undefined,
     links: t.links?.length ? t.links : undefined,
     cta: t.cta,
+    registrationOpen: t.registrationOpen ?? false,
+    registrationLabel: t.cta?.label,
   };
 }
 

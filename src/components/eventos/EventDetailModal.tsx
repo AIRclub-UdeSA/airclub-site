@@ -36,6 +36,9 @@ export function EventDetailModal({
       initialSection={initialSection}
       onClose={onClose}
       onSelectTalk={(slug, sec) => onSelectActivity?.(slug, sec)}
+      // Los eventos no tienen inscripcion propia (eso es RSVP, #50 solo es para /talks):
+      // registrationOpen siempre da false/undefined acá, así que nunca se llega a usar esto.
+      onRegister={() => {}}
     />
   );
 }

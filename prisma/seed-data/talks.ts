@@ -54,6 +54,8 @@ export type SeedTalk = {
   links?: { label: string; url: string }[];
   /** Botón principal (ej.: anotarse o proponer una charla). */
   cta?: { label: string; url: string };
+  /** true = inscripcion propia del sitio en vez de un link externo (ver #50). No usado en el seed hoy. */
+  registrationOpen?: boolean;
 };
 
 export const talks: SeedTalk[] = [

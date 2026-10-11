@@ -27,6 +27,8 @@ export type TimelineTalk = {
   slides?: TalkSlide[];
   links?: { label: string; url: string }[];
   cta?: { label: string; url: string };
+  registrationOpen: boolean;
+  registrationLabel?: string;
   category?: "talk" | "workshop" | "competition" | "meetup";
   capacity?: number;
   prerequisites?: string;
@@ -49,6 +51,7 @@ interface TalksTimelineProps {
   talks: TimelineTalk[];
   nextSlug: string | null;
   onOpenTalk: (slug: string, section?: TalkSection) => void;
+  onRegister: (talk: TimelineTalk) => void;
   edit?: TalksEdit;
 }
 
@@ -56,7 +59,7 @@ type Item = { kind: "talk"; talk: TimelineTalk } | { kind: "today" };
 
 const GUTTER = "px-4 sm:px-8 md:px-12";
 
-export function TalksTimeline({ talks, nextSlug, onOpenTalk, edit }: TalksTimelineProps) {
+export function TalksTimeline({ talks, nextSlug, onOpenTalk, onRegister, edit }: TalksTimelineProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -157,6 +160,7 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk, edit }: TalksTimeli
                 isNext={item.talk.slug === nextSlug}
                 edge={edge}
                 onOpenTalk={onOpenTalk}
+                onRegister={onRegister}
                 controls={edit?.controls(item.talk)}
               />
             );
@@ -226,19 +230,21 @@ function TalkColumn({
   isNext,
   edge,
   onOpenTalk,
+  onRegister,
   controls,
 }: {
   talk: TimelineTalk;
   isNext: boolean;
   edge?: "first" | "last";
   onOpenTalk: TalksTimelineProps["onOpenTalk"];
+  onRegister: TalksTimelineProps["onRegister"];
   controls?: ReactNode;
 }) {
   const upcoming = Boolean(talk.isUpcoming);
   const cover = talkCover(talk.media);
   const date = talkDateParts(talk.startsAt, talk.endsAt);
   const hasSlides = Boolean(talk.slides?.length);
-  const hasActions = hasSlides || (upcoming && talk.cta);
+  const hasActions = hasSlides || (upcoming && (talk.cta || talk.registrationOpen));
 
   return (
     <li
@@ -367,14 +373,26 @@ function TalkColumn({
                   Diapositivas
                 </ActionLink>
               )}
-              {upcoming && talk.cta && (
-                <a
-                  href={talk.cta.url}
-                  className="relative z-10 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-crimson-text underline decoration-crimson-text/40 underline-offset-[6px] transition-colors hover:decoration-crimson-text"
+              {upcoming && talk.registrationOpen ? (
+                <button
+                  type="button"
+                  onClick={() => onRegister(talk)}
+                  className="relative z-10 inline-flex cursor-pointer items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-crimson-text underline decoration-crimson-text/40 underline-offset-[6px] transition-colors hover:decoration-crimson-text"
                 >
-                  {talk.cta.label}
+                  {talk.registrationLabel ?? "Inscribirme"}
                   <ArrowUpRight size={14} aria-hidden="true" />
-                </a>
+                </button>
+              ) : (
+                upcoming &&
+                talk.cta && (
+                  <a
+                    href={talk.cta.url}
+                    className="relative z-10 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-crimson-text underline decoration-crimson-text/40 underline-offset-[6px] transition-colors hover:decoration-crimson-text"
+                  >
+                    {talk.cta.label}
+                    <ArrowUpRight size={14} aria-hidden="true" />
+                  </a>
+                )
               )}
             </div>
           )}

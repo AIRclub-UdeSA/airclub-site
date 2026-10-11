@@ -20,6 +20,7 @@ interface TalkModalProps {
   initialSection?: TalkSection;
   onClose: () => void;
   onSelectTalk: (slug: string, section?: TalkSection) => void;
+  onRegister: (talk: TimelineTalk) => void;
 }
 
 // Coincide con la duración de la animación de salida en globals.css (.talk-modal[data-closing]).
@@ -36,6 +37,7 @@ export function TalkModal({
   initialSection = "overview",
   onClose,
   onSelectTalk,
+  onRegister,
 }: TalkModalProps) {
   const [activeSection, setActiveSection] = useState<TalkSection>(initialSection);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -382,7 +384,7 @@ export function TalkModal({
                 </div>
 
                 <div className="space-y-8">
-                  {upcoming && talk.cta && (
+                  {upcoming && (talk.cta || talk.registrationOpen) && (
                     <div className="bg-crimson p-6 text-white">
                       <p className="font-display text-[1.15rem] font-bold">
                         {talk.category === "workshop"
@@ -396,15 +398,28 @@ export function TalkModal({
                           ? `Capacidad limitada a ${talk.capacity} lugares. Confirmá tu asistencia con anticipación.`
                           : "Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación."}
                       </p>
-                      <a
-                        href={talk.cta.url}
-                        target={talk.cta.url.startsWith("http") ? "_blank" : undefined}
-                        rel={talk.cta.url.startsWith("http") ? "noopener noreferrer" : undefined}
-                        className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
-                      >
-                        <span>{talk.cta.label}</span>
-                        <ArrowUpRight size={15} aria-hidden="true" />
-                      </a>
+                      {talk.registrationOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => onRegister(talk)}
+                          className="mt-5 inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
+                        >
+                          <span>{talk.registrationLabel ?? "Inscribirme"}</span>
+                          <ArrowUpRight size={15} aria-hidden="true" />
+                        </button>
+                      ) : (
+                        talk.cta && (
+                          <a
+                            href={talk.cta.url}
+                            target={talk.cta.url.startsWith("http") ? "_blank" : undefined}
+                            rel={talk.cta.url.startsWith("http") ? "noopener noreferrer" : undefined}
+                            className="mt-5 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
+                          >
+                            <span>{talk.cta.label}</span>
+                            <ArrowUpRight size={15} aria-hidden="true" />
+                          </a>
+                        )
+                      )}
                     </div>
                   )}
 

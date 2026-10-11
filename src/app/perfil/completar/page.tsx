@@ -2,13 +2,17 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
+import { safeNext } from "@/lib/safe-next";
 
-export default async function CompletarPerfilPage() {
+export default async function CompletarPerfilPage({ searchParams }: PageProps<"/perfil/completar">) {
+  const { next } = await searchParams;
+  const target = safeNext(Array.isArray(next) ? next[0] : next, "/perfil?guardado=1");
+
   const session = await auth();
   if (!session?.user?.email) redirect("/");
 
   const existing = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
-  if (existing) redirect("/perfil");
+  if (existing) redirect(target);
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
@@ -22,7 +26,7 @@ export default async function CompletarPerfilPage() {
           Talk.
         </p>
       </div>
-      <PerfilForm submitLabel="Crear perfil" />
+      <PerfilForm submitLabel="Crear perfil" next={target} />
     </div>
   );
 }

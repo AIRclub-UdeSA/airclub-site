@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ALL_CAREER_SLUGS, MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
+import { safeNext } from "@/lib/safe-next";
 
 const VALID_CAREER_SLUGS = new Set<string>(ALL_CAREER_SLUGS);
 const CURRENT_YEAR = new Date().getFullYear();
@@ -22,6 +23,8 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
   const email = session?.user?.email;
   if (!email) redirect("/");
 
+  const next = safeNext(String(formData.get("next") ?? ""), "/perfil?guardado=1");
+
   const role = String(formData.get("role") ?? "");
   if (role !== "STUDENT" && role !== "PROFESSOR" && role !== "OTHER") {
     return { error: "Elegí una opción: estudiante, profesor u otro." };
@@ -36,7 +39,7 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
       create: { email, role, otherRole },
       update: { role, otherRole, careers: [], otherCareer: null, startYear: null, studentStatus: null },
     });
-    redirect("/perfil?guardado=1");
+    redirect(next);
   }
 
   if (role === "PROFESSOR") {
@@ -45,7 +48,7 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
       create: { email, role },
       update: { role, otherRole: null, careers: [], otherCareer: null, startYear: null, studentStatus: null },
     });
-    redirect("/perfil?guardado=1");
+    redirect(next);
   }
 
   // role === "STUDENT"
@@ -77,5 +80,5 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
     create: { email, role, careers, otherCareer, startYear, studentStatus },
     update: { role, otherRole: null, careers, otherCareer, startYear, studentStatus },
   });
-  redirect("/perfil?guardado=1");
+  redirect(next);
 }

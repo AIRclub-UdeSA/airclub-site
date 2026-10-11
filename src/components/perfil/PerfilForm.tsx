@@ -58,7 +58,16 @@ function PillToggleGroup<T extends string>({
   );
 }
 
-export function PerfilForm({ existing, submitLabel }: { existing?: ExistingProfile; submitLabel: string }) {
+export function PerfilForm({
+  existing,
+  submitLabel,
+  next,
+}: {
+  existing?: ExistingProfile;
+  submitLabel: string;
+  /** A donde redirigir despues de guardar (ver saveProfileAction y safeNext). */
+  next: string;
+}) {
   const [state, formAction, pending] = useActionState(saveProfileAction, initialState);
   const [role, setRole] = useState<"STUDENT" | "PROFESSOR" | "OTHER">(existing?.role ?? "STUDENT");
   const [careers, setCareers] = useState<string[]>(existing?.careers ?? []);
@@ -66,6 +75,7 @@ export function PerfilForm({ existing, submitLabel }: { existing?: ExistingProfi
 
   return (
     <form action={formAction} className="flex flex-col gap-8 rounded-[var(--r-md)] border border-border bg-card p-6 sm:p-10">
+      <input type="hidden" name="next" value={next} />
       <fieldset className="flex flex-col gap-2.5">
         <legend className={labelClass}>¿Cuál es tu rol?</legend>
         <PillToggleGroup

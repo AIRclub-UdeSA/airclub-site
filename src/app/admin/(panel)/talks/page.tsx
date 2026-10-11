@@ -31,6 +31,7 @@ export default async function AdminTalksPage() {
     recordingUrl: talk.recordingUrl,
     ctaLabel: talk.ctaLabel,
     ctaUrl: talk.ctaUrl,
+    registrationOpen: talk.registrationOpen,
     confirmed: talk.confirmed,
     status: talk.status,
     media: talk.media.map((m) => ({

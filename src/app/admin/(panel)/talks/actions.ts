@@ -120,6 +120,7 @@ function talkScalarData(formData: FormData) {
     recordingUrl: optStr(formData, "recordingUrl"),
     ctaLabel: optStr(formData, "ctaLabel"),
     ctaUrl: optStr(formData, "ctaUrl"),
+    registrationOpen: formData.get("registrationOpen") === "on",
     confirmed: formData.get("confirmed") === "on",
     status: (formData.get("status") === "DRAFT" ? "DRAFT" : "PUBLISHED") as "DRAFT" | "PUBLISHED",
   };
@@ -131,7 +132,10 @@ function validateTalkData(data: ReturnType<typeof talkScalarData>): string | nul
   if (!data.title) return "El título es obligatorio.";
   if (!data.subtitle) return "El subtítulo es obligatorio.";
   if (!data.abstract) return "El resumen es obligatorio.";
-  if (Boolean(data.ctaLabel) !== Boolean(data.ctaUrl)) return "El botón principal necesita label y URL, o ninguno de los dos.";
+  if (data.registrationOpen && data.ctaUrl) return "La inscripción propia y el link externo son excluyentes: vaciá uno de los dos.";
+  if (!data.registrationOpen && Boolean(data.ctaLabel) !== Boolean(data.ctaUrl)) {
+    return "El botón principal necesita label y URL, o ninguno de los dos.";
+  }
   if (data.startsAt && data.endsAt && data.endsAt < data.startsAt) return "La fecha de fin no puede ser anterior a la de inicio.";
   return null;
 }
@@ -156,6 +160,7 @@ function talkAuditSnapshot(talk: {
   recordingUrl: string | null;
   ctaLabel: string | null;
   ctaUrl: string | null;
+  registrationOpen: boolean;
   confirmed: boolean;
   status: string;
   order: number;
