@@ -15,6 +15,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/talks", label: "AIR Talks" },
+  { href: "/workshops", label: "Workshops" },
   { href: "/eventos", label: "Eventos" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
