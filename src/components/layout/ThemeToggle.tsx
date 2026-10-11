@@ -22,14 +22,34 @@ function getServerSnapshot() {
 export function ThemeToggle({ className }: { className?: string }) {
   const dark = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  function toggle() {
-    const next = !document.documentElement.classList.contains("dark");
+  function apply(next: boolean) {
     document.documentElement.classList.toggle("dark", next);
     try {
       localStorage.setItem("airTheme", next ? "dark" : "light");
     } catch {
       // localStorage puede no estar disponible (modo privado, etc); no es critico.
     }
+  }
+
+  function toggle(e: React.MouseEvent<HTMLButtonElement>) {
+    const next = !document.documentElement.classList.contains("dark");
+    // El tema nuevo se abre como un círculo desde el botón (View Transitions). Sin soporte del navegador o con movimiento
+    // reducido, el cambio es instantáneo.
+    if (!document.startViewTransition || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      apply(next);
+      return;
+    }
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const transition = document.startViewTransition(() => apply(next));
+    transition.ready.then(() => {
+      document.documentElement.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        { duration: 520, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" },
+      );
+    });
   }
 
   return (

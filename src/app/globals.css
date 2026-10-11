@@ -519,3 +519,17 @@ html.dark .page-hero {
 .ws-progress-fill {
   animation: ws-progress 3400ms linear forwards;
 }
+
+/* Cambio de tema (ThemeToggle): el tema nuevo se abre como un círculo desde el botón. El navegador hace por defecto un
+   fundido entre las dos capturas; se apaga para que solo se vea el recorte animado desde JS. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
