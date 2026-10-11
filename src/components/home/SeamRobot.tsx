@@ -130,6 +130,92 @@ function centerPivot(node: THREE.Object3D | undefined) {
   return mesh;
 }
 
+/**
+ * Separa la torreta del LiDAR para que gire solo ella, como en el RPLIDAR real. En el CAD `lidar_sensor` es una sola
+ * malla (base, motor, polea, correa y torreta juntas), así que se parte en piezas conectadas: el eje es el centro de la
+ * pieza más alta (la tapa) y va a la torreta toda pieza que quede entera dentro del círculo de la tapa y arriba de la
+ * base. La polea y la correa se salen de ese círculo y quedan quietas con la base. Devuelve la torreta, centrada en
+ * su eje, como hija de la malla original (que se queda con la base).
+ */
+function splitLidarTurret(node: THREE.Object3D | undefined) {
+  const mesh = node as THREE.Mesh | undefined;
+  if (!mesh?.isMesh) return null;
+  // Al volver a montar (modo estricto de React) ya está partida
+  if (mesh.userData.turret) return mesh.userData.turret as THREE.Mesh;
+  const geo = mesh.geometry.index ? mesh.geometry : null;
+  if (!geo?.index) return null;
+  const pos = geo.attributes.position;
+  const index = geo.index.array;
+
+  // Piezas conectadas. El CAD repite vértices en la misma posición, así que se sueldan por posición antes de unir.
+  const weld = new Int32Array(pos.count);
+  const byKey = new Map<string, number>();
+  for (let v = 0; v < pos.count; v++) {
+    const key = `${Math.round(pos.getX(v) * 1000)},${Math.round(pos.getY(v) * 1000)},${Math.round(pos.getZ(v) * 1000)}`;
+    let w = byKey.get(key);
+    if (w === undefined) byKey.set(key, (w = byKey.size));
+    weld[v] = w;
+  }
+  const parent = Int32Array.from({ length: byKey.size }, (_, i) => i);
+  const find = (a: number) => {
+    while (parent[a] !== a) a = parent[a] = parent[parent[a]];
+    return a;
+  };
+  for (let t = 0; t < index.length; t += 3) {
+    const a = find(weld[index[t]]);
+    parent[find(weld[index[t + 1]])] = a;
+    parent[find(weld[index[t + 2]])] = a;
+  }
+  type Piece = { tris: number[]; box: THREE.Box3 };
+  const pieces = new Map<number, Piece>();
+  const p = new THREE.Vector3();
+  for (let t = 0; t < index.length; t += 3) {
+    const root = find(weld[index[t]]);
+    let piece = pieces.get(root);
+    if (!piece) pieces.set(root, (piece = { tris: [], box: new THREE.Box3() }));
+    piece.tris.push(t);
+    for (let k = 0; k < 3; k++) piece.box.expandByPoint(p.fromBufferAttribute(pos, index[t + k]));
+  }
+
+  geo.computeBoundingBox();
+  const all = geo.boundingBox!;
+  const cap = [...pieces.values()].reduce((a, b) => (b.box.max.y > a.box.max.y ? b : a));
+  const axis = cap.box.getCenter(new THREE.Vector3());
+  const radius = ((cap.box.max.x - cap.box.min.x) / 2) * 1.05;
+  const baseTop = all.min.y + (all.max.y - all.min.y) * 0.4;
+  const inTurret = (piece: Piece) => {
+    if (piece.box.min.y < baseTop) return false;
+    for (const t of piece.tris)
+      for (let k = 0; k < 3; k++) {
+        p.fromBufferAttribute(pos, index[t + k]);
+        if (Math.hypot(p.x - axis.x, p.z - axis.z) > radius) return false;
+      }
+    return true;
+  };
+
+  const baseIdx: number[] = [];
+  const turretIdx: number[] = [];
+  for (const piece of pieces.values()) {
+    const out = inTurret(piece) ? turretIdx : baseIdx;
+    for (const t of piece.tris) out.push(index[t], index[t + 1], index[t + 2]);
+  }
+  if (!turretIdx.length) return null;
+
+  const baseGeo = geo.clone();
+  baseGeo.setIndex(baseIdx);
+  const turretGeo = geo.clone();
+  turretGeo.setIndex(turretIdx);
+  turretGeo.translate(-axis.x, 0, -axis.z);
+  mesh.geometry = baseGeo;
+  const turret = new THREE.Mesh(turretGeo, mesh.material);
+  turret.castShadow = mesh.castShadow;
+  turret.receiveShadow = mesh.receiveShadow;
+  turret.position.set(axis.x, 0, axis.z);
+  mesh.add(turret);
+  mesh.userData.turret = turret;
+  return turret;
+}
+
 /** Con movimiento reducido el robot queda quieto, al centro de la pista, mientras la banda está a la vista. */
 let stillRun: Run | null = null;
 function reducedRun(): Run | null {
@@ -151,11 +237,11 @@ let wakeNow: () => void = () => {};
 
 function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | null> }) {
   const model = useRosmasterModel();
-  // Piezas con vida propia (se centran en su eje una sola vez, al montar)
+  // Piezas con vida propia (se preparan una sola vez, al montar): del LiDAR gira solo la torreta
   const parts = useRef<{ lidar: THREE.Mesh | null; camera: THREE.Mesh | null }>({ lidar: null, camera: null });
   useEffect(() => {
     parts.current = {
-      lidar: centerPivot(model.getObjectByName("lidar_sensor")),
+      lidar: splitLidarTurret(model.getObjectByName("lidar_sensor")),
       camera: centerPivot(model.getObjectByName("rgbd_camera")),
     };
   }, [model]);
@@ -184,7 +270,7 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
     g.scale.setScalar(pose.size / ROSMASTER_UNITS);
     if (yawGroup.current) yawGroup.current.rotation.y = pose.yaw;
 
-    // Vida propia: el LiDAR gira siempre y la cámara cabecea cuando la escena lo pide
+    // Vida propia: la torreta del LiDAR gira siempre (la base no) y la cámara cabecea cuando la escena lo pide
     const { lidar, camera } = parts.current;
     if (lidar) lidar.rotation.y = reduced ? 0 : frame.clock.elapsedTime * 5;
     if (camera) camera.rotation.x = st.nod;
