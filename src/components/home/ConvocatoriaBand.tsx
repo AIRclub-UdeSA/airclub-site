@@ -16,7 +16,7 @@ export async function ConvocatoriaBand() {
   // #0e0407 y rosa #f0357f: los mismos de la cuenta regresiva y de la convocatoria de /talks. El contenido se alinea con
   // la grilla del resto de la landing (max-w-7xl + mismos paddings).
   return (
-  <div data-seam="peek" className="relative w-full bg-[#0e0407]">
+  <div className="relative w-full bg-[#0e0407]">
     <TalksBattlement className="text-[#0e0407]" />
     <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:px-8 sm:py-16 md:px-12 lg:grid-cols-12 lg:gap-16">
       <div className="lg:col-span-6">

@@ -107,7 +107,7 @@ Estos son los patrones que construyen la identidad visual de AIR Club:
 4. **Botón Mono Técnico (`Button.tsx`)**:
    * Borde fino, esquinas redondeadas (`rounded-full`), tipografía `font-mono text-[.8rem] uppercase` y flecha `ArrowUpRight` en hover.
 5. **`SectionEdge` y `SeamRobot` (landing, ver sección 11)**:
-   * `SectionEdge` es la curva que une dos secciones en lugar de un corte recto; `SeamRobot` es el Rosmaster que protagoniza una escena distinta en cada unión.
+   * `SectionEdge` es la curva que une dos secciones en lugar de un corte recto; `SeamRobot` es el Rosmaster que corre el slalom en la pista del Challenge JAR.
 6. **Eje Temporal con Nodo ("HOY")**:
    * Ancla los eventos pasados a la izquierda (línea sólida) y los futuros a la derecha (línea punteada), con el marcador HOY en el corte. Implementado en `TalksTimeline.tsx`, solo horizontal (en mobile se desliza lateralmente; no hay versión vertical).
 
@@ -282,14 +282,14 @@ Antes la landing tenía seis cambios claro/oscuro y "Tengo una idea" salía ante
 
 ### Estructura y archivos (de arriba hacia abajo)
 1. `ArmHero.tsx`: el brazo robótico del hero. Sigue sin tener pasada propia ("le falta poder"); lo único que cambió es que "Entrar al club" baja con `scrollToTarget` (Lenis).
-2. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne. Deja `--edge-h` de padding inferior extra para la colina del carrusel y para el robot.
+2. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne. Deja `--edge-h` de padding inferior extra para la colina del carrusel (el extra que quedó "para el robot" ya no hace falta).
 3. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. Lleva su propio `SectionEdge` arriba, con el color de la diapositiva activa (transición de 700 ms). El piso del `clamp` del título es `1.2rem`: "COMPETENCIAS" (13,8 em) tiene que caber en 320px.
 4. `CountdownStrip.tsx` + `RosmasterTrack.tsx`: un bloque oscuro continuo. Cuenta regresiva con números en Anton en celdas de 1px y segundos en carmesí macizo; debajo, la pista rosa. `RosmasterTrack` dibuja **solo la pista** (se desplaza con el scroll); el robot lo dibuja `SeamRobot`.
 5. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` y los mismos datos (`getUnifiedCalendarActivities`), máximo 3; las cajas cambian de forma según cuántas hay. Ya no incluye la convocatoria.
 6. `IdeaCallout.tsx`: "Tengo una idea" como banda `bg-bg2`, frase en Anton con interlineado `1.04`.
 7. `ConvocatoriaBand.tsx`: banda oscura con el borde almenado de `/talks` (`TalksBattlement`), "Proponé una charla o un workshop" con dos filas (charla, workshop).
 8. `SponsorStrip.tsx` (en `layout/`): alianzas, solo en la landing.
-9. Archivos de soporte: `src/components/shared/SectionEdge.tsx` (curvas), `src/components/home/SeamRobot.tsx` (el robot), `src/components/home/RosmasterModel.tsx` (el CAD repintado, compartido), `src/lib/smooth-scroll.ts` y `src/components/shared/SmoothScrollProvider.tsx` (Lenis).
+9. Archivos de soporte: `src/components/shared/SectionEdge.tsx` (curvas), `src/components/home/SeamRobot.tsx` y `slalom-scene.ts` (el robot y su escena), `src/components/home/RosmasterModel.tsx` (el CAD repintado, compartido), `src/lib/smooth-scroll.ts` y `src/components/shared/SmoothScrollProvider.tsx` (Lenis).
 
 ### Uniones: la curva no va en todas
 | Unión | Tratamiento |
@@ -304,24 +304,20 @@ Antes la landing tenía seis cambios claro/oscuro y "Tengo una idea" salía ante
 
 **Regla:** la curva solo abre y cierra el tramo oscuro. Si se agrega otra unión especial, que sea de otro tipo; no repetir el mismo arco en toda la página.
 
-`SectionEdge` es la colina de la sección que sigue, pintada de su color, que sube sobre el final de la anterior. Con el scroll la cima se desliza de lado y se aplana un poco, pero nunca llega a ser una recta. Cada borde tiene su propia forma (`peak`, `amp`). Se coloca **entre** dos secciones y las de arriba necesitan al menos `--edge-h` de padding inferior (`--edge-h: clamp(48px, 7.5vw, 110px)` en `globals.css`); sin eso la curva tapa texto. Se saca el `border` recto de las secciones que tienen curva arriba. Con movimiento reducido la curva queda quieta. Publica la posición de su cima en `data-peak`.
+`SectionEdge` es la colina de la sección que sigue, pintada de su color, que sube sobre el final de la anterior. Con el scroll la cima se desliza de lado y se aplana un poco, pero nunca llega a ser una recta. Cada borde tiene su propia forma (`peak`, `amp`). Se coloca **entre** dos secciones y las de arriba necesitan al menos `--edge-h` de padding inferior (`--edge-h: clamp(48px, 7.5vw, 110px)` en `globals.css`); sin eso la curva tapa texto. Se saca el `border` recto de las secciones que tienen curva arriba. Con movimiento reducido la curva queda quieta.
 
-### La mascota que se asoma (`SeamRobot`)
-El Rosmaster es la **mascota de la página**: no cruza de lado a lado, se **asoma** por las uniones entre secciones, juega un rato y se vuelve a esconder mientras se baja. Es un solo robot en **un canvas fijo** sobre la ventana (`pointer-events-none`, `z-40`, debajo de la barra de navegación, ortográfico con 1 unidad = 1 px). Cada unión se marca con `data-seam` y su escena se recorre con el scroll (se puede ir y volver): la posición sale de `window.scrollY`, amortiguada sobre el avance y no sobre la posición, para que el robot siga pegado a la unión.
+### El Rosmaster en la pista (`SeamRobot`)
+El Rosmaster es la mascota de la página, pero hoy hace **una sola escena**: el slalom de la pista del JAR (banda `data-seam="slalom"` de `RosmasterTrack`). Es un solo robot en **un canvas fijo** sobre la ventana (`pointer-events-none`, `z-40`, debajo de la barra de navegación, ortográfico con 1 unidad = 1 px) que no dibuja ni se ve fuera de la ventana de la banda. Lo anterior (escenas en las dos colinas y en las almenas) se **sacó**; ver "Rechazado".
 
-**Sale de atrás de la unión:** el canvas se recorta con la forma de la colina (`hillClip`, muestreando el SVG real) o de las almenas (`battlementClip`), así que lo que queda por debajo de la línea no se ve. Para esconderse, el robot baja (`sink`); para asomarse, sube. Fuera de una escena el canvas no dibuja ni se ve.
+**Escena (`src/components/home/slalom-scene.ts`):** una línea de tiempo de GSAP con **reloj propio** (no depende de la velocidad del scroll): entra por el borde derecho, se detiene a mirar la cuenta regresiva (la cámara RGB-D cabecea) y cruza la pista de derecha a izquierda esquivando tres conos, con el LiDAR barriendo adelante; más abajo en pantalla = más cerca = más grande. Una vuelta dura unos 4,3 s y **se repite mientras la banda está a la vista**.
 
-| `data-seam` | Dónde | Escena |
-| :--- | :--- | :--- |
-| `summit` | colina que abre el tramo oscuro | asoma la cabeza por detrás, mira a los lados, se agacha, vuelve a asomar, sube a la cima, saluda con dos saltitos y se esconde del otro lado |
-| `slalom` | pista del JAR | entra por el borde derecho, mira la cuenta regresiva y la cruza de derecha a izquierda esquivando tres conos, con el LiDAR barriendo adelante; más abajo en pantalla = más cerca = más grande |
-| `jump` | colina que cierra el tramo oscuro | asoma por detrás de la cima, mira adelante, sale disparado en un arco con vuelta (como un delfín) y se zambulle del otro lado |
-| `peek` | almenas de la convocatoria | asoma la cabeza sobre las almenas, mira a los lados, se agacha, sube del todo, saluda y se va rodando por las almenas |
-
-* **Reglas:** cada escena tiene que ser *otra cosa* (no el mismo cruce con otro tamaño) y **lenta**: el dueño pidió que se sienta como un personaje que se asoma, no una máquina. Por eso las escenas son pistas de puntos (`track`) con arranque y frenada suaves entre cada uno, con pausas, y las ventanas de scroll son largas (unos 540 a 810 px). Todas pasan por espacio vacío para no tapar texto.
-* En las colinas el robot sigue el trazado real del SVG y se inclina con la pendiente.
-* Con movimiento reducido solo queda quieto sobre la pista mientras la banda está a la vista, sin recorte.
-* El hover sobre la pista ya no acelera nada. La banda del Rosmaster mide `md:h-[520px]` para que las ventanas del `slalom` y del `jump` no se pisen.
+**Atada a la banda:**
+* Arranca cuando el borde superior de la banda llega al 90% de la pantalla (`START_AT`). Hasta que su carril sube, el robot va por el piso visible de la banda y se **achica para caber en ella** (no pisa la cuenta regresiva); crece a medida que la banda sube.
+* Si se sigue scrolleando, el robot se va con la banda (nada queda flotando en pantalla). Al salir por arriba (`END_AT`) la escena queda en pausa y sigue donde estaba si se vuelve; solo se descarta y arranca de cero cuando la banda sale por completo por abajo (`RESET_AT`).
+* **Dwell:** durante la primera vuelta la rueda rinde el 40% (`DWELL_SPEED`, `setWheelSpeed` en `smooth-scroll.ts`), para que alcance a verse sin tomar el control del scroll; después vuelve a la normal. No afecta al táctil (Lenis no lo intercepta, `syncTouch` apagado).
+* Render: luz de estudio generada en el cliente (`RoomEnvironment`, `environmentIntensity` 0.3: más alto vuelve rosa el carmesí del chasis), sombra de contacto suave, el LiDAR gira siempre y la cámara cabecea.
+* Con movimiento reducido el robot queda quieto, sin conos, sobre la pista mientras la banda está a la vista.
+* El hover sobre la pista no acelera nada. La banda mide `md:h-[520px]`.
 
 ### Scroll suave (Lenis)
 `SmoothScrollProvider` (en el layout) crea la instancia; el resto de la app pasa por `scrollToTarget` (`src/lib/smooth-scroll.ts`), que cae al scroll nativo si Lenis no está activo. No colgar la instancia de `window`. `allowNestedScroll` evita que Lenis trabe el modal de `/talks` y los paneles de `/admin`, y `html.lenis { scroll-behavior: auto }` evita que compita con el `scroll-behavior: smooth` nativo. Se desactiva con `prefers-reduced-motion`.
@@ -339,6 +335,8 @@ El Rosmaster es la **mascota de la página**: no cruza de lado a lado, se **asom
 * **Bandas de color de fondo** y `rounded-card` en la landing.
 * **Curvas en todas las uniones**: se probó (seis colinas seguidas) y se pidió variar.
 * **Titulares que se "leen" con el scroll** (cada palabra pasa de tenue a plena, como Slush): con poco recorrido casi no se notaba y con más obligaba a scrollear para ver las últimas palabras. Se probó en tres titulares y se revirtió.
+* **Escenas del robot en las colinas y en las almenas** (asomarse, saludar, salto con vuelta): se hicieron cuatro y se dejó solo el slalom. Con la unión pegada a la página cada escena tenía unos 2 s a velocidad normal, y la colina del salto queda a unos 190 px de la pista, así que casi nunca se veía completa. Antes de reponerlas, resolver ese espacio (ver "Trampas").
+* **Que el robot se suelte de su sección** y siga fijo en pantalla si se sigue scrolleando: se probó y se rechazó, el robot tiene que irse con su sección.
 * **El robot cruzando siempre de izquierda a derecha** en distintos tamaños ("siempre repetimos el mismo patrón") y **demasiado rápido**: tiene que verse como una mascota que se asoma y juega, no como algo que pasa corriendo. También se probó una escena donde caía desde arriba rebotando; se cambió por asomarse sobre las almenas.
 * **Anton en el carrusel**: probado lado a lado con Syne y se prefirió Syne por ahora.
 * Los vinos fuera de paleta en la convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
@@ -351,16 +349,15 @@ El Rosmaster es la **mascota de la página**: no cruza de lado a lado, se **asom
 * **Títulos de `ActivityPanel` con palabras largas** ("DESBLOQUEANDO"): sin permitir el corte de palabra ensanchaban la página en mobile.
 * **Tailwind descarta `calc()` sin espacios**: `pb-[calc(var(--edge-h)+2rem)]` no aplica nada (sin error). Escribirlo con guiones bajos: `pb-[calc(var(--edge-h)_+_2rem)]`.
 * **Las curvas tapan lo que esté cerca del borde**: dejar `--edge-h` de padding inferior en la sección de arriba y subir los puntos del carrusel si hay curva debajo.
-* **El robot también tapa texto si no hay lugar**: en las colinas necesita unos 200px libres sobre la unión y en las almenas unos 130px (por eso `AboutSection` e `IdeaCallout` tienen más padding inferior). En mobile la escena `peek` se asoma sobre la columna única de "Tengo una idea" y pisa un poco el párrafo.
-* **Dos escenas del robot no pueden pisarse**: las ventanas de scroll se calculan por unión y, si se superponen, la anterior termina donde empieza la siguiente (y se acorta, o sea que va más rápida). La colina de salida queda al pie de la pista, por eso la pista es alta y la ventana de `jump` arranca más tarde. Si se achica la banda o se agregan escenas, revisar las ventanas con una captura por escena.
-* **La acción de una escena tiene que pasar a media altura de la pantalla**: si cae cuando la unión ya subió junto a la barra de navegación, el robot se ve diminuto y casi no se nota (le pasó al `jump`).
-* **El recorte del canvas es un `clip-path` que se recalcula en cada cuadro** mientras hay escena activa; no hacerlo con estado de React.
+* **Una animación atada al scroll (scrub) corre a la velocidad con que se scrollea**: un barrido rápido la reproduce en una fracción de segundo y alargar las ventanas no lo arregla. Por eso las escenas del robot usan un reloj propio (GSAP) y no scrub.
+* **Con reloj propio y la escena pegada a su sección, la escena solo se ve entera si la sección se queda en pantalla el tiempo suficiente** (unos 750 px de scroll por sección): de ahí el dwell de la rueda. Si se agregan escenas, dejar entre ellas distancia de sobra o resolver el turno (con un solo robot, la que empezó antes gana).
+* **El robot también tapa texto si no hay lugar**: mientras la banda entra, el robot va por su piso visible y se achica; no subirlo sobre la sección de arriba.
+* **Con el reductor de movimiento del compilador de React** (`react-hooks/immutability`), el estado de una escena se mueve desde GSAP y se lee en `useFrame`; mutar valores que vienen de hooks o props dentro del componente falla el lint (usar refs, `onCreated` o funciones fuera del componente).
 * **`next dev` guarda un candado en `.next/dev/lock`**: si se mata el servidor a medias, borrarlo antes de volver a levantarlo.
 * En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El canvas del robot necesita WebGL (en Playwright headless: `--use-gl=swiftshader --enable-unsafe-swiftshader`).
 
 ### Pendientes
-* Probar el scroll con rueda y táctil reales (todo se verificó con capturas en posiciones fijas) y ajustar el ritmo de las escenas del robot. El dueño dijo que "falta trabajo".
-* Revisar si el robot en `peek` tiene que esquivar el texto en mobile.
+* El dwell no funciona en táctil: en el teléfono el slalom pasa a la velocidad del dedo. Evaluar `syncTouch` de Lenis (cambia el tacto del scroll en toda la página).
 * El brazo robótico del hero sigue pendiente de su pasada propia.
 * La sección 8 todavía dice que "la landing conserva `rounded-card`" (línea de "Forma"): quedó vieja desde la decisión de la sección 11.
 * Abrir el PR contra `v2` cuando el dueño lo apruebe.

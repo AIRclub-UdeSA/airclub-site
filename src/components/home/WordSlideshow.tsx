@@ -196,7 +196,7 @@ export function WordSlideshow() {
 
   return (
     <>
-    <SectionEdge seam="summit" color={activeSlide.bg} transition={700} peak={[0.78, 0.3]} amp={[1, 0.65]} />
+    <SectionEdge color={activeSlide.bg} transition={700} peak={[0.78, 0.3]} amp={[1, 0.65]} />
     <section
       id="slideshow-palabras"
       aria-roledescription="carrusel"
