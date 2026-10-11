@@ -5,7 +5,52 @@
 
 export type WorkshopLevel = "inicial" | "intermedio" | "avanzado";
 
+/** Línea de workshops: agrupa los talleres por tema en /workshops. Para sumar una línea, agregarla a `tracks`. */
+export type WorkshopTrackKey = "ros2" | "linux";
+
+export type SeedWorkshopTrack = {
+  key: WorkshopTrackKey;
+  title: string;
+  /** Nota mono a la derecha del título ("Challenge JAR 2026"). */
+  label?: string;
+  /** Qué se aprende en esta línea. Opcional: la de ROS 2 ya se presenta con la intro de su recorrido. */
+  summary?: string;
+};
+
+export const tracks: SeedWorkshopTrack[] = [
+  { key: "ros2", title: "ROS 2 y robótica", label: "Challenge JAR 2026" },
+  {
+    key: "linux",
+    title: "Linux",
+    summary: "Para trabajar con ROS 2 y con los robots del club hace falta Linux en la computadora: lo instalamos juntos.",
+  },
+];
+
+/**
+ * Taller presencial que ya se hizo y no está cargado como evento (por ejemplo, porque todavía falta la fecha o las
+ * fotos). Los que tienen fecha pueden ir en prisma/seed-data/events.ts con `category: "workshop"` y su `track`.
+ */
+export type SeedPastWorkshop = {
+  slug: string;
+  track: WorkshopTrackKey;
+  title: string;
+  summary: string;
+  startsAt?: Date;
+  /** Foto del taller (en public/ o en el bucket de Supabase). */
+  imageUrl?: string;
+};
+
+export const pastWorkshops: SeedPastWorkshop[] = [
+  {
+    slug: "instalacion-linux",
+    track: "linux",
+    title: "Instalación de Linux",
+    summary: "Instalamos Linux en las laptops de quienes vinieron, para dejarlas listas para trabajar con el club.",
+  },
+];
+
 export type SeedAsyncWorkshop = {
+  track: WorkshopTrackKey;
   /** Número de semana, "01" a "09". Es el numeral grande de la página. */
   week: string;
   /** Carpeta en jar_workshops y ruta de la guía en jar_site ("semana-01-talkers-listeners"). */
@@ -27,6 +72,7 @@ export const JAR_WORKSHOPS_REPO = "https://github.com/AIRclub-UdeSA/jar_workshop
 
 export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
+    track: "ros2",
     week: "01",
     slug: "semana-01-talkers-listeners",
     title: "Talkers y listeners",
@@ -37,6 +83,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: [],
   },
   {
+    track: "ros2",
     week: "02",
     slug: "semana-02-zigzag-mecanum",
     title: "Zigzag mecanum",
@@ -47,6 +94,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["01"],
   },
   {
+    track: "ros2",
     week: "03",
     slug: "semana-03-evasion-obstaculos",
     title: "Evasión de obstáculos",
@@ -57,6 +105,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["01", "02"],
   },
   {
+    track: "ros2",
     week: "04",
     slug: "semana-04-deteccion-color",
     title: "Detección de color",
@@ -67,6 +116,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["03"],
   },
   {
+    track: "ros2",
     week: "05",
     slug: "semana-05-launch-rviz",
     title: "Launch files y RViz",
@@ -77,6 +127,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["03", "04"],
   },
   {
+    track: "ros2",
     week: "06",
     slug: "semana-06-localizacion",
     title: "Localización",
@@ -87,6 +138,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["03", "04", "05"],
   },
   {
+    track: "ros2",
     week: "07",
     slug: "semana-07-obstaculos-no-mapeados",
     title: "Obstáculos fuera del mapa",
@@ -97,6 +149,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["04", "06"],
   },
   {
+    track: "ros2",
     week: "08",
     slug: "semana-08-cobertura-mapa",
     title: "Cobertura del mapa",
@@ -107,6 +160,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     requires: ["06"],
   },
   {
+    track: "ros2",
     week: "09",
     slug: "semana-09-nav2",
     title: "Nav2",

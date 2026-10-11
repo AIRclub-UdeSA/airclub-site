@@ -1,4 +1,5 @@
 import type { TalkSpeaker } from "./talks";
+import type { WorkshopTrackKey } from "./workshops";
 
 export type EventCategory = "workshop" | "competition" | "meetup" | "talk";
 
@@ -21,6 +22,8 @@ export type SeedEvent = {
   instructor?: string;
   speakers?: TalkSpeaker[];
   prerequisites?: string;
+  /** Solo para `category: "workshop"`: en qué línea de /workshops va cuando ya pasó. */
+  track?: WorkshopTrackKey;
 };
 
 export const events: SeedEvent[] = [

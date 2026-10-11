@@ -4,13 +4,15 @@ const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)<
 
 /**
  * Título de /workshops (Anton, centrado, misma altura de letra que /talks y /equipo) y el manifiesto: qué es un
- * workshop del club y las dos formas de entrar (presencial o el recorrido asincrónico).
+ * workshop del club, las dos formas de entrar (presencial o asincrónico) y un índice de las líneas de workshops.
  */
 export function WorkshopsHero({
+  tracks,
   guideCount,
   totalHours,
   firstGuideUrl,
 }: {
+  tracks: { key: string; title: string }[];
   guideCount: number;
   totalHours: string;
   firstGuideUrl?: string;
@@ -25,7 +27,9 @@ export function WorkshopsHero({
         className="talk-rise mx-auto mt-12 grid max-w-[1440px] grid-cols-1 gap-8 px-4 sm:px-8 md:mt-16 md:px-12 lg:grid-cols-12 lg:gap-4"
         style={{ "--d": "120ms" } as React.CSSProperties}
       >
-        <p className="text-balance font-display text-[clamp(1.9rem,4.4vw,4rem)] font-bold leading-[1.04] tracking-tight text-text lg:col-span-7">
+        {/* Como el manifiesto de la landing: Syne black en mayúsculas. "SIMULADORES." (12 letras de ~1.2em) tiene que
+            entrar en 320px y en las 7 columnas de escritorio, de ahí el clamp. */}
+        <p className="font-display text-[clamp(1.4rem,6.2vw,3.3rem)] font-black uppercase leading-[0.98] tracking-tight text-text lg:col-span-7">
           Cables, código, motores y simuladores. <span className="text-crimson-text">Sin requisitos previos.</span>
         </p>
 
@@ -38,6 +42,26 @@ export function WorkshopsHero({
           <p className="mt-5 font-mono text-[.74rem] font-semibold uppercase tracking-[.16em] text-mauve">
             {String(guideCount).padStart(2, "0")} guías · {totalHours} de práctica
           </p>
+
+          {tracks.length > 1 && (
+            <nav aria-label="Líneas de workshops" className="mt-6 border-t border-text pt-4">
+              <ul className="flex flex-col">
+                {tracks.map((t) => (
+                  <li key={t.key}>
+                    <a
+                      href={`#linea-${t.key}`}
+                      className="group flex items-baseline justify-between gap-4 border-b border-text/20 py-2.5 font-display text-[1.05rem] font-bold tracking-tight text-text transition-colors hover:text-crimson-text"
+                    >
+                      {t.title}
+                      <span aria-hidden="true" className="font-mono text-[.8rem] text-text3 transition-colors group-hover:text-crimson-text">
+                        ↓
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
 
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
             {firstGuideUrl && (

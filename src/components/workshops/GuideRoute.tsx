@@ -1,7 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
 import { JAR_SITE_URL, JAR_WORKSHOPS_REPO, type AsyncWorkshop, type WorkshopLevel } from "@/lib/workshops";
-import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { CountHeading } from "@/components/shared/CountHeading";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
@@ -26,70 +24,57 @@ function LevelNode({ level, className = "" }: { level: WorkshopLevel; className?
 }
 
 /**
- * Recorrido asincrónico del Challenge JAR: las guías en orden, sobre una ruta vertical con un nodo por semana. El orden es
- * el diseño: cada guía deja andando algo que la siguiente da por hecho, y "Requiere" enlaza a esas semanas. La 01 va en
- * carmesí macizo (es por donde se entra). La guía completa vive en el sitio del JAR y el código en jar_workshops.
+ * Recorrido asincrónico de una línea (hoy, el del Challenge JAR): las guías en orden, sobre una ruta vertical con un nodo
+ * por semana. El orden es el diseño: cada guía deja andando algo que la siguiente da por hecho, y "Requiere" enlaza a esas
+ * semanas. La 01 va en carmesí macizo (es por donde se entra). La guía completa vive en el sitio del JAR y el código en
+ * jar_workshops.
  */
-export function AsyncRoute({ workshops, totalHours }: { workshops: AsyncWorkshop[]; totalHours: string }) {
-  const first = workshops[0];
+export function GuideRoute({ guides, totalHours }: { guides: AsyncWorkshop[]; totalHours: string }) {
+  const first = guides[0];
 
   return (
-    <section id="asincronicos" className="scroll-mt-24 bg-bg2 py-16 md:py-24">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
-        <RevealOnScroll>
-          <CountHeading
-            n={workshops.length}
-            title="Talleres asincrónicos"
-            aside={
-              <p className="pb-1.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.18em] text-mauve lg:ml-auto">
-                Challenge JAR 2026
-              </p>
-            }
-          />
+    <div id="asincronicos" className="scroll-mt-24">
+      <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-4">
+        <div className="min-w-0 lg:col-span-5">
+          <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">
+            Guías asincrónicas paso a paso para hacer a tu ritmo contra el simulador, con el código de cada semana en
+            GitHub. Cada una deja andando algo que la siguiente da por hecho: hacelas en orden. En total, {totalHours}.
+          </p>
 
-          <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-4">
-            <div className="min-w-0 lg:col-span-5">
-              <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">
-                Guías paso a paso para hacer a tu ritmo contra el simulador, con el código de cada semana en GitHub. Cada
-                una deja andando algo que la siguiente da por hecho: hacelas en orden. En total, {totalHours}.
-              </p>
+          <a
+            href={`${JAR_SITE_URL}/setup/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
+          >
+            Guía de instalación del simulador
+            <ArrowUpRight size={13} aria-hidden="true" />
+            {NEW_TAB_HINT}
+          </a>
 
-              <a
-                href={`${JAR_SITE_URL}/setup/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
-              >
-                Guía de instalación del simulador
-                <ArrowUpRight size={13} aria-hidden="true" />
-                {NEW_TAB_HINT}
-              </a>
-
-              <dl className="mt-8 flex flex-wrap gap-x-6 gap-y-3 font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
-                {(Object.keys(LEVEL_LABEL) as WorkshopLevel[]).map((level) => (
-                  <div key={level} className="flex items-center gap-2">
-                    <dt>
-                      <LevelNode level={level} />
-                    </dt>
-                    <dd>{LEVEL_LABEL[level]}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            {first && <SetupBlock firstPackage={first.ros2Package} className="lg:col-span-6 lg:col-start-7" />}
-          </div>
-
-          <ol className="relative mt-12 grid min-w-0 grid-cols-1 gap-3 md:mt-16">
-            {/* La ruta: una línea de 1px que une los nodos de todas las semanas. */}
-            <span className="absolute bottom-8 left-[6px] top-8 w-px bg-text/30" aria-hidden="true" />
-            {workshops.map((w, i) => (
-              <RouteStop key={w.slug} workshop={w} start={i === 0} />
+          <dl className="mt-8 flex flex-wrap gap-x-6 gap-y-3 font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
+            {(Object.keys(LEVEL_LABEL) as WorkshopLevel[]).map((level) => (
+              <div key={level} className="flex items-center gap-2">
+                <dt>
+                  <LevelNode level={level} />
+                </dt>
+                <dd>{LEVEL_LABEL[level]}</dd>
+              </div>
             ))}
-          </ol>
-        </RevealOnScroll>
+          </dl>
+        </div>
+
+        {first && <SetupBlock firstPackage={first.ros2Package} className="lg:col-span-6 lg:col-start-7" />}
       </div>
-    </section>
+
+      <ol className="relative mt-12 grid min-w-0 grid-cols-1 gap-3 md:mt-16">
+        {/* La ruta: una línea de 1px que une los nodos de todas las semanas. */}
+        <span className="absolute bottom-8 left-[6px] top-8 w-px bg-text/30" aria-hidden="true" />
+        {guides.map((w, i) => (
+          <RouteStop key={w.slug} workshop={w} start={i === 0} />
+        ))}
+      </ol>
+    </div>
   );
 }
 
