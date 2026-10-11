@@ -20,12 +20,7 @@ export async function ConvocatoriaBand() {
     <TalksBattlement className="text-[#0e0407]" />
     <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:px-8 sm:py-16 md:px-12 lg:grid-cols-12 lg:gap-16">
       <div className="lg:col-span-6">
-        <div className="flex items-center gap-2.5 font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-[#f0357f]">
-          {/* Punto de estado: la convocatoria está abierta ahora. El pulso se apaga con movimiento reducido. */}
-          <span aria-hidden="true" className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#f0357f] opacity-60 motion-safe:animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f0357f]" />
-          </span>
+        <div className="font-mono text-[.74rem] font-semibold uppercase tracking-[.2em] text-[#f0357f]">
           Convocatoria abierta
         </div>
         <h2 className="mt-3 font-display text-[clamp(1.7rem,3.1vw,2.7rem)] font-black uppercase leading-[0.95] tracking-tight text-white">
