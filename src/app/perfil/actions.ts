@@ -36,7 +36,7 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
       create: { email, role, otherRole },
       update: { role, otherRole, careers: [], otherCareer: null, startYear: null, studentStatus: null },
     });
-    redirect("/perfil");
+    redirect("/perfil?guardado=1");
   }
 
   if (role === "PROFESSOR") {
@@ -45,7 +45,7 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
       create: { email, role },
       update: { role, otherRole: null, careers: [], otherCareer: null, startYear: null, studentStatus: null },
     });
-    redirect("/perfil");
+    redirect("/perfil?guardado=1");
   }
 
   // role === "STUDENT"
@@ -77,5 +77,5 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
     create: { email, role, careers, otherCareer, startYear, studentStatus },
     update: { role, otherRole: null, careers, otherCareer, startYear, studentStatus },
   });
-  redirect("/perfil");
+  redirect("/perfil?guardado=1");
 }
