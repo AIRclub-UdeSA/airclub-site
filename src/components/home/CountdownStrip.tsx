@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { EventItem } from "@/lib/events";
+import { FlapDigit } from "./FlapDigit";
 
 function diffParts(targetMs: number) {
   const diff = targetMs - Date.now();
@@ -124,15 +125,13 @@ export function CountdownStrip({ event }: { event: EventItem }) {
   );
 }
 
-/** Cada dígito en una caja de ancho fijo: Anton no tiene cifras tabulares y, sin esto, el número "baila" cada segundo. */
+/** Cada dígito es una solapa de tablero mecánico (FlapDigit) en una caja de ancho fijo: Anton no tiene cifras tabulares y, sin esto, el número "baila" cada segundo. */
 function Digits({ value }: { value?: number }) {
   const text = value === undefined ? "--" : pad(value);
   return (
     <span className="inline-flex" aria-hidden={value === undefined ? true : undefined}>
       {text.split("").map((ch, i) => (
-        <span key={i} className="inline-block w-[0.5em] text-center">
-          {ch}
-        </span>
+        <FlapDigit key={i} ch={ch} />
       ))}
     </span>
   );
@@ -142,7 +141,7 @@ function Unit({ value, label, isLive }: { value?: number; label: string; isLive?
   return (
     <div
       className={`flex flex-col items-center justify-between gap-3 px-1 py-5 sm:gap-5 sm:py-8 ${
-        isLive ? "bg-crimson text-white" : "bg-[#0e0407] text-[#f5e8ec]"
+        isLive ? "bg-crimson text-white [--flap-seam:var(--crimson)]" : "bg-[#0e0407] text-[#f5e8ec] [--flap-seam:#0e0407]"
       }`}
     >
       <span className="font-logo text-[clamp(2.6rem,7.2vw,8rem)] leading-[0.85]">
