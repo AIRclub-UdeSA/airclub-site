@@ -13,11 +13,11 @@ Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Pr
 
 | Carpeta / archivo | Qué es |
 | --- | --- |
-| `src/app/` | Rutas de la app (Home, Eventos, Plataformas, Equipo, Contacto) |
+| `src/app/` | Rutas de la app (Home, Talks, Workshops, Eventos, Plataformas, Equipo, Contacto) |
 | `src/components/` | Componentes de layout (`layout/`), compartidos (`shared/`) y de Home (`home/`) |
 | `src/lib/` | Acceso a datos (`events.ts`, `robots.ts`, `team.ts`), utilidades y el cliente de Prisma |
 | `prisma/schema.prisma` | Modelo de datos (Event, EventRegistration, Robot, TeamMember) |
-| `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo y charlas se siembran a Postgres desde acá con `npm run db:seed` |
+| `prisma/seed-data/` | Contenido tipado. Eventos, workshops, robots, proyectos y contacto se leen directo de acá; equipo y charlas se siembran a Postgres desde acá con `npm run db:seed` |
 | `public/` | Imágenes estáticas (logo, favicon, fotos) |
 | `netlify.toml` | Deploy de la versión **actual en producción** (rama `main`), sin tocar |
 
@@ -56,12 +56,14 @@ CI (`typecheck`, `lint`, `build`) corre en cada PR contra `v2` o `main`.
 
 ### Contenido (eventos, robots, equipo)
 
-Eventos, robots, proyectos y contacto se editan directamente en `prisma/seed-data/*.ts` (arrays tipados), con el mismo flujo de PR que el resto del código. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
+Eventos, workshops, robots, proyectos y contacto se editan directamente en `prisma/seed-data/*.ts` (arrays tipados), con el mismo flujo de PR que el resto del código. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
 
 El equipo y las charlas viven en la base, y `npm run db:seed` carga en ella lo que dice `prisma/seed-data/`:
 
 - **Equipo:** se edita en `prisma/seed-data/team.ts` y se corre `npm run db:seed`, que crea o actualiza a cada persona. El array (`founders` / `collaborators`) define en qué lista aparece, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
 - **Charlas:** la fuente de verdad es la base (se editan desde el panel). El seed solo crea las charlas que no existen y nunca modifica una existente, así que correrlo no pisa lo editado.
+
+**Workshops:** un taller presencial es un evento más, con `category: "workshop"` en `prisma/seed-data/events.ts`: aparece en `/workshops` (en próximos o en el archivo, según la fecha) y en `/eventos`. Las guías asincrónicas del Challenge JAR están en `prisma/seed-data/workshops.ts`.
 
 ### Imágenes
 
