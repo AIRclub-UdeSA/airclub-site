@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { requireUserProfile } from "@/lib/perfil/require-profile";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
+
+export const metadata: Metadata = {
+  title: "Mi perfil, AIR Club UdeSA",
+  robots: { index: false, follow: false },
+};
 
 export default async function PerfilPage({ searchParams }: PageProps<"/perfil">) {
   const profile = await requireUserProfile();
@@ -14,9 +20,12 @@ export default async function PerfilPage({ searchParams }: PageProps<"/perfil">)
           Mi perfil
         </h1>
         <p className="mt-4 font-body text-[1.05rem] leading-[1.7] text-text2">Editá tus datos cuando quieras.</p>
+        <p className="mt-3 max-w-[52ch] font-body text-[.92rem] leading-[1.7] text-text3">
+          Usamos tu rol y tu carrera para la inscripción a las charlas y para saber quiénes vienen.
+        </p>
       </div>
       {guardado && (
-        <p className="flex items-center gap-2 rounded-[var(--r-sm)] border border-crimson/25 bg-crimson/8 px-4 py-3 font-body text-[.9rem] font-medium text-crimson-text">
+        <p className="flex items-center gap-2 border border-crimson/25 bg-crimson/8 px-4 py-3 font-body text-[.9rem] font-medium text-crimson-text">
           <Check className="h-4 w-4 shrink-0" /> Perfil guardado.
         </p>
       )}

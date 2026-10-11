@@ -54,7 +54,7 @@ export function CareerSelect({ selected, onChange }: { selected: string[]; onCha
       )}
 
       {openGroup ? (
-        <div className="flex flex-col gap-1 rounded-[var(--r-md)] border border-border bg-bg2 p-2">
+        <div className="flex flex-col gap-1 border border-border bg-bg2 p-2">
           <button
             type="button"
             onClick={() => setOpenGroupId(null)}
@@ -85,7 +85,7 @@ export function CareerSelect({ selected, onChange }: { selected: string[]; onCha
                 type="button"
                 onClick={() => setOpenGroupId(g.id)}
                 className={cn(
-                  "group flex flex-col items-center gap-2.5 rounded-[var(--r-md)] border px-4 py-5 text-center transition-colors",
+                  "group flex flex-col items-center gap-2.5 border px-4 py-5 text-center transition-colors",
                   count > 0 ? "border-crimson/40 bg-crimson/6" : "border-border bg-bg2 hover:border-crimson/30 hover:bg-crimson/5",
                 )}
               >
@@ -105,7 +105,7 @@ export function CareerSelect({ selected, onChange }: { selected: string[]; onCha
             type="button"
             onClick={() => toggle(OTHER_CAREER_SLUG)}
             className={cn(
-              "group flex flex-col items-center gap-2.5 rounded-[var(--r-md)] border border-dashed px-4 py-5 text-center transition-colors",
+              "group flex flex-col items-center gap-2.5 border border-dashed px-4 py-5 text-center transition-colors",
               selected.includes(OTHER_CAREER_SLUG)
                 ? "border-crimson bg-crimson/8"
                 : "border-border-strong/50 hover:border-crimson/40 hover:bg-crimson/5",

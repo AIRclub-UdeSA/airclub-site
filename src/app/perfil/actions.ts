@@ -1,12 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { ALL_CAREER_SLUGS, MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
 
 const VALID_CAREER_SLUGS = new Set<string>(ALL_CAREER_SLUGS);
-const CURRENT_YEAR = new Date().getFullYear();
 
 export type ActionState = { error: string | null };
 
@@ -18,8 +17,7 @@ function parseCareers(formData: FormData): string[] {
 }
 
 export async function saveProfileAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const session = await auth();
-  const email = session?.user?.email;
+  const email = await getSessionEmail();
   if (!email) redirect("/");
 
   const role = String(formData.get("role") ?? "");
@@ -66,9 +64,10 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
   // Ya recibido/a: no hace falta el año de inicio.
   let startYear: number | null = null;
   if (studentStatus === "STUDYING") {
+    const currentYear = new Date().getFullYear();
     startYear = Number(formData.get("startYear"));
-    if (!Number.isInteger(startYear) || startYear < MIN_START_YEAR || startYear > CURRENT_YEAR) {
-      return { error: `El año de inicio tiene que estar entre ${MIN_START_YEAR} y ${CURRENT_YEAR}.` };
+    if (!Number.isInteger(startYear) || startYear < MIN_START_YEAR || startYear > currentYear) {
+      return { error: `El año de inicio tiene que estar entre ${MIN_START_YEAR} y ${currentYear}.` };
     }
   }
 

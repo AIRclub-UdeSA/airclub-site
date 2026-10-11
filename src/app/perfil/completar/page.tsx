@@ -1,13 +1,19 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
 
-export default async function CompletarPerfilPage() {
-  const session = await auth();
-  if (!session?.user?.email) redirect("/");
+export const metadata: Metadata = {
+  title: "Completá tu perfil, AIR Club UdeSA",
+  robots: { index: false, follow: false },
+};
 
-  const existing = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
+export default async function CompletarPerfilPage() {
+  const email = await getSessionEmail();
+  if (!email) redirect("/");
+
+  const existing = await prisma.userProfile.findUnique({ where: { email } });
   if (existing) redirect("/perfil");
 
   return (
@@ -20,6 +26,9 @@ export default async function CompletarPerfilPage() {
         <p className="mt-4 max-w-[52ch] font-body text-[1.05rem] leading-[1.7] text-text2">
           Lo pedimos una sola vez: con esto ya no vas a tener que volver a completar nada para inscribirte a una AIR
           Talk.
+        </p>
+        <p className="mt-3 max-w-[52ch] font-body text-[.92rem] leading-[1.7] text-text3">
+          Usamos tu rol y tu carrera para la inscripción a las charlas y para saber quiénes vienen.
         </p>
       </div>
       <PerfilForm submitLabel="Crear perfil" />
