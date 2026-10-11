@@ -28,6 +28,12 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     description: "Historial de cambios: quién modificó qué y cuándo.",
     section: null,
   },
+  {
+    href: "/admin/comunidad",
+    title: "Comunidad",
+    description: "Perfiles públicos creados en el sitio y quién se inscribió a cada charla.",
+    section: null,
+  },
 ];
 
 const ROLE_LABELS = { ADMIN: "Admin (acceso a todo)", EDITOR: "Editor" } as const;
