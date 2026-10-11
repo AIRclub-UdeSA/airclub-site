@@ -5,7 +5,7 @@ export async function SponsorStrip() {
   const sponsors = await getContactReason("sponsors");
 
   return (
-    <section className="border-t border-border/80 bg-surface/20">
+    <section className="bg-bg">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 py-16 sm:py-20 flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="max-w-2xl">
           <h3 className="mb-3 font-display text-[1.4rem] sm:text-[1.75rem] font-bold text-text leading-tight">

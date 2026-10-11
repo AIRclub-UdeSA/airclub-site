@@ -3,6 +3,8 @@
 
 /* ===== Design tokens ===== */
 :root {
+  /* Alto de las curvas entre secciones (SectionEdge); las secciones de arriba dejan al menos esto de padding inferior. */
+  --edge-h: clamp(48px, 7.5vw, 110px);
   --bg: #faf8f8;
   --bg2: #f4efef;
   --card: #ffffff;
@@ -92,6 +94,10 @@ html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: rgba(164, 12, 76, 0.2) transparent;
+}
+/* Con Lenis activo el scroll suave lo hace él; el nativo encima lo haría arrastrar y vibrar. */
+html.lenis {
+  scroll-behavior: auto;
 }
 body {
   background: var(--bg);
@@ -512,4 +518,18 @@ html.dark .page-hero {
 }
 .ws-progress-fill {
   animation: ws-progress 3400ms linear forwards;
+}
+
+/* Cambio de tema (ThemeToggle): el tema nuevo se abre como un círculo desde el botón. El navegador hace por defecto un
+   fundido entre las dos capturas; se apaga para que solo se vea el recorte animado desde JS. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+::view-transition-old(root) {
+  z-index: 1;
 }

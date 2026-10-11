@@ -1,137 +1,18 @@
 "use client";
 
-import { useRef, useMemo, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useEffect, useSyncExternalStore } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
-// Precarga del modelo CAD oficial
-useGLTF.preload("/models/rosmaster_unified.glb");
-
-function CadRobot({ speedBoost }: { speedBoost: boolean }) {
-  const { scene } = useGLTF("/models/rosmaster_unified.glb");
-  const robotRigRef = useRef<THREE.Group>(null);
-
-  // Clona la escena para aislar modificaciones de materiales y nodos
-  const cloned = useMemo(() => {
-    const root = scene.clone(true);
-
-    // Ajuste específico de la cámara Orbbec Astra heredado de jar_site
-    const rgbd = root.getObjectByName("rgbd_camera");
-    if (rgbd) rgbd.position.z = -10;
-
-    // Repintado con la paleta de identidad AIR Club
-    const crimsonMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#a40c4c"), // Carmesí oficial AIR Club
-      roughness: 0.32,
-      metalness: 0.72,
-      envMapIntensity: 1.4,
-    });
-
-    const titaniumMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#b8828e"), // Titanio satinado rosado
-      roughness: 0.3,
-      metalness: 0.85,
-    });
-
-    const steelMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#c8d0d5"), // Acero maquinado
-      roughness: 0.25,
-      metalness: 0.9,
-    });
-
-    const carbonMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#161619"), // Fibra de carbono negra
-      roughness: 0.75,
-      metalness: 0.25,
-    });
-
-    const lidarMaterial = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#1a0612"), // Obsidiana vino para LiDAR
-      roughness: 0.38,
-      metalness: 0.6,
-    });
-
-    root.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        const mat = mesh.material as THREE.Material;
-        const matName = mat?.name || "";
-
-        if (matName === "Chassis_Green") {
-          mesh.material = crimsonMaterial;
-        } else if (matName === "Standoff_Brass") {
-          mesh.material = titaniumMaterial;
-        } else if (matName === "Motor_Steel") {
-          mesh.material = steelMaterial;
-        } else if (matName === "Wheel_Carbon") {
-          mesh.material = carbonMaterial;
-        } else if (matName === "Lidar_Black") {
-          mesh.material = lidarMaterial;
-        }
-      }
-    });
-
-    // Normalización y centrado de escala del CAD (1.32 unidades de referencia)
-    const box = new THREE.Box3().setFromObject(root);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 2.4 / maxDim;
-
-    root.scale.setScalar(scale);
-    // Alineamos el centro en X y Z a 0, y fijamos la base más baja de las ruedas exactamente en y = 0
-    root.position.x = -center.x * scale;
-    root.position.y = -box.min.y * scale;
-    root.position.z = -center.z * scale;
-
-    return root;
-  }, [scene]);
-
-  // Animación continua de avance a alta velocidad y cabeceo dinámico
-  const progressRef = useRef(-4);
-
-  useFrame((state, delta) => {
-    const speed = speedBoost ? 7.2 : 4.4;
-    // Ancho visible exacto del viewport a z=0 para que entre y salga sin pausas vacías
-    const bound = Math.max(state.viewport.width / 2 + 1.5, 4.8);
-
-    // Avance de la pista en X
-    progressRef.current += delta * speed;
-    if (progressRef.current > bound) {
-      progressRef.current = -bound; // Reinicio dinámico exacto al salir por la derecha
-    }
-
-    if (robotRigRef.current) {
-      robotRigRef.current.position.x = progressRef.current;
-      // Posicionado estrictamente encima de la grilla (-0.75) con vibración de suspensión
-      robotRigRef.current.position.y = -0.745 + Math.abs(Math.sin(state.clock.elapsedTime * 24)) * 0.008;
-      robotRigRef.current.rotation.z = -0.03; // Pitch leve hacia adelante
-      // Rotado hacia la derecha (+X) con ligera inclinación hacia la cámara (3/4 dinámico)
-      robotRigRef.current.rotation.y = Math.PI / 2 + 0.28;
-    }
-  });
-
-  return (
-    <group ref={robotRigRef} position={[-10, -0.745, 0]}>
-      <primitive object={cloned} />
-    </group>
-  );
-}
-
-function RunwayGrid() {
+/** La pista corre con el scroll: avanza exactamente lo que se scrollea, así el robot parece rodar sobre ella. */
+function RunwayGrid({ reduced }: { reduced: boolean }) {
   const gridRef = useRef<THREE.Group>(null);
 
-  useFrame((_, delta) => {
-    if (gridRef.current) {
-      gridRef.current.position.x -= delta * 3.8;
-      if (gridRef.current.position.x < -4) {
-        gridRef.current.position.x = 0;
-      }
-    }
+  useFrame(() => {
+    if (!gridRef.current) return;
+    // La grilla se repite cada 4 unidades: el módulo hace el bucle sin saltos
+    gridRef.current.position.x = reduced ? 0 : -((window.scrollY * 0.012) % 4);
   });
 
   return (
@@ -160,23 +41,32 @@ export function RosmasterTrack() {
     () => true,
     () => false
   );
-  const [speedBoost, setSpeedBoost] = useState(false);
+  const reduced = usePrefersReducedMotion();
+  const bandRef = useRef<HTMLElement>(null);
+  // Sin banda a la vista no se dibuja nada: el canvas deja de gastar GPU fuera de pantalla.
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { rootMargin: "200px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <section
+      ref={bandRef}
       id="rosmaster-track"
-      className="relative w-full bg-white dark:bg-[#0e0407] border-y border-border py-4 sm:py-8 overflow-hidden select-none"
+      data-seam="slalom"
+      className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
-      <div
-        className="relative w-full h-[260px] sm:h-[320px] md:h-[380px] cursor-grab active:cursor-grabbing"
-        onMouseEnter={() => setSpeedBoost(true)}
-        onMouseLeave={() => setSpeedBoost(false)}
-      >
+      <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px]">
         {mounted ? (
           <Canvas
             camera={{ position: [0, 1.8, 6.2], fov: 42 }}
             shadows
+            frameloop={inView ? "always" : "never"}
             gl={{ antialias: true, alpha: true }}
           >
             <ambientLight intensity={1.4} />
@@ -191,10 +81,9 @@ export function RosmasterTrack() {
             <pointLight position={[4, 2, -2]} intensity={1.5} color="#a40c4c" />
 
             {/* Grid de pista continua en rosa */}
-            <RunwayGrid />
+            <RunwayGrid reduced={reduced} />
 
-            {/* Robot CAD animado sin círculos ni elementos sobrantes */}
-            <CadRobot speedBoost={speedBoost} />
+            {/* El robot no vive acá: lo dibuja SeamRobot, que cruza la banda sobre esta pista */}
           </Canvas>
         ) : (
           <div className="w-full h-full flex items-center justify-center">

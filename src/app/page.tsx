@@ -5,6 +5,9 @@ import { IdeaCallout } from "@/components/home/IdeaCallout";
 import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
+import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
+import { SeamRobot } from "@/components/home/SeamRobot";
+import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
@@ -23,26 +26,24 @@ export default async function HomePage() {
           este h1 le da a lectores de pantalla y buscadores el titulo real de la pagina. */}
       <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
       <ArmHero />
+      {/* El Rosmaster viaja por las uniones entre secciones (ver SeamRobot). */}
+      <SeamRobot />
       <div id="contenido" className="scroll-mt-20">
-        {/* 01. Manifiesto del Club */}
+        {/* Las uniones no llevan todas el mismo tratamiento: la curva solo abre y cierra el tramo oscuro (carrusel y
+            salida del Rosmaster), la convocatoria usa el borde almenado de /talks y el resto son cambios de tono rectos. */}
+        {/* Acto I, quiénes somos: el manifiesto en claro y el carrusel, que es el puente hacia lo oscuro. */}
         <AboutSection />
-
-        {/* 02. Slideshow Horizontal con Palabras Monumentales & Fondo Dinámico */}
         <WordSlideshow />
 
-        {/* 03. "Tengo una idea, pero no sé por dónde empezar" */}
-        <IdeaCallout />
-
-        {/* 04. Hito Nacional + Cronómetro sobre ShaderGradient */}
+        {/* Acto II, el desafío: un solo bloque oscuro continuo (cuenta regresiva y CAD del Rosmaster). */}
         {featuredEvent && <CountdownStrip event={featuredEvent} />}
-
-        {/* 05. Plataforma Oficial JAR 2026: ROSMASTER X3 CAD en pista minimalista (fondo blanco + grilla rosa) */}
         <RosmasterTrack />
 
-        {/* 06. Próximas Actividades */}
+        {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}
+        <SectionEdge color="var(--bg)" peak={[0.85, 0.35]} amp={[1, 0.65]} />
         <EventsTeaser />
-
-        {/* 07. Alianzas y Empresas (solo en landing) */}
+        <IdeaCallout />
+        <ConvocatoriaBand />
         <SponsorStrip />
       </div>
     </>

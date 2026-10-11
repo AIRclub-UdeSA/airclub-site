@@ -82,13 +82,14 @@ JETBRAINS MONO (font-mono)► Datos técnicos, fechas, métricas, botones técni
 Sintetizamos tres perspectivas de animación:
 * **Emil Kowalski (Restricción & Velocidad)**: *¿Esto realmente necesita animarse?* Si no comunica cambio de estado o continuidad espacial, **se elimina**. Transiciones instantáneas y secas (150ms a 240ms con `--ease-club: cubic-bezier(0.4, 0, 0.2, 1)`).
 * **Jakub Krehel (Pulido de Producción)**: Profundidad sutil, trazo de luz rotatorio en el borde (`border-trail-hover`) y micro-elevación de 2px sin sombras infladas.
-* **Jhey Tompkins (Sensación Táctil / Mecánica)**: El movimiento cinético se reserva exclusivamente para los artefactos de laboratorio: el brazo robótico articulado al scrollear y el CAD del Rosmaster.
+* **Jhey Tompkins (Sensación Táctil / Mecánica)**: El movimiento cinético se reserva exclusivamente para los artefactos de laboratorio: el brazo robótico articulado al scrollear y el CAD del Rosmaster, que además viaja por las uniones de la landing (ver sección 11).
 
 ### Reglas de Movimiento:
 * **NO usar `hover:scale-105`**: Es el principal cliché de interfaz generada por IA. Para indicar interacción, usar el `border-trail-hover`, cambio de color en el borde o un ligero desplazamiento en Y (`-translate-y-1`).
   * *Excepción aceptada:* la barra de eventos multi-día del calendario de `/eventos` (`CalendarMonthGrid.tsx`) usa `hover:scale-[1.015]` junto con `-translate-y-0.5`. Es un escalado mínimo que ayuda a leer la barra como un solo bloque continuo; se mantiene a propósito y respeta `motion-reduce`.
 * **NO usar Stagger-Spam**: Prohibido encadenar retrasos artificiales de 0.1s en cascada infinita que hagan esperar al usuario 2 segundos para ver el contenido.
 * **Física de entrada limpia**: Entradas con fade rápido y desplazamiento corto (`translate-y-4` a `translate-y-0`), nunca desde escalas `scale(0)` o con rebotes elásticos absurdos.
+  * *Excepción aceptada:* las solapas de la cuenta regresiva de la landing (`FlapDigit.tsx`, sección 11) aterrizan con un rebote corto (`bounce.out`, ~0,2 s) porque es un tablero mecánico; es lo que lo hace leerse como solapa y no como un fundido.
 
 ---
 
@@ -106,7 +107,9 @@ Estos son los patrones que construyen la identidad visual de AIR Club:
    * Borde con destello de luz cónica rotativa que se activa en hover. Comunica interacción sin mover el layout.
 4. **Botón Mono Técnico (`Button.tsx`)**:
    * Borde fino, esquinas redondeadas (`rounded-full`), tipografía `font-mono text-[.8rem] uppercase` y flecha `ArrowUpRight` en hover.
-5. **Eje Temporal con Nodo ("HOY")**:
+5. **`SectionEdge` y `SeamRobot` (landing, ver sección 11)**:
+   * `SectionEdge` es la curva que une dos secciones en lugar de un corte recto; `SeamRobot` es el Rosmaster que corre el slalom en la pista del Challenge JAR.
+6. **Eje Temporal con Nodo ("HOY")**:
    * Ancla los eventos pasados a la izquierda (línea sólida) y los futuros a la derecha (línea punteada), con el marcador HOY en el corte. Implementado en `TalksTimeline.tsx`, solo horizontal (en mobile se desliza lateralmente; no hay versión vertical).
 
 ---
@@ -122,7 +125,7 @@ Para no regresar a los patrones mediocres de IA, queda **estrictamente prohibido
 * ❌ **Emojis en lugar de íconos**: Cero emojis para ilustrar conceptos de ingeniería. Usar íconos vectoriales SVG limpios (`lucide-react`) con trazo parejo.
 * ❌ **Bloques "Sponsor / Empresa" fuera de la landing**: El bloque de vinculación empresarial pertenece únicamente al final de la portada, no a los footers de subpáginas.
 * ❌ **Paréntesis en rótulos de conteo** ("Fotos (5)", "Diapositivas (2)"): el dueño los rechazó. Usar el rótulo solo, o una cifra aparte.
-* ❌ **Divisores decorativos entre secciones** (reglas de vernier, cintas de texto, dibujos de circuito): todos se probaron en `/talks` y se descartaron, ver sección 8. Las secciones se separan con bandas de color a todo el ancho.
+* ❌ **Divisores decorativos entre secciones** (reglas de vernier, cintas de texto, dibujos de circuito): todos se probaron en `/talks` y se descartaron, ver sección 8. Las secciones se separan con bandas de color a todo el ancho. **Excepción en la landing:** las uniones pueden ser curvas (`SectionEdge`) o almenadas, con la regla de la sección 11 (la curva no va en todas).
 * ❌ **Hardcodear datos dentro de los componentes**: Todo contenido estructurado debe residir en `prisma/seed-data/*.ts` y consumirse a través de `src/lib/*.ts`, preparado para su migración a Supabase.
 
 ---
@@ -265,38 +268,111 @@ La página es un enrutador: elegís el motivo y te lleva al canal. **El fondo no
 
 ## 11. Landing (`/`): decisiones, rechazos y mapa
 
-Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto` (secciones 8 a 10). `rounded-card` queda descartado también acá ("vibecoded 101").
+Paneles y tarjetas rectos con contorno de 1px, sin sombras y con botones píldora, igual que `/talks`, `/equipo` y `/contacto` (secciones 8 a 10). `rounded-card` queda descartado también acá ("vibecoded 101"). **Lo nuevo de esta pasada son las uniones entre secciones**, que ya no son todas cortes rectos (ver "Uniones").
 
 ### Idea rectora
-La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, sin sombras y con botones píldora. **El fondo no cambia** (lienzo, alternando con `bg-bg2`): el color va en lo de arriba. Las únicas bandas oscuras son las que ya lo eran por contenido: el carrusel y la banda de cuenta regresiva.
+La landing es una sola recorrida en **tres actos**, y la conexión entre secciones es **invisible**: no hay numeración ni índice. La dan el orden, el tono, uniones que no se repiten y un personaje (el Rosmaster) que pasa de una sección a otra. Las referencias fueron Slush, Wise, Intercom y Flying Papers: ninguna pone un tratamiento en cada unión; casi todas son cambios de tono rectos y se reserva lo especial para uno o dos momentos.
 
-### Estructura y archivos
-1. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne, con "Competir." en carmesí.
-2. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. El piso del `clamp` del título es `1.2rem`: la palabra más larga ("COMPETENCIAS", 13,8 em) tiene que caber en 320px.
-3. `IdeaCallout.tsx`: "Tengo una idea" como banda recta, frase en Anton con interlineado `1.04`.
-4. `CountdownStrip.tsx`: banda oscura de marca; números en Anton dentro de celdas rectas de 1px; los segundos en carmesí macizo, sin punto que pulsa.
-5. `RosmasterTrack.tsx`: CAD 3D del Rosmaster sobre grilla rosa. Es el único artefacto cinético de la landing (ver sección 4).
-6. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` (`src/components/eventos/ActivityPanel.tsx`) y los mismos datos (`getUnifiedCalendarActivities`), máximo 3. Las cajas cambian de forma según cuántas hay: una sola a todo el ancho; con dos o tres, una grande (7 columnas) y las demás chicas (5 columnas). Debajo, la banda de convocatoria.
-7. `ArmHero.tsx`: el brazo robótico del hero. **No se tocó** en esta pasada; tendrá una pasada propia (su animación "le falta poder").
+| Acto | Tono | Contenido |
+| :--- | :--- | :--- |
+| I. Quiénes somos | Claro | Hero con el brazo, manifiesto y carrusel (el carrusel hace de puente hacia lo oscuro) |
+| II. El desafío | Un solo bloque oscuro `#0e0407` | Cuenta regresiva del Challenge JAR y pista del Rosmaster, sin borde entre ellas |
+| III. Sumate | Claro | Actividades, "Tengo una idea", convocatoria y alianzas |
+
+Antes la landing tenía seis cambios claro/oscuro y "Tengo una idea" salía antes del hito principal; ahora son dos cambios y los pedidos de participación quedan juntos.
+
+### Estructura y archivos (de arriba hacia abajo)
+1. `ArmHero.tsx`: el brazo robótico del hero. Sigue sin tener pasada propia ("le falta poder"); lo único que cambió es que "Entrar al club" baja con `scrollToTarget` (Lenis).
+2. `AboutSection.tsx`: manifiesto "Construir. Competir. En comunidad." en Syne. Deja `--edge-h` de padding inferior extra para la colina del carrusel (el extra que quedó "para el robot" ya no hace falta).
+3. `WordSlideshow.tsx`: carrusel de palabras en Syne sobre fondo oscuro con luz ambiental. Lleva su propio `SectionEdge` arriba, con el color de la diapositiva activa (transición de 700 ms). El piso del `clamp` del título es `1.2rem`: "COMPETENCIAS" (13,8 em) tiene que caber en 320px.
+4. `CountdownStrip.tsx` + `RosmasterTrack.tsx`: un bloque oscuro continuo. Cuenta regresiva con números en Anton en celdas de 1px y segundos en carmesí macizo, cada dígito como una **solapa de tablero mecánico** (`FlapDigit.tsx`, ver "La cuenta regresiva como tablero"); debajo, la pista rosa. `RosmasterTrack` dibuja **solo la pista** (se desplaza con el scroll); el robot lo dibuja `SeamRobot`.
+5. `EventsTeaser.tsx`: "Próximas actividades" con el `ActivityPanel` compartido con `/eventos` y los mismos datos (`getUnifiedCalendarActivities`), máximo 3; las cajas cambian de forma según cuántas hay. Ya no incluye la convocatoria.
+6. `IdeaCallout.tsx`: "Tengo una idea" como banda `bg-bg2`, frase en Anton con interlineado `1.04`.
+7. `ConvocatoriaBand.tsx`: banda oscura con el borde almenado de `/talks` (`TalksBattlement`), "Proponé una charla o un workshop" con dos filas (charla, workshop).
+8. `SponsorStrip.tsx` (en `layout/`): alianzas, solo en la landing.
+9. Archivos de soporte: `src/components/shared/SectionEdge.tsx` (curvas), `src/components/home/SeamRobot.tsx` y `slalom-scene.ts` (el robot y su escena), `src/components/home/RosmasterModel.tsx` (el CAD repintado, compartido), `src/lib/smooth-scroll.ts` y `src/components/shared/SmoothScrollProvider.tsx` (Lenis).
+
+### Uniones: la curva no va en todas
+| Unión | Tratamiento |
+| :--- | :--- |
+| Hero → manifiesto | ninguno (mismo lienzo) |
+| Manifiesto → carrusel | **curva** (abre el tramo oscuro) |
+| Carrusel → JAR + Rosmaster | corte recto, de ciruela a negro |
+| Rosmaster → actividades | **curva** (cierra el tramo oscuro) |
+| Actividades → "Tengo una idea" | cambio de tono recto |
+| "Tengo una idea" → convocatoria | **borde almenado** de `/talks` |
+| Convocatoria → alianzas | cambio de tono recto |
+
+**Regla:** la curva solo abre y cierra el tramo oscuro. Si se agrega otra unión especial, que sea de otro tipo; no repetir el mismo arco en toda la página.
+
+`SectionEdge` es la colina de la sección que sigue, pintada de su color, que sube sobre el final de la anterior. Con el scroll la cima se desliza de lado y se aplana un poco, pero nunca llega a ser una recta. Cada borde tiene su propia forma (`peak`, `amp`). Se coloca **entre** dos secciones y las de arriba necesitan al menos `--edge-h` de padding inferior (`--edge-h: clamp(48px, 7.5vw, 110px)` en `globals.css`); sin eso la curva tapa texto. Se saca el `border` recto de las secciones que tienen curva arriba. Con movimiento reducido la curva queda quieta.
+
+### El Rosmaster en la pista (`SeamRobot`)
+El Rosmaster es la mascota de la página, pero hoy hace **una sola escena**: el slalom de la pista del JAR (banda `data-seam="slalom"` de `RosmasterTrack`). Es un solo robot en **un canvas fijo** sobre la ventana (`pointer-events-none`, `z-40`, debajo de la barra de navegación, ortográfico con 1 unidad = 1 px) que no dibuja ni se ve fuera de la ventana de la banda. Lo anterior (escenas en las dos colinas y en las almenas) se **sacó**; ver "Rechazado".
+
+**Escena (`src/components/home/slalom-scene.ts`):** una línea de tiempo de GSAP con **reloj propio** (no depende de la velocidad del scroll): entra por el borde derecho, se detiene a mirar la cuenta regresiva (la cámara RGB-D cabecea) y cruza la pista de derecha a izquierda esquivando tres conos, con el LiDAR barriendo adelante; más abajo en pantalla = más cerca = más grande. Una vuelta dura unos 4,3 s y **se repite mientras la banda está a la vista**.
+
+**Atada a la banda:**
+* Arranca cuando el borde superior de la banda llega al 90% de la pantalla (`START_AT`). Hasta que su carril sube, el robot va por el piso visible de la banda y se **achica para caber en ella** (no pisa la cuenta regresiva); crece a medida que la banda sube.
+* Si se sigue scrolleando, el robot se va con la banda (nada queda flotando en pantalla). Al salir por arriba (`END_AT`) la escena queda en pausa y sigue donde estaba si se vuelve; solo se descarta y arranca de cero cuando la banda sale por completo por abajo (`RESET_AT`).
+* **Dwell:** durante la primera vuelta la rueda rinde el 40% (`DWELL_SPEED`, `setWheelSpeed` en `smooth-scroll.ts`), para que alcance a verse sin tomar el control del scroll; después vuelve a la normal. No afecta al táctil (Lenis no lo intercepta, `syncTouch` apagado).
+* Render: luz de estudio generada en el cliente (`RoomEnvironment`, `environmentIntensity` 0.3: más alto vuelve rosa el carmesí del chasis), sombra de contacto suave, el LiDAR gira siempre y la cámara cabecea.
+* Con movimiento reducido el robot queda quieto, sin conos, sobre la pista mientras la banda está a la vista.
+* El hover sobre la pista no acelera nada. La banda mide `md:h-[520px]`.
+
+### La cuenta regresiva como tablero (`FlapDigit`)
+Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a mano con GSAP (sin librería de componentes):
+* Tres capas por dígito: la mitad de arriba ya con el número nuevo, la de abajo todavía con el viejo, y una solapa que gira 180° sobre la bisagra (`rotateX` con `backface-visibility`): por delante la mitad de arriba vieja, por detrás la de abajo nueva. Cae en dos tramos (`power2.in` y un `bounce.out` corto), ~0,33 s en total.
+* La bisagra es una línea de 1px del color de la celda (`--flap-seam`: `#0e0407` en las oscuras y `var(--crimson)` en la de segundos), así que **cada celda nueva que se agregue tiene que definirla** o la línea se ve de otro color.
+* Sin giro la primera vez (de `--` a la cifra) ni con `prefers-reduced-motion` (el número cambia de golpe). Cada dígito sigue en una caja de `0.5em`, porque Anton no tiene cifras tabulares.
+* Las mitades se recortan con `clip-path` con margen de sobra (`-30%`) para no cortar el trazo de las cifras.
+* Se verificó con el reloj de Playwright (`page.clock`) y cuadros intermedios; el ritmo real, con la rueda y en vivo, lo juzga el dueño.
+
+### Scroll suave (Lenis)
+`SmoothScrollProvider` (en el layout) crea la instancia; el resto de la app pasa por `scrollToTarget` (`src/lib/smooth-scroll.ts`), que cae al scroll nativo si Lenis no está activo. No colgar la instancia de `window`. `allowNestedScroll` evita que Lenis trabe el modal de `/talks` y los paneles de `/admin`, y `html.lenis { scroll-behavior: auto }` evita que compita con el `scroll-behavior: smooth` nativo. Se desactiva con `prefers-reduced-motion`.
 
 ### Lo que el dueño aprobó (conservar)
 * El carrusel con su luz ambiental ("tono metálico con luz") y en Syne; si algún día se cambia, se pasa **solo** a Anton y no se mezclan.
-* La banda de convocatoria en el oscuro de marca `#0e0407` con rosa `#f0357f`, igual que la cuenta regresiva y `/talks`.
-* La banda del Rosmaster como está (decorativa, sin leyenda ni foto).
-* Cuenta regresiva en Anton, celdas de 1px, segundos en carmesí macizo.
+* La convocatoria en el oscuro de marca `#0e0407` con rosa `#f0357f`, igual que la cuenta regresiva y `/talks`.
+* La pista del Rosmaster oscura y pegada a la cuenta regresiva (antes era una banda blanca aparte).
+* Cuenta regresiva en Anton, celdas de 1px, segundos en carmesí macizo, con los dígitos como solapas de tablero mecánico (el dueño aprobó el prototipo y lo pidió como valor por defecto).
+* Las curvas "con onda" en las dos uniones del tramo oscuro y el borde almenado: "me gustó el vibe, pero no abusar".
+* El Rosmaster como personaje de la página, siempre que no repita el mismo movimiento.
 
 ### Rechazado (no reintroducir)
 * **Orbes de luz y el shader de fondo** (`ShaderGradientBg`, eliminado), salvo la luz ambiental del carrusel, que se conserva.
 * **Bandas de color de fondo** y `rounded-card` en la landing.
+* **Curvas en todas las uniones**: se probó (seis colinas seguidas) y se pidió variar.
+* **Titulares que se "leen" con el scroll** (cada palabra pasa de tenue a plena, como Slush): con poco recorrido casi no se notaba y con más obligaba a scrollear para ver las últimas palabras. Se probó en tres titulares y se revirtió.
+* **Escenas del robot en las colinas y en las almenas** (asomarse, saludar, salto con vuelta): se hicieron cuatro y se dejó solo el slalom. Con la unión pegada a la página cada escena tenía unos 2 s a velocidad normal, y la colina del salto queda a unos 190 px de la pista, así que casi nunca se veía completa. Antes de reponerlas, resolver ese espacio (ver "Trampas").
+* **Que el robot se suelte de su sección** y siga fijo en pantalla si se sigue scrolleando: se probó y se rechazó, el robot tiene que irse con su sección.
+* **El robot cruzando siempre de izquierda a derecha** en distintos tamaños ("siempre repetimos el mismo patrón") y **demasiado rápido**: tiene que verse como una mascota que se asoma y juega, no como algo que pasa corriendo. También se probó una escena donde caía desde arriba rebotando; se cambió por asomarse sobre las almenas.
 * **Anton en el carrusel**: probado lado a lado con Syne y se prefirió Syne por ahora.
-* Los vinos fuera de paleta en la banda de convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
+* Los vinos fuera de paleta en la convocatoria (`#520b2f` de fondo y `#ff4d8d` de acento). Los del carrusel (`#440924`, `#520b2f`…) se dejan: son parte de su tono.
 * Los stickers de `public/stickers` en la landing: varios (robot verde, átomo azul y violeta, píxel art) no están en la paleta.
+* Numeración o índice visible entre secciones: la conexión tiene que ser invisible.
+* **Librerías de componentes** (Componentry, Space UI, Skecher UI, Planes, Arc UI): se revisaron y no se adoptan. Son registros estilo shadcn con Motion (el repo no tiene shadcn ni Motion y ya usa GSAP) y buena parte de lo que traen está prohibido acá: fondos con shaders, glass, formas redondeadas o squircle, cintas de texto, revelado de titulares por palabra y emojis. Sirvieron de idea, no de código: el cambio de tema en círculo y el tablero de la cuenta regresiva salieron de ahí y se hicieron a mano. Planes es de pago. Para `/eventos`, `/admin` o `/talks` podrían servir piezas sueltas (selector de rango de fechas, paleta de comandos, lightbox); revisar licencia y sumar dependencias solo con acuerdo del dueño.
+* **Punto de estado pulsante** antes de "Convocatoria abierta" (`ConvocatoriaBand`): se probó (punto rosa con anillo que pulsa) y el dueño no lo quiso.
 
 ### Trampas conocidas
 * **Syne en mayúscula es muy ancha**: una palabra larga corta el título o ensancha toda la página en mobile. Medir `scrollWidth - innerWidth` de 320 a 1920px y el ancho de cada palabra del carrusel, no solo la primera.
 * **Acentos con interlineado apretado**: en Anton con `leading-[0.92]` el acento de la É de "SÉ" pisaba la A de "UNA" de la línea de arriba. Usar `1.04` en frases con tildes.
 * **Títulos de `ActivityPanel` con palabras largas** ("DESBLOQUEANDO"): sin permitir el corte de palabra ensanchaban la página en mobile.
-* En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El robot de `RosmasterTrack` cruza la pista en bucle, también con `reducedMotion: "reduce"` (la animación no lo respeta): una captura lo agarra en cualquier punto, a veces cortado en el borde. No es un error de encuadre.
+* **Tailwind descarta `calc()` sin espacios**: `pb-[calc(var(--edge-h)+2rem)]` no aplica nada (sin error). Escribirlo con guiones bajos: `pb-[calc(var(--edge-h)_+_2rem)]`.
+* **Los resplandores del carrusel no pueden llegar al borde de la colina**: la colina de `SectionEdge` va de un solo color y los resplandores (`WordSlideshow`) aclaraban la sección justo debajo, así que del lado derecho se veía una línea (hasta 38/255 de diferencia). Van dentro de un contenedor con `mask-image` que los desvanece hacia arriba (0 en el borde, pleno a los 240 px); la diferencia quedó en 0 a 1 en las cinco diapositivas, en claro y en oscuro. Para medirlo: captura con `transition: none`, muestrear un píxel 4 px arriba y 4 px abajo del borde de la sección en varias x bajo la colina.
+* **Las curvas tapan lo que esté cerca del borde**: dejar `--edge-h` de padding inferior en la sección de arriba y subir los puntos del carrusel si hay curva debajo.
+* **Una animación atada al scroll (scrub) corre a la velocidad con que se scrollea**: un barrido rápido la reproduce en una fracción de segundo y alargar las ventanas no lo arregla. Por eso las escenas del robot usan un reloj propio (GSAP) y no scrub.
+* **Con reloj propio y la escena pegada a su sección, la escena solo se ve entera si la sección se queda en pantalla el tiempo suficiente** (unos 750 px de scroll por sección): de ahí el dwell de la rueda. Si se agregan escenas, dejar entre ellas distancia de sobra o resolver el turno (con un solo robot, la que empezó antes gana).
+* **El robot también tapa texto si no hay lugar**: mientras la banda entra, el robot va por su piso visible y se achica; no subirlo sobre la sección de arriba.
+* **Con el reductor de movimiento del compilador de React** (`react-hooks/immutability`), el estado de una escena se mueve desde GSAP y se lee en `useFrame`; mutar valores que vienen de hooks o props dentro del componente falla el lint (usar refs, `onCreated` o funciones fuera del componente).
+* **`next dev` guarda un candado en `.next/dev/lock`**: si se mata el servidor a medias, borrarlo antes de volver a levantarlo.
+* En capturas, esperar a `document.fonts.ready` y ocultar `nextjs-portal`. El canvas del robot necesita WebGL (en Playwright headless: `--use-gl=swiftshader --enable-unsafe-swiftshader`).
+
+### Pendientes
+* El dwell no funciona en táctil: en el teléfono el slalom pasa a la velocidad del dedo. Evaluar `syncTouch` de Lenis (cambia el tacto del scroll en toda la página).
+* El brazo robótico del hero sigue pendiente de su pasada propia.
+* La sección 8 todavía dice que "la landing conserva `rounded-card`" (línea de "Forma"): quedó vieja desde la decisión de la sección 11.
+* Abrir el PR contra `v2` cuando el dueño lo apruebe.
 
 ---
 
@@ -305,7 +381,7 @@ La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, si
 ### Comportamiento
 * **Landing (`/`)**: la barra aparece recién al pasar el umbral de scroll (`min(35% del alto de la ventana, 260 px)`) o con "Entrar al club" (evento `air-enter-club`), y después no se esconde.
 * **Resto de las páginas**: se esconde al bajar y reaparece apenas se sube 4 px. Siempre se ve a menos de 80 px del tope, con el menú mobile abierto o con foco de teclado adentro. Transición de 200 ms, sin animación con `prefers-reduced-motion`.
-* **Toggle de tema** (`ThemeToggle.tsx`): vive en la píldora, a la izquierda del botón de cuenta (en mobile, al lado de la hamburguesa). Es un parche de contraste (círculo con una mitad rellena, como el de densidad de una prueba de imprenta) del mismo tamaño que el botón de cuenta (32 px, anillo de 1 px). Al cambiar de tema la mitad rellena gira 180°. El giro sale de la clase `dark` y no del estado de React, así no se anima al cargar con el tema oscuro guardado.
+* **Toggle de tema** (`ThemeToggle.tsx`): vive en la píldora, a la izquierda del botón de cuenta (en mobile, al lado de la hamburguesa). Es un parche de contraste (círculo con una mitad rellena, como el de densidad de una prueba de imprenta) del mismo tamaño que el botón de cuenta (32 px, anillo de 1 px). Al cambiar de tema la mitad rellena gira 180°. El giro sale de la clase `dark` y no del estado de React, así no se anima al cargar con el tema oscuro guardado. **El tema nuevo se abre como un círculo desde el botón** (View Transitions API, `document.startViewTransition`, recorte `circle()` de 520 ms con `--ease-club`): en `globals.css` se apaga el fundido por defecto de `::view-transition-old/new(root)` para que solo se vea el recorte. Sin soporte del navegador o con movimiento reducido el cambio es instantáneo.
 
 ### Rechazado (no reintroducir)
 * El botón flotante con emojis (🌙 / ☀️) y `hover:scale-110`.
@@ -313,7 +389,8 @@ La landing es una pila de bandas rectas a todo el ancho, con contorno de 1px, si
 * Halo alrededor del toggle (luz en oscuro, sombra en claro): se probó y no se eligió.
 
 ### Pendiente
-* El dueño no está del todo conforme con el toggle; es lo mejor que se encontró por ahora. Se puede cambiar si aparece una idea mejor.
+* El dueño no estaba del todo conforme con el toggle (el ícono); el círculo que se abre mejora cómo se siente el cambio, pero el ícono sigue siendo lo mejor que se encontró por ahora. Se puede cambiar si aparece una idea mejor.
+* La transición de tema se probó solo en Chromium; falta mirarla en Safari y Firefox.
 
 ### Trampas conocidas
 * **`focus-within` traba la barra**: al hacer clic en un link de la barra el foco queda en él, y como Next navega sin recargar, en la página nueva la barra seguía "con foco" y no se escondía hasta recargar. Por eso la condición es `has-[:focus-visible]` (solo foco de teclado).

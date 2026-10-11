@@ -4,7 +4,7 @@ import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
 export function AboutSection() {
   return (
-    <section id="nosotros" className="px-6 sm:px-10 md:px-16 flex items-center justify-center max-w-[1400px] mx-auto py-24 sm:py-32 w-full">
+    <section id="nosotros" className="px-6 sm:px-10 md:px-16 flex items-center justify-center max-w-[1400px] mx-auto pt-24 pb-[calc(5rem_+_var(--edge-h))] sm:pt-32 sm:pb-[calc(6rem_+_var(--edge-h))] w-full">
       <RevealOnScroll className="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-24 items-center w-full">
           {/* Lado izquierdo: Declaración tipográfica monumental posicionada con amplio respiro */}
