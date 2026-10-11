@@ -54,6 +54,12 @@ const FLOOR = 14;
 const DWELL_SPEED = 0.4;
 
 const trackSizeFor = (W: number) => clamp(W * 0.22, 130, 300);
+/**
+ * Posición horizontal sobre la pista: u = 0 en el borde derecho y u = 1 ya afuera por la izquierda. La vuelta termina
+ * a 0,7 veces el tamaño del robot del borde (lo que más sobresale es el abanico del LiDAR, a 0,64 por delante del
+ * centro): así sale entero y vuelve a entrar por la derecha sin que se vea el salto. Robot y conos usan la misma cuenta.
+ */
+const laneX = (u: number, W: number) => lerp(W, -(trackSizeFor(W) * 0.7 + 16), u);
 
 type Pose = {
   x: number;
@@ -80,7 +86,7 @@ function slalomPose(el: HTMLElement, st: SlalomState): Pose {
   const size = Math.min(trackSizeFor(W), Math.max(0, lane - r.top - 8) / 1.05);
   return {
     lane,
-    x: W * (1.0 - st.wu * 1.12) + st.x * W,
+    x: laneX(st.wu, W) + st.x * W,
     y: lane + weave * Math.min(r.height * 0.12, (lane - r.top) * 0.2),
     size: size * (1 + weave * 0.16),
     yaw: lerp(FACE_L + heading * 0.45, FACE_CAM, st.look), // gira hacia donde va; más hacia cámara cuando se acerca
@@ -288,7 +294,7 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
       if (!m) return;
       const appear = reduced ? 0 : st.cones;
       m.visible = appear > 0.01;
-      m.position.set(window.innerWidth * (1.0 - cu * 1.12) - W / 2, Hc / 2 - pose.lane + coneSize * 0.5, 0);
+      m.position.set(laneX(cu, window.innerWidth) - W / 2, Hc / 2 - pose.lane + coneSize * 0.5, 0);
       m.scale.setScalar(coneSize * appear);
     });
   });
