@@ -57,6 +57,34 @@ model AuditLog {
   @@index([adminUserId])
 }
 
+enum ProfileRole {
+  STUDENT
+  PROFESSOR
+  OTHER
+}
+
+enum StudentStatus {
+  STUDYING
+  GRADUATED
+}
+
+// Perfil publico de cualquier cuenta @udesa.edu.ar (no es AdminUser: una persona puede
+// tener las dos filas, por el mismo email, sin relacion entre ellas). Se completa una sola
+// vez al loguearse por primera vez (ver requireUserProfile en src/lib/perfil/require-profile.ts)
+// y despues sirve para autocompletar la inscripcion a charlas (ver #50).
+model UserProfile {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  role          ProfileRole
+  otherRole     String? // detalle libre, solo si role = OTHER
+  careers       String[] // slugs de src/lib/perfil/careers.ts, solo si role = STUDENT
+  otherCareer   String? // detalle libre, solo si careers incluye el slug "otra"
+  startYear     Int? // ano de inicio de la carrera, solo si role = STUDENT
+  studentStatus StudentStatus? // solo si role = STUDENT
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
 enum TalkMediaType {
   IMAGE
   VIDEO

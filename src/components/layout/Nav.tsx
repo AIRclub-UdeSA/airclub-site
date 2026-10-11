@@ -204,6 +204,13 @@ function AccountMenu({ className, variant = "dropdown" }: { className?: string; 
           Panel de admin
         </Link>
       )}
+      <Link
+        href="/perfil"
+        onClick={() => setOpen(false)}
+        className="block rounded-xl px-3 py-2 font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
+      >
+        Mi perfil
+      </Link>
       <SignOutButton className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text">
         Cerrar sesión
       </SignOutButton>
