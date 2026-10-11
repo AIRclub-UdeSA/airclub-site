@@ -406,23 +406,27 @@ Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a ma
 
 Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno de 1px, botones píldora, bandas `bg`/`bg2` alternadas y cierre en banda oscura fija.
 
-### Idea rectora: el orden es el diseño
-* El recorrido asincrónico es una **ruta**: una línea vertical de 1px con un nodo cuadrado por semana y el número en Anton (`01`–`09`) como ancla, igual que la fecha en `/talks`.
+### Idea rectora: líneas de workshops, y en cada una el orden es el diseño
+* La página se arma por **líneas** (hoy "ROS 2 y robótica" y "Linux"): cada una es una banda a todo el ancho con su conteo en Anton (talleres reales de la línea) y su título en Syne. Va a haber workshops de otros estilos: una línea nueva se agrega en `tracks` (`prisma/seed-data/workshops.ts`) sin tocar componentes. El hero tiene un índice de las líneas.
+* El recorrido asincrónico de una línea es una **ruta**: una línea vertical de 1px con un nodo cuadrado por semana y el número en Anton (`01`–`09`) como ancla, igual que la fecha en `/talks`.
 * El **relleno del nodo dice el nivel**: vacío = inicial, medio = intermedio, macizo = avanzado (como el color dice el estado en `/talks`). La leyenda está junto a la intro.
 * La `01` va en carmesí macizo con el sello inclinado "Empezá acá": es la puerta de entrada. "Requiere 03 · 04" enlaza a las semanas previas (`#semana-NN`), así se lee que la 07 y la 08 son ramas hermanas de la 06.
 
 ### Estructura y archivos (`src/components/workshops/`, de arriba hacia abajo)
-1. `WorkshopsHero.tsx`: título "WORKSHOPS" (Anton, centrado, misma altura de letra que el resto) y el manifiesto en Syne, con la cifra de guías y horas calculada de los datos.
-2. `UpcomingWorkshops.tsx`: talleres presenciales que vienen. Son eventos de categoría `workshop` en `prisma/seed-data/events.ts` (no hay otra fuente): el primero en carmesí macizo, los demás con contorno; horario, lugar, cupos, a cargo de y requisitos en una columna `dl`. Sin ninguno, panel con la trama de "lugar reservado" que lleva al recorrido y a proponer uno.
-3. `AsyncRoute.tsx`: el recorrido asincrónico sobre `bg-bg2`. Intro + bloque de código (oscuro fijo, comando en rosa) con lo que hay que correr antes de la 01; debajo, la ruta.
-4. `WorkshopArchive.tsx`: talleres presenciales pasados (tarjeta líder + módulos). **Solo aparece si hay alguno**: no se rellena con fotos de relleno. La foto es la `imageUrl` del evento, a color; sin foto, trama diagonal.
+1. `WorkshopsHero.tsx`: título "WORKSHOPS" (Anton, centrado, misma altura de letra que el resto), manifiesto en Syne black en mayúsculas (como el de la landing), cifra de guías y horas calculada de los datos e índice de líneas.
+2. `UpcomingWorkshops.tsx`: talleres presenciales que vienen, de todas las líneas. Son eventos de categoría `workshop` en `prisma/seed-data/events.ts`: el primero en carmesí macizo, los demás con contorno; horario, lugar, cupos, a cargo de y requisitos en una columna `dl`. Sin ninguno, panel con la trama de "lugar reservado" que lleva al recorrido y a proponer uno.
+3. `WorkshopTrackSection.tsx`: una banda por línea (solo las que tienen algo). Adentro, `GuideRoute.tsx` (intro, bloque de código oscuro fijo con lo que hay que correr antes de la 01, y la ruta) si la línea tiene guías, y `PastWorkshopList` (`PastWorkshops.tsx`) con sus talleres presenciales pasados.
+4. Talleres pasados: tarjeta líder + módulos; uno solo va como panel horizontal. Foto a color; sin foto, trama diagonal (no se rellena con fotos de relleno). Vienen de dos lados: eventos de categoría `workshop` ya pasados con su `track`, o `pastWorkshops` del seed para los que todavía no tienen fecha (como el de Linux). Un evento-taller sin `track` cae en "Otros talleres" (`UntrackedArchive`), que solo aparece si hay alguno.
 5. `ProposeWorkshop.tsx`: banda oscura "Proponé un workshop" con el motivo `workshop` de `src/lib/contact.ts` (texto y destino, sin duplicar).
-6. Datos: `prisma/seed-data/workshops.ts` (las guías del JAR) leído por `src/lib/workshops.ts`. La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
+6. Datos: `prisma/seed-data/workshops.ts` (líneas, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts`. La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
 
 ### Trampas conocidas
 * La URL del `git clone` no entra en mobile: el `<pre>` scrollea de costado dentro de un contenedor `min-w-0`; sin eso ensancha toda la página.
 * En oscuro, el bloque de código (`#0e0407`) casi se funde con `bg2` (`#16070b`): por eso lleva contorno de 1px.
+* El manifiesto en mayúsculas: "SIMULADORES." tiene que entrar a 320px y en 7 columnas a 1440px; el `clamp(1.4rem,6.2vw,3.3rem)` sale de eso.
+* Pesos que no se cargan: JetBrains Mono se carga hasta 500 y Syne llega a 800, pero el sitio usa `font-semibold` en mono y `font-black` en Syne (acá y en el resto de las páginas): el navegador los simula. Si se corrige, que sea en todo el sitio a la vez (`layout.tsx`).
 
 ### Pendientes
-* No hay talleres presenciales cargados todavía: los paneles de "Próximos talleres" y "Archivo" se probaron con eventos de prueba y no se vieron con datos reales.
+* Taller de Linux: falta fecha, fotos y descripción final (`pastWorkshops` en el seed).
+* No hay talleres presenciales con fecha cargados: los paneles de "Próximos talleres" y los pasados con foto se probaron con eventos de prueba, no con datos reales.
 * Revisión visual del dueño.
