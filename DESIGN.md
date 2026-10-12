@@ -409,7 +409,7 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 ### Idea rectora: tres niveles, y en cada uno el orden es el diseño
 | Nivel | URL | Qué muestra |
 | :--- | :--- | :--- |
-| Página general | `/workshops` | Hero y **una caja por workshop en mosaico** (casi cuadradas, tres por fila en escritorio, dos en tablet, una en celular), en orden: 01 Linux, 02 ROS 2 y robótica… Abajo, los próximos talleres presenciales de todos. |
+| Página general | `/workshops` | Hero, después los **próximos talleres** presenciales de todos los workshops (lo que tiene fecha y botón para inscribirse, bien a la vista: pedido del dueño) y debajo **una caja por workshop en mosaico** (casi cuadradas, tres por fila en escritorio, dos en tablet, una en celular), en orden: 01 Linux, 02 ROS 2 y robótica… |
 | Workshop | `/workshops/<workshop>` | Número de orden en Anton, título y resumen; adentro, sus talleres (la ruta de 9 guías de ROS 2, el taller de Linux). |
 | Taller | `/workshops/<workshop>/<taller>` | Solo ese taller: de qué se trata, qué te llevás, comandos, datos, guía y código, anterior y siguiente, y el panel para marcarlo como hecho. "Volver" lleva a su caja en el workshop. |
 
@@ -424,7 +424,7 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 * Datos: tabla `WorkshopCompletion` (email + slug del taller, sin clave foránea porque los talleres no viven en la base). Server actions en `src/app/workshops/progress-actions.ts`; el progreso se pide desde el cliente (`WorkshopProgress.tsx`) para que las tres páginas sigan siendo estáticas (ISR), igual que la inscripción en `/talks`.
 
 ### Estructura y archivos
-1. `src/app/workshops/page.tsx`: `WorkshopsHero.tsx` (título "WORKSHOPS" en Anton, manifiesto en Syne black en mayúsculas, "02 workshops · 10 talleres", "Empezar por el 01"), `TrackBoxes.tsx` (las cajas), `UpcomingWorkshops.tsx` sobre `bg-bg2` (eventos de categoría `workshop`; sin ninguno, panel con trama "Todavía no hay fecha") y `ProposeWorkshop.tsx` (banda oscura con el motivo `workshop` de `src/lib/contact.ts`).
+1. `src/app/workshops/page.tsx`, de arriba hacia abajo: `WorkshopsHero.tsx` (título "WORKSHOPS" en Anton, manifiesto en Syne black en mayúsculas, "02 workshops · 10 talleres", "Empezar por el 01"), `UpcomingWorkshops.tsx` sobre `bg-bg2` (eventos de categoría `workshop`; sin ninguno, panel con trama "Todavía no hay fecha"), `TrackBoxes.tsx` (el mosaico) y `ProposeWorkshop.tsx` (banda oscura con el motivo `workshop` de `src/lib/contact.ts`).
 2. `src/app/workshops/[track]/page.tsx`: la página de un workshop. Adentro, `TrackBody.tsx`: `GuideRoute.tsx` (intro, progreso `RouteProgress.tsx`, bloque de código oscuro fijo y las cajas de `RouteSteps.tsx`) si tiene guías, y `PastWorkshopList` (`PastWorkshops.tsx`: tarjeta líder + módulos, o un panel horizontal si hay uno solo; foto a color o trama diagonal) si tiene talleres presenciales pasados. Si tiene fechas próximas, también `UpcomingWorkshops`.
 3. `src/app/workshops/[track]/[slug]/page.tsx`: la página de un taller (`CompletionPanel.tsx` para marcarlo).
 4. Datos: `prisma/seed-data/workshops.ts` (workshops, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts` (`trackHref`, `workshopHref`). La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.

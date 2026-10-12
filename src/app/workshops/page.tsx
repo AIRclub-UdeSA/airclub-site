@@ -31,8 +31,9 @@ function factsOf(t: WorkshopTrack): string[] {
 }
 
 /**
- * Página general de workshops: el hero y una caja por workshop, en orden (Linux, después ROS 2…). Cada caja abre la
- * página del workshop, que tiene adentro sus talleres. Abajo, los próximos talleres presenciales de todos los workshops.
+ * Página general de workshops: el hero, los próximos talleres presenciales de todos los workshops (lo que tiene fecha y
+ * botón para inscribirse, bien a la vista) y debajo una caja por workshop, en orden (Linux, después ROS 2…). Cada caja
+ * abre la página del workshop, que tiene adentro sus talleres.
  */
 export default async function WorkshopsPage() {
   const [tracks, upcoming, propose] = await Promise.all([
@@ -56,15 +57,16 @@ export default async function WorkshopsPage() {
     <WorkshopProgressProvider>
       <WorkshopsHero trackCount={tracks.length} itemCount={itemCount} firstTrackHref={boxes[0]?.href} />
 
-      <section id="workshops" aria-label="Workshops" className="scroll-mt-24 pb-16 md:pb-24">
+      {/* Primero lo que tiene fecha (y el botón para inscribirse), después el mosaico de workshops. */}
+      <div className="bg-bg2 pt-16 md:pt-24">
+        <UpcomingWorkshops workshops={upcoming} />
+      </div>
+
+      <section id="workshops" aria-label="Workshops" className="scroll-mt-24 py-16 md:py-24">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
           <TrackBoxes tracks={boxes} />
         </div>
       </section>
-
-      <div className="bg-bg2 pt-16 md:pt-24">
-        <UpcomingWorkshops workshops={upcoming} />
-      </div>
 
       <ProposeWorkshop reason={propose} />
     </WorkshopProgressProvider>
