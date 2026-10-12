@@ -99,7 +99,7 @@ function slalomPose(el: HTMLElement, st: SlalomState): Pose {
   const n = conesFor(W).length;
   const weave = Math.sin(v * Math.PI * n);
   const heading = Math.cos(v * Math.PI * n);
-  // el robot mide más o menos su tamaño de alto: lo que entre en el piso visible de la banda (con aire arriba)
+  // el robot mide más o menos su tamaño de alto: no más de lo que hay entre el borde de arriba de la banda y el carril
   const size = Math.min(trackSizeFor(W), Math.max(0, lane - r.top - 8) / 1.05);
   return {
     lane,

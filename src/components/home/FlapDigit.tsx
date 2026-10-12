@@ -48,11 +48,16 @@ export function FlapDigit({ ch }: { ch: string }) {
   const topShade = useRef<HTMLSpanElement>(null);
   const frontShade = useRef<HTMLSpanElement>(null);
   const backShade = useRef<HTMLSpanElement>(null);
+  // El giro en curso: si llega otro número antes de que termine (al volver a una pestaña que estuvo en segundo plano,
+  // el reloj sigue y las animaciones no), se corta para que no terminen dos a la vez sobre la misma solapa
+  const turn = useRef<gsap.core.Timeline | null>(null);
 
   useGSAP(
     () => {
       const old = prev.current;
       prev.current = ch;
+      turn.current?.kill();
+      turn.current = null;
       const el = flap.current;
       // Sin giro la primera vez (de "-" a la cifra), con movimiento reducido o sin cambio
       if (!el || old === ch || old === "-" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -71,7 +76,7 @@ export function FlapDigit({ ch }: { ch: string }) {
         gsap.set(deg < 90 ? frontShade.current : backShade.current, { opacity: 0.65 * (1 - tilt) });
       };
       shade();
-      gsap
+      turn.current = gsap
         .timeline({
           onUpdate: shade,
           onComplete: () => {
@@ -79,6 +84,7 @@ export function FlapDigit({ ch }: { ch: string }) {
             // queda nítida (la solapa en 3D se dibuja más blanda) y no hay un cuadro con el número viejo
             flushSync(() => setFrom(ch));
             gsap.set(el, { visibility: "hidden" });
+            turn.current = null;
           },
         })
         // cae: arranca despacio y se acelera, como algo con peso
