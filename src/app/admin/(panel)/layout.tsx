@@ -33,6 +33,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               <Link href="/admin/logs" className="text-sm font-medium text-text2 hover:text-crimson">
                 Logs
               </Link>
+              <Link href="/admin/comunidad" className="text-sm font-medium text-text2 hover:text-crimson">
+                Comunidad
+              </Link>
             </>
           )}
           <span className="text-sm text-text3">{admin.email}</span>
