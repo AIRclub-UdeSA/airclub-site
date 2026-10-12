@@ -216,6 +216,20 @@ model TalkRegistration {
   @@index([talkId])
 }
 
+// Workshop que una cuenta marcó como hecho (#2): arma su recorrido en /workshops y su pestaña
+// Aprendizaje en /perfil. Los workshops no viven en la base (salen de prisma/seed-data/workshops.ts
+// y de los eventos de categoría "workshop"), así que se guarda el slug, sin clave foránea. Como en
+// TalkRegistration, se identifica por el email de la sesión y los datos de la persona salen de UserProfile.
+model WorkshopCompletion {
+  id           String   @id @default(cuid())
+  email        String
+  workshopSlug String
+  completedAt  DateTime @default(now())
+
+  @@unique([email, workshopSlug])
+  @@index([email])
+}
+
 model TalkMedia {
   id        String        @id @default(cuid())
   talkId    String
