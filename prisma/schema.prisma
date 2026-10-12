@@ -190,6 +190,8 @@ model Talk {
   recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
   ctaLabel           String?
   ctaUrl             String?
+  registrationOpen   Boolean     @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
+  capacity           Int? // cupo de la inscripcion propia; null = sin limite
   status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
   confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
   order              Int         @default(0)
@@ -198,6 +200,20 @@ model Talk {
   media              TalkMedia[]
   slides             TalkSlide[]
   links              TalkLink[]
+  registrations      TalkRegistration[]
+}
+
+// Inscripcion propia de una charla (talk.registrationOpen = true), gemelo de EventRegistration.
+// No guarda nombre: se completa con el email de la sesion y el resto sale de UserProfile (#49).
+model TalkRegistration {
+  id        String   @id @default(cuid())
+  talkId    String
+  talk      Talk     @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  email     String
+  createdAt DateTime @default(now())
+
+  @@unique([talkId, email])
+  @@index([talkId])
 }
 
 model TalkMedia {

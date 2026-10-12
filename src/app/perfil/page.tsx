@@ -29,7 +29,7 @@ export default async function PerfilPage({ searchParams }: PageProps<"/perfil">)
           <Check className="h-4 w-4 shrink-0" /> Perfil guardado.
         </p>
       )}
-      <PerfilForm existing={profile} submitLabel="Guardar cambios" />
+      <PerfilForm existing={profile} submitLabel="Guardar cambios" next="/perfil?guardado=1" />
     </div>
   );
 }

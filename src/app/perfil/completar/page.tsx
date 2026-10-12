@@ -3,18 +3,22 @@ import { redirect } from "next/navigation";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
+import { safeNext } from "@/lib/safe-next";
 
 export const metadata: Metadata = {
   title: "Completá tu perfil, AIR Club UdeSA",
   robots: { index: false, follow: false },
 };
 
-export default async function CompletarPerfilPage() {
+export default async function CompletarPerfilPage({ searchParams }: PageProps<"/perfil/completar">) {
+  const { next } = await searchParams;
+  const target = safeNext(Array.isArray(next) ? next[0] : next, "/perfil?guardado=1");
+
   const email = await getSessionEmail();
   if (!email) redirect("/");
 
   const existing = await prisma.userProfile.findUnique({ where: { email } });
-  if (existing) redirect("/perfil");
+  if (existing) redirect(target);
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
@@ -31,7 +35,7 @@ export default async function CompletarPerfilPage() {
           Usamos tu rol y tu carrera para la inscripción a las charlas y para saber quiénes vienen.
         </p>
       </div>
-      <PerfilForm submitLabel="Crear perfil" />
+      <PerfilForm submitLabel="Crear perfil" next={target} />
     </div>
   );
 }

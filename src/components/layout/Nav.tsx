@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { User } from "lucide-react";
-import { SessionProvider, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signInAction } from "@/lib/admin/auth-actions";
@@ -20,17 +20,11 @@ const NAV_LINKS = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-// La sesión se lee acá, en el navegador, y no en el RootLayout: leerla en el servidor usa
-// cookies y obliga a armar todas las páginas públicas en cada visita en vez de servirlas pre-armadas.
+// El SessionProvider vive en el RootLayout (src/app/layout.tsx), no acá: lo necesita también
+// el diálogo de inscripción de /talks (#50). La sesión se sigue leyendo en el navegador, nunca
+// en el servidor de las páginas públicas (eso obligaría a armarlas en cada visita en vez de
+// servirlas pre-armadas).
 export function Nav() {
-  return (
-    <SessionProvider>
-      <NavContent />
-    </SessionProvider>
-  );
-}
-
-function NavContent() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [visible, setVisible] = useState(!isHome);

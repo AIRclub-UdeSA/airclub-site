@@ -12,13 +12,14 @@ interface TalksHeroProps {
   todayIso: string;
   daysUntilNext: string | null;
   onOpenTalk: (slug: string, section?: TalkSection) => void;
+  onRegister: (talk: TimelineTalk) => void;
 }
 
 const PANEL_PAD = "p-6 sm:p-8 lg:p-10";
 // Un único elemento por panel cubre todo el panel (enlace estirado); los demás enlaces se elevan por encima.
 const STRETCH = "after:absolute after:inset-0 after:content-['']";
 
-export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk }: TalksHeroProps) {
+export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk, onRegister }: TalksHeroProps) {
   const both = Boolean(latest && next);
   return (
     <section className="pb-10 pt-24 md:pb-14">
@@ -37,7 +38,7 @@ export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk }:
         {both && <TodayBadge todayIso={todayIso} />}
 
         {next ? (
-          <NextPanel talk={next} daysUntil={daysUntilNext} onOpenTalk={onOpenTalk} />
+          <NextPanel talk={next} daysUntil={daysUntilNext} onOpenTalk={onOpenTalk} onRegister={onRegister} />
         ) : (
           <NoDatePanel />
         )}
@@ -162,10 +163,12 @@ function NextPanel({
   talk,
   daysUntil,
   onOpenTalk,
+  onRegister,
 }: {
   talk: TimelineTalk;
   daysUntil: string | null;
   onOpenTalk: TalksHeroProps["onOpenTalk"];
+  onRegister: TalksHeroProps["onRegister"];
 }) {
   const date = talkDateParts(talk.startsAt, talk.endsAt);
 
@@ -217,14 +220,25 @@ function NextPanel({
           {/* Debajo de 2xl el botón va más compacto (menos relleno y tracking) para que "Ver detalles" entre en la
               misma fila en notebooks de ~1300px. En anchos menores igual baja a la línea siguiente, sin cortarse. */}
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 2xl:gap-x-6">
-            {talk.cta && (
-              <a
-                href={talk.cta.url}
-                className="relative z-10 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-crimson 2xl:px-6 2xl:tracking-[.14em] transition-colors hover:bg-[#f5e8ec]"
+            {talk.registrationOpen ? (
+              <button
+                type="button"
+                onClick={() => onRegister(talk)}
+                className="relative z-10 inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-crimson 2xl:px-6 2xl:tracking-[.14em] transition-colors hover:bg-[#f5e8ec]"
               >
-                <span>{talk.cta.label}</span>
+                <span>{talk.registrationLabel ?? "Inscribirme"}</span>
                 <ArrowUpRight size={15} aria-hidden="true" />
-              </a>
+              </button>
+            ) : (
+              talk.cta && (
+                <a
+                  href={talk.cta.url}
+                  className="relative z-10 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-crimson 2xl:px-6 2xl:tracking-[.14em] transition-colors hover:bg-[#f5e8ec]"
+                >
+                  <span>{talk.cta.label}</span>
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+              )
             )}
             <button
               type="button"

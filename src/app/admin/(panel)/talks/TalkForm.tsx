@@ -40,6 +40,8 @@ export type EditingTalk = {
   recordingUrl: string | null;
   ctaLabel: string | null;
   ctaUrl: string | null;
+  registrationOpen: boolean;
+  capacity: number | null;
   confirmed: boolean;
   status: "DRAFT" | "PUBLISHED";
   media: MediaItem[];
@@ -370,6 +372,22 @@ export function TalkForm({
 
       <fieldset className="flex flex-col gap-3">
         <legend className="font-mono text-xs uppercase tracking-wide text-text3">Inscripción (antes de la charla)</legend>
+        <label className="flex items-center gap-2 text-sm text-text2">
+          <input type="checkbox" name="registrationOpen" defaultChecked={values?.registrationOpen ?? false} />
+          Inscripción propia del sitio (en vez de un link externo)
+        </label>
+        <label className={`${labelClass} max-w-[16rem]`}>
+          Cupo de la inscripción propia
+          <input
+            type="number"
+            name="capacity"
+            min={1}
+            step={1}
+            placeholder="Sin límite"
+            defaultValue={values?.capacity ?? ""}
+            className={inputClass}
+          />
+        </label>
         <div className="flex flex-wrap gap-3">
           <label className={labelClass}>
             Texto del botón
@@ -382,7 +400,9 @@ export function TalkForm({
         </div>
         <p className="text-xs text-text3">
           El botón aparece en el panel de la próxima charla, en su tarjeta del cronograma y en su detalle. Cuando la charla termina se
-          oculta solo, así que en una charla pasada no hace falta borrarlo.
+          oculta solo, así que en una charla pasada no hace falta borrarlo. Con la inscripción propia tildada, el link externo tiene que
+          quedar vacío (son excluyentes); el texto del botón es opcional, por default dice &ldquo;Inscribirme&rdquo;. Con cupo, al llenarse el diálogo avisa que no quedan
+          lugares; vacío es sin límite.
         </p>
       </fieldset>
 
