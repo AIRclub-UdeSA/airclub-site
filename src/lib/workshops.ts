@@ -5,13 +5,23 @@ import {
   JAR_SITE_URL,
   JAR_WORKSHOPS_REPO,
   type SeedAsyncWorkshop,
-  type SeedWorkshopTrack,
   type WorkshopTrackKey,
 } from "../../prisma/seed-data/workshops";
 import { getPastEvents, getUpcomingEvents, type EventItem } from "@/lib/events";
 
 export type { WorkshopLevel, WorkshopTrackKey } from "../../prisma/seed-data/workshops";
 export { JAR_SITE_URL, JAR_WORKSHOPS_REPO };
+
+/**
+ * Clave de un workshop en la URL. "otros" no está en el seed: junta los talleres-evento que no tienen `track`, para que
+ * igual tengan caja y página.
+ */
+export type TrackKey = WorkshopTrackKey | "otros";
+const OTHERS = {
+  key: "otros" as const,
+  title: "Otros talleres",
+  summary: "Talleres presenciales sueltos, que no son parte de un workshop más largo.",
+};
 
 export type AsyncWorkshop = SeedAsyncWorkshop & {
   guideUrl: string;
@@ -26,7 +36,7 @@ export type InPersonWorkshop = EventItem;
 /** Taller presencial que ya pasó, venga de un evento o de `pastWorkshops` del seed (sin fecha ni foto todavía). */
 export type PastWorkshop = {
   slug: string;
-  track?: WorkshopTrackKey;
+  track: TrackKey;
   title: string;
   summary: string;
   /** ISO; sin fecha, la tarjeta dice "Taller presencial". */
@@ -39,28 +49,37 @@ export type PastWorkshop = {
   urlLabel?: string;
 };
 
-export type WorkshopTrack = SeedWorkshopTrack & {
-  /** Guías asincrónicas de la línea, en orden. */
+/** Un workshop con sus talleres: la caja de /workshops y la página /workshops/<key>. */
+export type WorkshopTrack = {
+  key: TrackKey;
+  title: string;
+  label?: string;
+  summary: string;
+  /** Guías asincrónicas, en orden. */
   guides: AsyncWorkshop[];
   /** Talleres presenciales que ya pasaron, el más reciente primero. */
   past: PastWorkshop[];
+  /** Talleres presenciales que vienen, el más cercano primero. */
+  upcoming: InPersonWorkshop[];
 };
 
-/** Lo que muestra /workshops/[slug]: una guía (con su línea y sus vecinas) o un taller presencial pasado. */
+/** Lo que muestra /workshops/<workshop>/<taller>: una guía (con sus vecinas) o un taller presencial pasado. */
 export type WorkshopDetail =
   | {
       kind: "guide";
-      track: SeedWorkshopTrack;
+      track: WorkshopTrack;
       guide: AsyncWorkshop;
-      /** Las guías de la misma línea que hay que tener hechas antes (de `requires`). */
+      /** Las guías del mismo workshop que hay que tener hechas antes (de `requires`). */
       requires: AsyncWorkshop[];
       prev?: AsyncWorkshop;
       next?: AsyncWorkshop;
     }
-  | { kind: "past"; track?: SeedWorkshopTrack; workshop: PastWorkshop };
+  | { kind: "past"; track: WorkshopTrack; workshop: PastWorkshop };
 
-/** Ruta de la página de un workshop. */
-export const workshopHref = (slug: string) => `/workshops/${slug}`;
+/** Página de un workshop (la caja). */
+export const trackHref = (key: TrackKey) => `/workshops/${key}`;
+/** Página de un taller: va adentro de su workshop. */
+export const workshopHref = (w: { slug: string; track: TrackKey }) => `${trackHref(w.track)}/${w.slug}`;
 
 function formatMinutes([min, max]: [number, number]): string {
   if (max <= 90) return `${min}–${max} min`;
@@ -77,10 +96,12 @@ function toAsyncWorkshop(w: SeedAsyncWorkshop): AsyncWorkshop {
   };
 }
 
+const knownTrack = (key?: string): TrackKey => (seedTracks.some((t) => t.key === key) ? (key as WorkshopTrackKey) : "otros");
+
 function fromEvent(e: EventItem): PastWorkshop {
   return {
     slug: e.slug,
-    track: e.track,
+    track: knownTrack(e.track),
     title: e.title,
     summary: e.description,
     startsAt: e.startsAt.toISOString(),
@@ -127,41 +148,43 @@ export async function getUpcomingWorkshops(): Promise<InPersonWorkshop[]> {
 }
 
 /**
- * Las líneas de /workshops con lo suyo: guías asincrónicas y talleres pasados. Los talleres-evento sin `track` no entran
- * en ninguna línea: van en `untracked`, que la página muestra como archivo aparte.
+ * Los workshops con sus talleres, en el orden de `tracks` (el de las cajas), solo los que tienen algo. "Otros talleres"
+ * va al final y solo si hay talleres-evento sin `track`.
  */
-export async function getWorkshopTracks(): Promise<{ tracks: WorkshopTrack[]; untracked: PastWorkshop[] }> {
-  const [guides, past] = await Promise.all([getAsyncWorkshops(), getPastWorkshops()]);
-  const known = new Set(seedTracks.map((t) => t.key));
+export async function getWorkshopTracks(): Promise<WorkshopTrack[]> {
+  const [guides, past, upcoming] = await Promise.all([getAsyncWorkshops(), getPastWorkshops(), getUpcomingWorkshops()]);
 
-  return {
-    tracks: seedTracks.map((t) => ({
+  return [...seedTracks, OTHERS]
+    .map((t) => ({
       ...t,
       guides: guides.filter((g) => g.track === t.key),
       past: past.filter((w) => w.track === t.key),
-    })),
-    untracked: past.filter((w) => !w.track || !known.has(w.track)),
-  };
+      upcoming: upcoming.filter((e) => knownTrack(e.track) === t.key),
+    }))
+    .filter((t) => t.guides.length + t.past.length + t.upcoming.length > 0);
 }
 
-/** Slugs que tienen página propia y que se pueden marcar como hechos: las guías y los talleres que ya pasaron. */
-export async function getWorkshopSlugs(): Promise<string[]> {
+export async function getWorkshopTrack(key: string): Promise<WorkshopTrack | null> {
+  return (await getWorkshopTracks()).find((t) => t.key === key) ?? null;
+}
+
+/** Talleres con página propia y que se pueden marcar como hechos: las guías y los presenciales que ya pasaron. */
+export async function getWorkshopItems(): Promise<{ slug: string; track: TrackKey }[]> {
   const [guides, past] = await Promise.all([getAsyncWorkshops(), getPastWorkshops()]);
-  return [...guides.map((g) => g.slug), ...past.map((w) => w.slug)];
+  return [...guides, ...past].map(({ slug, track }) => ({ slug, track }));
 }
 
-export async function getWorkshopDetail(slug: string): Promise<WorkshopDetail | null> {
-  const trackOf = (key?: WorkshopTrackKey) => seedTracks.find((t) => t.key === key);
+export async function getWorkshopDetail(trackKey: string, slug: string): Promise<WorkshopDetail | null> {
+  const track = await getWorkshopTrack(trackKey);
+  if (!track) return null;
 
-  const guides = await getAsyncWorkshops();
-  const guide = guides.find((g) => g.slug === slug);
+  const guide = track.guides.find((g) => g.slug === slug);
   if (guide) {
-    const siblings = guides.filter((g) => g.track === guide.track);
-    const i = siblings.indexOf(guide);
-    const requires = guide.requires.flatMap((week) => siblings.filter((g) => g.week === week));
-    return { kind: "guide", track: trackOf(guide.track)!, guide, requires, prev: siblings[i - 1], next: siblings[i + 1] };
+    const i = track.guides.indexOf(guide);
+    const requires = guide.requires.flatMap((week) => track.guides.filter((g) => g.week === week));
+    return { kind: "guide", track, guide, requires, prev: track.guides[i - 1], next: track.guides[i + 1] };
   }
 
-  const workshop = (await getPastWorkshops()).find((w) => w.slug === slug);
-  return workshop ? { kind: "past", track: trackOf(workshop.track), workshop } : null;
+  const workshop = track.past.find((w) => w.slug === slug);
+  return workshop ? { kind: "past", track, workshop } : null;
 }

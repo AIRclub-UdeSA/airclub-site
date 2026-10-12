@@ -3,18 +3,16 @@ import { ArrowRight } from "lucide-react";
 
 /**
  * Título de /workshops (Anton, centrado, misma altura de letra que /talks y /equipo) y el manifiesto: qué es un
- * workshop del club, las dos formas de entrar (presencial o asincrónico) y un índice de las líneas de workshops.
+ * workshop del club y las dos formas de entrar (presencial o asincrónico). Las cajas de los workshops van justo abajo.
  */
 export function WorkshopsHero({
-  tracks,
-  guideCount,
-  totalHours,
-  firstGuideHref,
+  trackCount,
+  itemCount,
+  firstTrackHref,
 }: {
-  tracks: { key: string; title: string }[];
-  guideCount: number;
-  totalHours: string;
-  firstGuideHref?: string;
+  trackCount: number;
+  itemCount: number;
+  firstTrackHref?: string;
 }) {
   return (
     <header className="pb-16 pt-24 md:pb-24">
@@ -39,36 +37,16 @@ export function WorkshopsHero({
             ROS 2 hasta navegar un laberinto con Nav2.
           </p>
           <p className="mt-5 font-mono text-[.74rem] font-semibold uppercase tracking-[.16em] text-mauve">
-            {String(guideCount).padStart(2, "0")} guías · {totalHours} de práctica
+            {String(trackCount).padStart(2, "0")} workshops · {String(itemCount).padStart(2, "0")} talleres
           </p>
 
-          {tracks.length > 1 && (
-            <nav aria-label="Líneas de workshops" className="mt-6 border-t border-text pt-4">
-              <ul className="flex flex-col">
-                {tracks.map((t) => (
-                  <li key={t.key}>
-                    <a
-                      href={`#linea-${t.key}`}
-                      className="group flex items-baseline justify-between gap-4 border-b border-text/20 py-2.5 font-display text-[1.05rem] font-bold tracking-tight text-text transition-colors hover:text-crimson-text"
-                    >
-                      {t.title}
-                      <span aria-hidden="true" className="font-mono text-[.8rem] text-text3 transition-colors group-hover:text-crimson-text">
-                        ↓
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-            {firstGuideHref && (
+            {firstTrackHref && (
               <Link
-                href={firstGuideHref}
+                href={firstTrackHref}
                 className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
               >
-                <span>Empezar la 01</span>
+                <span>Empezar por el 01</span>
                 <ArrowRight size={15} aria-hidden="true" />
               </Link>
             )}

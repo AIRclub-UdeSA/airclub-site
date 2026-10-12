@@ -19,8 +19,8 @@ export function GuideRoute({ guides, totalHours, back }: { guides: AsyncWorkshop
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-4">
         <div className="min-w-0 lg:col-span-5">
           <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">
-            Guías asincrónicas paso a paso para hacer a tu ritmo contra el simulador, con el código de cada semana en
-            GitHub. Cada una deja andando algo que la siguiente da por hecho: hacelas en orden. En total, {totalHours}.
+            Cada guía tiene su código en GitHub y deja andando algo que la siguiente da por hecho: hacelas en orden. En
+            total, {totalHours}.
           </p>
 
           <a

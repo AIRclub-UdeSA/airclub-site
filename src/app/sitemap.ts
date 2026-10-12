@@ -1,10 +1,16 @@
 import type { MetadataRoute } from "next";
 import { getAllEventSlugs } from "@/lib/events";
 import { getRobots } from "@/lib/robots";
+import { getWorkshopItems, getWorkshopTracks, trackHref, workshopHref } from "@/lib/workshops";
 import { SITE_URL } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [eventSlugs, robots] = await Promise.all([getAllEventSlugs(), getRobots()]);
+  const [eventSlugs, robots, tracks, workshops] = await Promise.all([
+    getAllEventSlugs(),
+    getRobots(),
+    getWorkshopTracks(),
+    getWorkshopItems(),
+  ]);
 
   const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/workshops", "/plataformas", "/equipo", "/contacto"].map((path) => ({
     url: new URL(path || "/", SITE_URL).toString(),
@@ -21,5 +27,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  return [...staticRoutes, ...eventRoutes, ...robotRoutes];
+  const workshopRoutes: MetadataRoute.Sitemap = [...tracks.map((t) => trackHref(t.key)), ...workshops.map(workshopHref)].map(
+    (path) => ({ url: new URL(path, SITE_URL).toString(), lastModified: new Date() }),
+  );
+
+  return [...staticRoutes, ...eventRoutes, ...robotRoutes, ...workshopRoutes];
 }

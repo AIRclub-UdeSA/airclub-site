@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { getAsyncWorkshops, getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel, workshopHref } from "@/lib/workshops";
+import { getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel, trackHref, type WorkshopTrack } from "@/lib/workshops";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopsHero } from "@/components/workshops/WorkshopsHero";
+import { TrackBoxes, type TrackBox } from "@/components/workshops/TrackBoxes";
 import { UpcomingWorkshops } from "@/components/workshops/UpcomingWorkshops";
-import { WorkshopTrackSection } from "@/components/workshops/WorkshopTrackSection";
-import { UntrackedArchive } from "@/components/workshops/PastWorkshops";
 import { ProposeWorkshop } from "@/components/workshops/ProposeWorkshop";
 import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
 
@@ -19,31 +18,54 @@ export const metadata: Metadata = buildMetadata({
 // ISR: el estado próximo/pasado de cada taller sale de su fecha, así que la página se revalida sola cada hora.
 export const revalidate = 3600;
 
-// Las bandas alternan lienzo y bg2 después de "Próximos talleres", que va sobre el lienzo.
-const band = (i: number) => (i % 2 === 0 ? "bg-bg2" : "");
+const pad = (n: number) => String(n).padStart(2, "0");
 
+/** Lo que dice cada caja en mono: cuántos talleres tiene, de qué tipo y cuánto lleva el recorrido. */
+function factsOf(t: WorkshopTrack): string[] {
+  return [
+    t.guides.length > 0 && `${pad(t.guides.length)} ${t.guides.length === 1 ? "guía asincrónica" : "guías asincrónicas"}`,
+    t.guides.length > 0 && `${totalHoursLabel(t.guides)} de práctica`,
+    t.past.length > 0 && `${pad(t.past.length)} ${t.past.length === 1 ? "taller presencial" : "talleres presenciales"}`,
+    t.upcoming.length > 0 && `${pad(t.upcoming.length)} ${t.upcoming.length === 1 ? "fecha próxima" : "fechas próximas"}`,
+  ].filter((f): f is string => Boolean(f));
+}
+
+/**
+ * Página general de workshops: el hero y una caja por workshop, en orden (Linux, después ROS 2…). Cada caja abre la
+ * página del workshop, que tiene adentro sus talleres. Abajo, los próximos talleres presenciales de todos los workshops.
+ */
 export default async function WorkshopsPage() {
-  const [guides, upcoming, { tracks, untracked }, propose] = await Promise.all([
-    getAsyncWorkshops(),
-    getUpcomingWorkshops(),
+  const [tracks, upcoming, propose] = await Promise.all([
     getWorkshopTracks(),
+    getUpcomingWorkshops(),
     getContactReason("workshop"),
   ]);
-  const visibleTracks = tracks.filter((t) => t.guides.length + t.past.length > 0);
+
+  const boxes: TrackBox[] = tracks.map((t) => ({
+    key: t.key,
+    href: trackHref(t.key),
+    title: t.title,
+    label: t.label,
+    summary: t.summary,
+    facts: factsOf(t),
+    slugs: [...t.guides.map((g) => g.slug), ...t.past.map((w) => w.slug)],
+  }));
+  const itemCount = tracks.reduce((n, t) => n + t.guides.length + t.past.length, 0);
 
   return (
     <WorkshopProgressProvider>
-      <WorkshopsHero
-        tracks={visibleTracks.map(({ key, title }) => ({ key, title }))}
-        guideCount={guides.length}
-        totalHours={totalHoursLabel(guides)}
-        firstGuideHref={guides[0] && workshopHref(guides[0].slug)}
-      />
-      <UpcomingWorkshops workshops={upcoming} />
-      {visibleTracks.map((track, i) => (
-        <WorkshopTrackSection key={track.key} track={track} className={band(i)} />
-      ))}
-      <UntrackedArchive workshops={untracked} className={band(visibleTracks.length)} />
+      <WorkshopsHero trackCount={tracks.length} itemCount={itemCount} firstTrackHref={boxes[0]?.href} />
+
+      <section id="workshops" aria-label="Workshops" className="scroll-mt-24 pb-16 md:pb-24">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
+          <TrackBoxes tracks={boxes} />
+        </div>
+      </section>
+
+      <div className="bg-bg2 pt-16 md:pt-24">
+        <UpcomingWorkshops workshops={upcoming} />
+      </div>
+
       <ProposeWorkshop reason={propose} />
     </WorkshopProgressProvider>
   );

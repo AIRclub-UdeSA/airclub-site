@@ -14,3 +14,13 @@ export function routeStates(slugs: string[], completed: ReadonlySet<string>): Ma
   const next = slugs.find((s) => !completed.has(s));
   return new Map(slugs.map((s) => [s, completed.has(s) ? "done" : s === next ? "next" : "todo"]));
 }
+
+/**
+ * Lo mismo, un nivel más arriba: el estado de cada workshop (caja de /workshops) según sus talleres. Un workshop está
+ * `done` cuando hizo todos sus talleres; el `next` es el primero, en el orden de las cajas, que no terminó.
+ */
+export function trackStates(tracks: { key: string; slugs: string[] }[], completed: ReadonlySet<string>): Map<string, StepState> {
+  const finished = (t: { slugs: string[] }) => t.slugs.length > 0 && t.slugs.every((s) => completed.has(s));
+  const next = tracks.find((t) => !finished(t));
+  return new Map(tracks.map((t) => [t.key, finished(t) ? "done" : t === next ? "next" : "todo"]));
+}

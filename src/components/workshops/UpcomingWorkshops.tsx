@@ -17,7 +17,7 @@ function timeRange(startsAt: Date, endsAt?: Date) {
 /**
  * Talleres presenciales que vienen. Salen de los eventos de categoría "workshop" (prisma/seed-data/events.ts): el
  * primero va en carmesí macizo, como la próxima charla de /talks; los demás, con contorno. Sin ninguno, un panel con la
- * trama de "lugar reservado" que lleva al recorrido asincrónico y a proponer uno.
+ * trama de "lugar reservado" que lleva a los workshops y a proponer uno.
  */
 export function UpcomingWorkshops({ workshops }: { workshops: InPersonWorkshop[] }) {
   return (
@@ -151,15 +151,15 @@ function EmptyPanel() {
           Todavía no hay fecha
         </h3>
         <p className="mt-3 max-w-[56ch] text-[.98rem] leading-[1.7] text-text2">
-          Estamos armando el próximo encuentro en el Campus Victoria. Mientras tanto, el recorrido asincrónico está
-          abierto; y si tenés algo para enseñar, este es el momento de proponerlo.
+          Estamos armando el próximo encuentro en el Campus Victoria. Mientras tanto, los workshops asincrónicos están
+          abiertos; y si tenés algo para enseñar, este es el momento de proponerlo.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
           <a
-            href="#asincronicos"
+            href="#workshops"
             className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
           >
-            Ver el recorrido
+            Ver los workshops
           </a>
           <a
             href="#proponer"

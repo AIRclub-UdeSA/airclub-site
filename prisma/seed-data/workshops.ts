@@ -5,24 +5,34 @@
 
 export type WorkshopLevel = "inicial" | "intermedio" | "avanzado";
 
-/** Línea de workshops: agrupa los talleres por tema en /workshops. Para sumar una línea, agregarla a `tracks`. */
-export type WorkshopTrackKey = "ros2" | "linux";
+/**
+ * Workshop (o línea): cada uno es una caja en /workshops y tiene su página, /workshops/<key>, con sus talleres adentro.
+ * El orden de `tracks` es el orden de las cajas (el recorrido sugerido). Para sumar un workshop, agregarlo acá.
+ */
+export type WorkshopTrackKey = "linux" | "ros2";
 
 export type SeedWorkshopTrack = {
+  /** Va en la URL (/workshops/<key>): no cambiarlo una vez publicado. */
   key: WorkshopTrackKey;
   title: string;
-  /** Nota mono a la derecha del título ("Challenge JAR 2026"). */
+  /** Nota mono junto al título ("Challenge JAR 2026"). */
   label?: string;
-  /** Qué se aprende en esta línea. Opcional: la de ROS 2 ya se presenta con la intro de su recorrido. */
-  summary?: string;
+  /** De qué se trata, en una o dos frases: va en la caja y arriba de su página. */
+  summary: string;
 };
 
 export const tracks: SeedWorkshopTrack[] = [
-  { key: "ros2", title: "ROS 2 y robótica", label: "Challenge JAR 2026" },
   {
     key: "linux",
     title: "Linux",
     summary: "Para trabajar con ROS 2 y con los robots del club hace falta Linux en la computadora: lo instalamos juntos.",
+  },
+  {
+    key: "ros2",
+    title: "ROS 2 y robótica",
+    label: "Challenge JAR 2026",
+    summary:
+      "Un recorrido asincrónico para hacer a tu ritmo con el simulador, desde tu primer nodo de ROS 2 hasta navegar un laberinto con Nav2.",
   },
 ];
 

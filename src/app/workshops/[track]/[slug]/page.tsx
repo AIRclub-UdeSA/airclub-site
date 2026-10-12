@@ -3,7 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
-import { getWorkshopDetail, getWorkshopSlugs, JAR_SITE_URL, workshopHref, type AsyncWorkshop, type WorkshopDetail } from "@/lib/workshops";
+import {
+  getWorkshopDetail,
+  getWorkshopItems,
+  JAR_SITE_URL,
+  trackHref,
+  workshopHref,
+  type AsyncWorkshop,
+  type WorkshopDetail,
+} from "@/lib/workshops";
 import { talkDateText } from "@/lib/talk-format";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
@@ -21,25 +29,30 @@ const LABEL = "font-mono text-[.7rem] uppercase tracking-[.16em] text-text3";
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  return (await getWorkshopSlugs()).map((slug) => ({ slug }));
+  return (await getWorkshopItems()).map(({ track, slug }) => ({ track, slug }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/workshops/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
-  const detail = await getWorkshopDetail(slug);
-  if (!detail) return buildMetadata({ title: "Workshop no encontrado", description: "", path: workshopHref(slug) });
+export async function generateMetadata({ params }: PageProps<"/workshops/[track]/[slug]">): Promise<Metadata> {
+  const { track, slug } = await params;
+  const detail = await getWorkshopDetail(track, slug);
+  if (!detail) return buildMetadata({ title: "Taller no encontrado", description: "", path: `/workshops/${track}/${slug}` });
 
-  const { title, summary } = detail.kind === "guide" ? detail.guide : detail.workshop;
-  return buildMetadata({ title: `${title}, Workshops AIR Club UdeSA`, description: summary, path: workshopHref(slug) });
+  const item = detail.kind === "guide" ? detail.guide : detail.workshop;
+  return buildMetadata({
+    title: `${item.title}, ${detail.track.title}, AIR Club UdeSA`,
+    description: item.summary,
+    path: workshopHref(item),
+  });
 }
 
 /**
- * La página de un workshop: solo ese workshop, con todo lo que hace falta para hacerlo y el panel para marcarlo como
- * hecho. "Volver" lleva a su tarjeta en /workshops (y el botón atrás del navegador hace lo mismo).
+ * La página de un taller: solo ese taller, con todo lo que hace falta para hacerlo y el panel para marcarlo como hecho.
+ * Vive adentro de su workshop (/workshops/<workshop>/<taller>): "volver" lleva a su caja en la página del workshop (y el
+ * botón atrás del navegador hace lo mismo).
  */
-export default async function WorkshopPage({ params }: PageProps<"/workshops/[slug]">) {
-  const { slug } = await params;
-  const detail = await getWorkshopDetail(slug);
+export default async function WorkshopPage({ params }: PageProps<"/workshops/[track]/[slug]">) {
+  const { track: trackKey, slug } = await params;
+  const detail = await getWorkshopDetail(trackKey, slug);
   if (!detail) notFound();
 
   return (
@@ -51,7 +64,7 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[sl
             className="inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
           >
             <ArrowLeft size={14} aria-hidden="true" />
-            Todos los workshops
+            {detail.track.title}
           </Link>
         </div>
 
@@ -62,8 +75,8 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[sl
 }
 
 function backHref(detail: WorkshopDetail) {
-  if (detail.kind === "guide") return `/workshops#semana-${detail.guide.week}`;
-  return detail.track ? `/workshops#linea-${detail.track.key}` : "/workshops#archivo";
+  const anchor = detail.kind === "guide" ? `semana-${detail.guide.week}` : `taller-${detail.workshop.slug}`;
+  return `${trackHref(detail.track.key)}#${anchor}`;
 }
 
 /* ---------- Guía asincrónica ---------- */
@@ -133,8 +146,8 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
         <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
           <CompletionPanel
             slug={w.slug}
-            href={workshopHref(w.slug)}
-            next={next && { href: workshopHref(next.slug), label: `${next.week} · ${next.title}` }}
+            href={workshopHref(w)}
+            next={next && { href: workshopHref(next), label: `${next.week} · ${next.title}` }}
           />
 
           <dl className="grid grid-cols-1 border-t border-text">
@@ -164,7 +177,7 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
                 {requires.map((r) => (
                   <li key={r.slug}>
                     <Link
-                      href={workshopHref(r.slug)}
+                      href={workshopHref(r)}
                       className="underline decoration-text/30 underline-offset-4 transition-colors hover:text-crimson-text"
                     >
                       {r.week} · {r.title}
@@ -178,7 +191,7 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
       </div>
 
       {(prev || next) && (
-        <nav aria-label="Otros workshops de la línea" className={`${CONTAINER} mt-16 md:mt-24`}>
+        <nav aria-label="Otros talleres del workshop" className={`${CONTAINER} mt-16 md:mt-24`}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {prev ? <Neighbor guide={prev} dir="prev" /> : <span className="hidden sm:block" />}
             {next && <Neighbor guide={next} dir="next" />}
@@ -202,7 +215,7 @@ function Neighbor({ guide, dir }: { guide: AsyncWorkshop; dir: "prev" | "next" }
   const isNext = dir === "next";
   return (
     <Link
-      href={workshopHref(guide.slug)}
+      href={workshopHref(guide)}
       className={`group flex min-h-[10rem] flex-col justify-between gap-6 border border-text p-6 transition-colors hover:border-crimson-text sm:p-8 ${
         isNext ? "sm:items-end sm:text-right" : ""
       }`}
@@ -232,7 +245,7 @@ function PastDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "past"
   return (
     <>
       <header className={`${CONTAINER} mt-10 md:mt-14`}>
-        <p className={KICKER}>{track ? `${track.title} · Taller presencial` : "Taller presencial"}</p>
+        <p className={KICKER}>{track.title} · Taller presencial</p>
         <h1 className="mt-4 max-w-[18ch] font-display text-[clamp(1.8rem,6vw,5rem)] font-black uppercase leading-[0.98] tracking-tight text-text [overflow-wrap:anywhere]">
           {w.title}
         </h1>
@@ -271,7 +284,7 @@ function PastDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "past"
         </div>
 
         <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
-          <CompletionPanel slug={w.slug} href={workshopHref(w.slug)} question="¿Viniste?" />
+          <CompletionPanel slug={w.slug} href={workshopHref(w)} question="¿Viniste?" />
 
           {(w.startsAt || w.location || w.instructor) && (
             <dl className="grid grid-cols-1 border-t border-text">

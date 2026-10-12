@@ -3,8 +3,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { workshopHref, type PastWorkshop } from "@/lib/workshops";
 import { talkDateText } from "@/lib/talk-format";
-import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { CountHeading } from "@/components/shared/CountHeading";
 import { DoneBadge } from "./DoneBadge";
 
 // Un único enlace por tarjeta la cubre entera (enlace estirado).
@@ -16,34 +14,26 @@ const STRETCH = "after:absolute after:inset-0 after:content-['']";
  * "lugar reservado" (no se rellena con fotos de relleno).
  */
 export function PastWorkshopList({ workshops }: { workshops: PastWorkshop[] }) {
-  if (workshops.length === 1) return <PastTile workshop={workshops[0]} wide />;
+  if (workshops.length === 1) {
+    return (
+      <div id={`taller-${workshops[0].slug}`} className="scroll-mt-28">
+        <PastTile workshop={workshops[0]} wide />
+      </div>
+    );
+  }
 
   return (
     <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
       {workshops.map((w, i) => (
-        <li key={w.slug} className={i === 0 ? "sm:col-span-2 lg:col-span-7 lg:row-span-2" : "lg:col-span-5"}>
+        <li
+          key={w.slug}
+          id={`taller-${w.slug}`}
+          className={`scroll-mt-28 ${i === 0 ? "sm:col-span-2 lg:col-span-7 lg:row-span-2" : "lg:col-span-5"}`}
+        >
           <PastTile workshop={w} lead={i === 0} />
         </li>
       ))}
     </ul>
-  );
-}
-
-/** Talleres-evento pasados que no tienen línea (`track`). Solo aparece si hay alguno. */
-export function UntrackedArchive({ workshops, className = "" }: { workshops: PastWorkshop[]; className?: string }) {
-  if (workshops.length === 0) return null;
-
-  return (
-    <section id="archivo" className={`scroll-mt-24 py-16 md:py-24 ${className}`}>
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
-        <RevealOnScroll>
-          <CountHeading n={workshops.length} title="Otros talleres" />
-          <div className="mt-8">
-            <PastWorkshopList workshops={workshops} />
-          </div>
-        </RevealOnScroll>
-      </div>
-    </section>
   );
 }
 
@@ -84,7 +74,7 @@ function PastTile({ workshop: w, lead = false, wide = false }: { workshop: PastW
           {w.startsAt ? talkDateText(w.startsAt, w.dateLabel) : "Taller presencial"}
         </p>
         <h3 className="font-display text-[clamp(1.3rem,2.1vw,1.85rem)] font-bold leading-[1.1] tracking-tight transition-colors group-hover:text-crimson-text">
-          <Link href={workshopHref(w.slug)} className={`${STRETCH} focus-visible:outline-none`}>
+          <Link href={workshopHref(w)} className={`${STRETCH} focus-visible:outline-none`}>
             {w.title}
           </Link>
         </h3>

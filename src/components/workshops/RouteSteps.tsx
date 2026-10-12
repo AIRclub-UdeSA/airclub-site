@@ -64,7 +64,7 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
                 state === "todo" ? "group-hover:text-crimson-text" : ""
               }`}
             >
-              <Link href={workshopHref(w.slug)} className={`${STRETCH} focus-visible:outline-none`}>
+              <Link href={workshopHref(w)} className={`${STRETCH} focus-visible:outline-none`}>
                 <span className="sr-only">Semana {w.week}: </span>
                 {w.title}
                 {done && <span className="sr-only"> (hecho)</span>}

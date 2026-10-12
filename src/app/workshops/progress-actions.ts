@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
-import { getWorkshopSlugs, workshopHref } from "@/lib/workshops";
+import { getWorkshopItems, workshopHref } from "@/lib/workshops";
 
 export type ProgressResult = { signedIn: false } | { signedIn: true; completed: string[] };
 
@@ -31,11 +31,12 @@ export async function setWorkshopDoneAction(slug: string, done: boolean): Promis
   const email = await getSessionEmail();
   if (!email) return { signedIn: false };
 
-  const profile = await prisma.userProfile.findUnique({ where: { email }, select: { email: true } });
-  if (!profile) redirect(`/perfil/completar?next=${encodeURIComponent(workshopHref(slug))}`);
+  // La acción se puede llamar con cualquier texto: solo se aceptan talleres que existen y ya se pueden hacer.
+  const item = (await getWorkshopItems()).find((w) => w.slug === slug);
+  if (!item) throw new Error(`No existe el taller "${slug}".`);
 
-  // La acción se puede llamar con cualquier texto: solo se aceptan workshops que existen y ya se pueden hacer.
-  if (!(await getWorkshopSlugs()).includes(slug)) throw new Error(`No existe el workshop "${slug}".`);
+  const profile = await prisma.userProfile.findUnique({ where: { email }, select: { email: true } });
+  if (!profile) redirect(`/perfil/completar?next=${encodeURIComponent(workshopHref(item))}`);
 
   if (done) {
     await prisma.workshopCompletion.upsert({

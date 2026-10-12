@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { requireUserProfile } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
-import { getWorkshopTracks, workshopHref, type PastWorkshop, type WorkshopTrack } from "@/lib/workshops";
+import { getWorkshopTracks, trackHref, workshopHref, type WorkshopTrack } from "@/lib/workshops";
 import { routeStates } from "@/lib/workshop-progress";
 import { PerfilTabs } from "@/components/perfil/PerfilTabs";
 
@@ -18,7 +18,7 @@ const LABEL = "font-mono text-[.7rem] uppercase tracking-[.16em] text-text3";
 const formatDay = (d: Date) =>
   new Intl.DateTimeFormat("es-AR", { timeZone: TIME_ZONE, day: "numeric", month: "long", year: "numeric" }).format(d);
 
-type DoneItem = { slug: string; code?: string; title: string; completedAt: Date };
+type DoneItem = { slug: string; href: string; code?: string; title: string; completedAt: Date };
 
 /**
  * Pestaña Aprendizaje del perfil: por cada línea de workshops, cuánto lleva la persona y por dónde seguir, y la lista de
@@ -27,19 +27,16 @@ type DoneItem = { slug: string; code?: string; title: string; completedAt: Date 
  */
 export default async function AprendizajePage() {
   const profile = await requireUserProfile();
-  const [rows, { tracks, untracked }] = await Promise.all([
+  const [rows, tracks] = await Promise.all([
     prisma.workshopCompletion.findMany({ where: { email: profile.email }, orderBy: { completedAt: "desc" } }),
     getWorkshopTracks(),
   ]);
   const completedAt = new Map(rows.map((r) => [r.workshopSlug, r.completedAt]));
   const completed = new Set(completedAt.keys());
 
-  const groups = [
-    ...tracks.map((t) => ({ key: t.key, title: t.title, track: t, past: t.past })),
-    ...(untracked.length ? [{ key: "otros", title: "Otros talleres", track: undefined, past: untracked }] : []),
-  ].filter((g) => (g.track?.guides.length ?? 0) + g.past.length > 0);
-
-  const total = groups.reduce((n, g) => n + doneItems(g.track, g.past, completedAt).length, 0);
+  // Los workshops con algo para marcar (guías o talleres que ya pasaron), en el orden de las cajas de /workshops.
+  const groups = tracks.filter((t) => t.guides.length + t.past.length > 0);
+  const total = groups.reduce((n, t) => n + doneItems(t, completedAt).length, 0);
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
@@ -71,17 +68,17 @@ export default async function AprendizajePage() {
         </section>
       )}
 
-      {groups.map((g) => (
-        <TrackProgress key={g.key} title={g.title} track={g.track} past={g.past} completed={completed} completedAt={completedAt} />
+      {groups.map((t) => (
+        <TrackProgress key={t.key} track={t} completed={completed} completedAt={completedAt} />
       ))}
     </div>
   );
 }
 
-function doneItems(track: WorkshopTrack | undefined, past: PastWorkshop[], completedAt: Map<string, Date>): DoneItem[] {
+function doneItems(track: WorkshopTrack, completedAt: Map<string, Date>): DoneItem[] {
   const items: DoneItem[] = [
-    ...(track?.guides ?? []).map((g) => ({ slug: g.slug, code: g.week, title: g.title })),
-    ...past.map((w) => ({ slug: w.slug, title: w.title })),
+    ...track.guides.map((g) => ({ slug: g.slug, href: workshopHref(g), code: g.week, title: g.title })),
+    ...track.past.map((w) => ({ slug: w.slug, href: workshopHref(w), title: w.title })),
   ].flatMap((i) => {
     const at = completedAt.get(i.slug);
     return at ? [{ ...i, completedAt: at }] : [];
@@ -90,32 +87,30 @@ function doneItems(track: WorkshopTrack | undefined, past: PastWorkshop[], compl
 }
 
 function TrackProgress({
-  title,
   track,
-  past,
   completed,
   completedAt,
 }: {
-  title: string;
-  track?: WorkshopTrack;
-  past: PastWorkshop[];
+  track: WorkshopTrack;
   completed: ReadonlySet<string>;
   completedAt: Map<string, Date>;
 }) {
-  const guides = track?.guides ?? [];
+  const { title, guides, past } = track;
   const states = routeStates(
     guides.map((g) => g.slug),
     completed,
   );
   const next = guides.find((g) => states.get(g.slug) === "next");
-  const done = doneItems(track, past, completedAt);
+  const done = doneItems(track, completedAt);
   const count = guides.length + past.length;
 
   return (
     <section className="border-t border-text pt-8">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <h2 className="font-display text-[clamp(1.2rem,4.4vw,2rem)] font-black uppercase leading-[0.98] tracking-tight text-text">
-          {title}
+          <Link href={trackHref(track.key)} className="transition-colors hover:text-crimson-text">
+            {title}
+          </Link>
         </h2>
         <p className="font-logo text-[2.8rem] leading-[0.8] text-crimson-text">
           {String(done.length).padStart(2, "0")}
@@ -130,7 +125,7 @@ function TrackProgress({
             return (
               <li key={g.slug}>
                 <Link
-                  href={workshopHref(g.slug)}
+                  href={workshopHref(g)}
                   title={`${g.week} · ${g.title}`}
                   className={`block size-6 border transition-colors ${
                     state === "done"
@@ -152,7 +147,7 @@ function TrackProgress({
 
       {next && (
         <Link
-          href={workshopHref(next.slug)}
+          href={workshopHref(next)}
           className="group mt-6 flex items-center justify-between gap-6 bg-crimson p-5 text-white transition-colors hover:bg-crimson-hover sm:p-6"
         >
           <span className="flex min-w-0 items-end gap-4">
@@ -177,7 +172,7 @@ function TrackProgress({
             {done.map((d) => (
               <li key={d.slug} className="border-b border-text/15">
                 <Link
-                  href={workshopHref(d.slug)}
+                  href={d.href}
                   className="group flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5"
                 >
                   <span className="text-[1rem] text-text transition-colors group-hover:text-crimson-text">
