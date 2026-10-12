@@ -406,26 +406,28 @@ Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a ma
 
 Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno de 1px, botones píldora, bandas `bg`/`bg2` alternadas y cierre en banda oscura fija.
 
-### Idea rectora: líneas de workshops, y en cada una el orden es el diseño
-* La página se arma por **líneas** (hoy "ROS 2 y robótica" y "Linux"): cada una es una banda a todo el ancho con su conteo en Anton (talleres reales de la línea) y su título en Syne. Va a haber workshops de otros estilos: una línea nueva se agrega en `tracks` (`prisma/seed-data/workshops.ts`) sin tocar componentes. El hero tiene un índice de las líneas.
-* El recorrido asincrónico de una línea es una **ruta**: una línea vertical de 1px con un nodo cuadrado por semana y el número en Anton (`01`–`09`) como ancla, igual que la fecha en `/talks`.
-* El **relleno del nodo dice el nivel**: vacío = inicial, medio = intermedio, macizo = avanzado (como el color dice el estado en `/talks`). La leyenda está junto a la intro.
-* La `01` va en carmesí macizo con el sello inclinado "Empezá acá": es la puerta de entrada. "Requiere 03 · 04" enlaza a las semanas previas (`#semana-NN`), así se lee que la 07 y la 08 son ramas hermanas de la 06.
+### Idea rectora: tres niveles, y en cada uno el orden es el diseño
+| Nivel | URL | Qué muestra |
+| :--- | :--- | :--- |
+| Página general | `/workshops` | Hero y **una caja grande por workshop**, en orden (01 Linux, 02 ROS 2 y robótica…), unidas por una ruta de nodos. Abajo, los próximos talleres presenciales de todos. |
+| Workshop | `/workshops/<workshop>` | Número de orden en Anton, título y resumen; adentro, sus talleres (la ruta de 9 guías de ROS 2, el taller de Linux). |
+| Taller | `/workshops/<workshop>/<taller>` | Solo ese taller: de qué se trata, qué te llevás, comandos, datos, guía y código, anterior y siguiente, y el panel para marcarlo como hecho. "Volver" lleva a su caja en el workshop. |
 
-### Cajas grandes, página propia y recorrido de cada persona
-* Cada workshop es una **caja grande que entera es un enlace** a su página, `/workshops/[slug]` (`src/app/workshops/[slug]/page.tsx`): ahí se ve solo ese workshop (de qué se trata, qué te llevás, comandos, datos, botones a la guía y al código, anterior y siguiente). "Todos los workshops" vuelve a su tarjeta en `/workshops` (`#semana-NN`); el botón atrás del navegador hace lo mismo.
-* **Seguimiento (learning path):** con sesión @udesa.edu.ar, cada persona marca un workshop como hecho desde su página (y lo puede desmarcar). En la ruta, **lo hecho pasa a gris claro** (contorno tenue, número y texto apagados, sello "Hecho") y **el primero que falta va en carmesí macizo** con el sello "Seguí acá"; sin sesión, la 01 en carmesí con "Empezá acá". "El primero que falta" va por orden, no por prerequisitos (`src/lib/workshop-progress.ts`, lo comparten la ruta y el perfil).
-* Junto a la intro de la ruta, la cifra en Anton (`01/09`) y un casillero por guía (gris = hecho, carmesí = siguiente, contorno = pendiente); sin sesión, invitación a ingresar.
-* **Perfil → Aprendizaje** (`/perfil/aprendizaje`, pestañas "Datos" / "Aprendizaje" en `PerfilTabs`): por línea, cuánto lleva, la caja carmesí "Seguí con…" y la lista de lo hecho con la fecha en que lo marcó. También está en el menú de la cuenta ("Mi aprendizaje").
-* Datos: tabla `WorkshopCompletion` (email + slug del workshop, sin clave foránea porque los workshops no viven en la base). Server actions en `src/app/workshops/progress-actions.ts`; el progreso se pide desde el cliente (`WorkshopProgress.tsx`) para que `/workshops` y las páginas de cada workshop sigan siendo estáticas (ISR), igual que la inscripción en `/talks`.
+* **Pedido del dueño (2026-10-12):** la página general muestra solo las cajas de los workshops, no todo el contenido de cada uno. Linux va primero porque es lo inicial, después ROS 2. El orden de las cajas es el de `tracks` en `prisma/seed-data/workshops.ts`; un workshop nuevo es una entrada más ahí (su `key` va en la URL: no cambiarla). Los talleres-evento sin `track` caen en una caja "Otros talleres" (`/workshops/otros`).
+* Adentro de un workshop, el recorrido asincrónico es una **ruta**: una línea vertical de 1px con un nodo cuadrado por semana y el número en Anton (`01`–`09`), igual que la fecha en `/talks`. El **relleno del nodo dice el nivel**: vacío = inicial, medio = intermedio, macizo = avanzado. "Requiere 03 · 04" enlaza a las semanas previas (`#semana-NN`).
 
-### Estructura y archivos (`src/components/workshops/`, de arriba hacia abajo)
-1. `WorkshopsHero.tsx`: título "WORKSHOPS" (Anton, centrado, misma altura de letra que el resto), manifiesto en Syne black en mayúsculas (como el de la landing), cifra de guías y horas calculada de los datos e índice de líneas.
-2. `UpcomingWorkshops.tsx`: talleres presenciales que vienen, de todas las líneas. Son eventos de categoría `workshop` en `prisma/seed-data/events.ts`: el primero en carmesí macizo, los demás con contorno; horario, lugar, cupos, a cargo de y requisitos en una columna `dl`. Sin ninguno, panel con la trama de "lugar reservado" que lleva al recorrido y a proponer uno.
-3. `WorkshopTrackSection.tsx`: una banda por línea (solo las que tienen algo). Adentro, `GuideRoute.tsx` (intro, progreso `RouteProgress.tsx`, bloque de código oscuro fijo con lo que hay que correr antes de la 01, y las cajas de `RouteSteps.tsx`) si la línea tiene guías, y `PastWorkshopList` (`PastWorkshops.tsx`) con sus talleres presenciales pasados.
-4. Talleres pasados: tarjeta líder + módulos; uno solo va como panel horizontal. Foto a color; sin foto, trama diagonal (no se rellena con fotos de relleno). Vienen de dos lados: eventos de categoría `workshop` ya pasados con su `track`, o `pastWorkshops` del seed para los que todavía no tienen fecha (como el de Linux). Un evento-taller sin `track` cae en "Otros talleres" (`UntrackedArchive`), que solo aparece si hay alguno.
-5. `ProposeWorkshop.tsx`: banda oscura "Proponé un workshop" con el motivo `workshop` de `src/lib/contact.ts` (texto y destino, sin duplicar).
-6. Datos: `prisma/seed-data/workshops.ts` (líneas, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts`. La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
+### Recorrido de cada persona (learning path)
+* Con sesión @udesa.edu.ar, cada persona marca un taller como hecho desde su página (y lo puede desmarcar).
+* **Colores del progreso (pedido del dueño), iguales en los dos niveles:** lo hecho pasa a **gris claro** (contorno tenue, número y texto apagados, sello "Hecho" o "Completo") y lo primero que falta va en **carmesí macizo** con el sello "Seguí acá"; sin nada hecho, "Empezá acá". En las cajas, un workshop está completo cuando hizo todos sus talleres; en la ruta, "el primero que falta" va por orden, no por prerequisitos (`routeStates` y `trackStates` en `src/lib/workshop-progress.ts`, compartidos con el perfil).
+* Cada caja y la intro de la ruta muestran la cifra en Anton (`01/09`) y un casillero por taller (gris = hecho, carmesí = siguiente, contorno = pendiente); sin sesión, invitación a ingresar.
+* **Perfil → Aprendizaje** (`/perfil/aprendizaje`, pestañas "Datos" / "Aprendizaje" en `PerfilTabs`): por workshop, cuánto lleva, la caja carmesí "Seguí con…" y la lista de lo hecho con la fecha en que lo marcó. También en el menú de la cuenta ("Mi aprendizaje").
+* Datos: tabla `WorkshopCompletion` (email + slug del taller, sin clave foránea porque los talleres no viven en la base). Server actions en `src/app/workshops/progress-actions.ts`; el progreso se pide desde el cliente (`WorkshopProgress.tsx`) para que las tres páginas sigan siendo estáticas (ISR), igual que la inscripción en `/talks`.
+
+### Estructura y archivos
+1. `src/app/workshops/page.tsx`: `WorkshopsHero.tsx` (título "WORKSHOPS" en Anton, manifiesto en Syne black en mayúsculas, "02 workshops · 10 talleres", "Empezar por el 01"), `TrackBoxes.tsx` (las cajas), `UpcomingWorkshops.tsx` sobre `bg-bg2` (eventos de categoría `workshop`; sin ninguno, panel con trama "Todavía no hay fecha") y `ProposeWorkshop.tsx` (banda oscura con el motivo `workshop` de `src/lib/contact.ts`).
+2. `src/app/workshops/[track]/page.tsx`: la página de un workshop. Adentro, `TrackBody.tsx`: `GuideRoute.tsx` (intro, progreso `RouteProgress.tsx`, bloque de código oscuro fijo y las cajas de `RouteSteps.tsx`) si tiene guías, y `PastWorkshopList` (`PastWorkshops.tsx`: tarjeta líder + módulos, o un panel horizontal si hay uno solo; foto a color o trama diagonal) si tiene talleres presenciales pasados. Si tiene fechas próximas, también `UpcomingWorkshops`.
+3. `src/app/workshops/[track]/[slug]/page.tsx`: la página de un taller (`CompletionPanel.tsx` para marcarlo).
+4. Datos: `prisma/seed-data/workshops.ts` (workshops, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts` (`trackHref`, `workshopHref`). La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
 
 ### Trampas conocidas
 * La URL del `git clone` no entra en mobile: el `<pre>` scrollea de costado dentro de un contenedor `min-w-0`; sin eso ensancha toda la página.
@@ -438,4 +440,4 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 * Aplicar la migración `20261012130000_add_workshop_completion` en Supabase: sin la tabla, marcar como hecho falla (la página igual carga).
 * Taller de Linux: falta fecha, fotos y descripción final (`pastWorkshops` en el seed).
 * No hay talleres presenciales con fecha cargados: los paneles de "Próximos talleres" y los pasados con foto se probaron con eventos de prueba, no con datos reales.
-* Revisión visual del dueño.
+* Inscripción a talleres presenciales: el dueño decidió que un presencial se marque solo cuando termina, si la persona se inscribió. Falta construir la inscripción (hoy solo hay un enlace externo en `events.ts`).
