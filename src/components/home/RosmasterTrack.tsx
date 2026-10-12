@@ -1,22 +1,15 @@
 "use client";
 
-import { useRef, useState, useEffect, useSyncExternalStore } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
+import { useSyncExternalStore } from "react";
+import { Canvas } from "@react-three/fiber";
 
-/** La pista corre con el scroll: avanza exactamente lo que se scrollea, así el robot parece rodar sobre ella. */
-function RunwayGrid({ reduced }: { reduced: boolean }) {
-  const gridRef = useRef<THREE.Group>(null);
-
-  useFrame(() => {
-    if (!gridRef.current) return;
-    // La grilla se repite cada 4 unidades: el módulo hace el bucle sin saltos
-    gridRef.current.position.x = reduced ? 0 : -((window.scrollY * 0.012) % 4);
-  });
-
+/**
+ * La pista, fija: el piso no se mueve. Antes corría con el scroll y, con el robot y los conos encima, se veían
+ * deslizarse sobre un piso que se iba para otro lado.
+ */
+function RunwayGrid() {
   return (
-    <group ref={gridRef} position={[0, -0.75, 0]}>
+    <group position={[0, -0.75, 0]}>
       {/* Pista de prueba de alta velocidad con grilla rosa sobre fondo blanco */}
       <gridHelper args={[60, 40, "#ff2a6d", "#e8a4be"]} position={[0, 0, 0]} />
       {/* Línea guía central fluorescente */}
@@ -41,21 +34,8 @@ export function RosmasterTrack() {
     () => true,
     () => false
   );
-  const reduced = usePrefersReducedMotion();
-  const bandRef = useRef<HTMLElement>(null);
-  // Sin banda a la vista no se dibuja nada: el canvas deja de gastar GPU fuera de pantalla.
-  const [inView, setInView] = useState(true);
-  useEffect(() => {
-    const el = bandRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { rootMargin: "200px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   return (
     <section
-      ref={bandRef}
       id="rosmaster-track"
       data-seam="slalom"
       className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
@@ -66,7 +46,8 @@ export function RosmasterTrack() {
           <Canvas
             camera={{ position: [0, 1.8, 6.2], fov: 42 }}
             shadows
-            frameloop={inView ? "always" : "never"}
+            // Fija: se dibuja al cargar y al cambiar de tamaño, no en cada cuadro
+            frameloop="demand"
             gl={{ antialias: true, alpha: true }}
           >
             <ambientLight intensity={1.4} />
@@ -81,7 +62,7 @@ export function RosmasterTrack() {
             <pointLight position={[4, 2, -2]} intensity={1.5} color="#a40c4c" />
 
             {/* Grid de pista continua en rosa */}
-            <RunwayGrid reduced={reduced} />
+            <RunwayGrid />
 
             {/* El robot no vive acá: lo dibuja SeamRobot, que cruza la banda sobre esta pista */}
           </Canvas>

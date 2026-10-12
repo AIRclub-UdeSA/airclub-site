@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "
 import type { KeyboardEvent, PointerEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { SectionEdge } from "@/components/shared/SectionEdge";
+import { useEdgeClip } from "@/components/shared/SectionEdge";
 
 interface WordSlide {
   title: string;
@@ -84,6 +84,9 @@ export function WordSlideshow() {
   const activeSlide = SLIDES[activeIdx];
 
   const rafs = useRef<number[]>([]);
+  const sectionRef = useRef<HTMLElement>(null);
+  // La colina de arriba es la propia sección recortada: un solo fondo, así que nunca queda de otro color al cambiar
+  useEdgeClip(sectionRef, { peak: [0.78, 0.3], amp: [1, 0.65] });
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
 
@@ -195,26 +198,18 @@ export function WordSlideshow() {
   };
 
   return (
-    <>
-    <SectionEdge color={activeSlide.bg} transition={700} peak={[0.78, 0.3]} amp={[1, 0.65]} />
     <section
+      ref={sectionRef}
       id="slideshow-palabras"
       aria-roledescription="carrusel"
       aria-label="Qué hacemos en AIR Club"
       className="relative w-full overflow-hidden transition-colors duration-700 ease-in-out select-none"
-      style={{ backgroundColor: activeSlide.bg }}
+      // Sube sobre el padding inferior del manifiesto para dibujar ahí su colina (useEdgeClip)
+      style={{ backgroundColor: activeSlide.bg, marginTop: "calc(-1 * var(--edge-h))", paddingTop: "var(--edge-h)" }}
       onKeyDown={onKeyDown}
     >
-      {/* Resplandores ambientales. Se desvanecen hacia arriba (máscara) para que en el borde con la colina de SectionEdge, que
-          va de un solo color, no haya luz y el color de la colina y el de la sección sean el mismo: sin esto se ve la línea. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          maskImage: "linear-gradient(to bottom, transparent 0, #000 240px)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 240px)",
-        }}
-      >
+      {/* Resplandores ambientales, ubicados respecto del contenido (debajo de la colina) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0" style={{ top: "var(--edge-h)" }}>
         {/* superior derecho */}
         <div
           className="absolute -right-20 -top-20 w-[480px] h-[480px] rounded-full blur-[140px] opacity-35 transition-all duration-700"
@@ -362,6 +357,5 @@ export function WordSlideshow() {
         })}
       </div>
     </section>
-    </>
   );
 }
