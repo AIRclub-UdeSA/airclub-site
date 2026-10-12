@@ -1,6 +1,5 @@
-import { ArrowUpRight } from "lucide-react";
-
-const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 /**
  * Título de /workshops (Anton, centrado, misma altura de letra que /talks y /equipo) y el manifiesto: qué es un
@@ -10,12 +9,12 @@ export function WorkshopsHero({
   tracks,
   guideCount,
   totalHours,
-  firstGuideUrl,
+  firstGuideHref,
 }: {
   tracks: { key: string; title: string }[];
   guideCount: number;
   totalHours: string;
-  firstGuideUrl?: string;
+  firstGuideHref?: string;
 }) {
   return (
     <header className="pb-16 pt-24 md:pb-24">
@@ -64,17 +63,14 @@ export function WorkshopsHero({
           )}
 
           <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-            {firstGuideUrl && (
-              <a
-                href={firstGuideUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+            {firstGuideHref && (
+              <Link
+                href={firstGuideHref}
                 className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
               >
                 <span>Empezar la 01</span>
-                <ArrowUpRight size={15} aria-hidden="true" />
-                {NEW_TAB_HINT}
-              </a>
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
             )}
             <a
               href="#proximos"

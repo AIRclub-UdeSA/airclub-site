@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAsyncWorkshops, getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel } from "@/lib/workshops";
+import { getAsyncWorkshops, getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel, workshopHref } from "@/lib/workshops";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopsHero } from "@/components/workshops/WorkshopsHero";
@@ -7,6 +7,7 @@ import { UpcomingWorkshops } from "@/components/workshops/UpcomingWorkshops";
 import { WorkshopTrackSection } from "@/components/workshops/WorkshopTrackSection";
 import { UntrackedArchive } from "@/components/workshops/PastWorkshops";
 import { ProposeWorkshop } from "@/components/workshops/ProposeWorkshop";
+import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
 
 export const metadata: Metadata = buildMetadata({
   title: "Workshops, AIR Club UdeSA",
@@ -31,12 +32,12 @@ export default async function WorkshopsPage() {
   const visibleTracks = tracks.filter((t) => t.guides.length + t.past.length > 0);
 
   return (
-    <>
+    <WorkshopProgressProvider>
       <WorkshopsHero
         tracks={visibleTracks.map(({ key, title }) => ({ key, title }))}
         guideCount={guides.length}
         totalHours={totalHoursLabel(guides)}
-        firstGuideUrl={guides[0]?.guideUrl}
+        firstGuideHref={guides[0] && workshopHref(guides[0].slug)}
       />
       <UpcomingWorkshops workshops={upcoming} />
       {visibleTracks.map((track, i) => (
@@ -44,6 +45,6 @@ export default async function WorkshopsPage() {
       ))}
       <UntrackedArchive workshops={untracked} className={band(visibleTracks.length)} />
       <ProposeWorkshop reason={propose} />
-    </>
+    </WorkshopProgressProvider>
   );
 }

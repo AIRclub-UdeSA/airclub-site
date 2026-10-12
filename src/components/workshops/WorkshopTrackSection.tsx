@@ -33,7 +33,7 @@ export function WorkshopTrackSection({ track, className = "" }: { track: Worksho
             <p className="mt-6 max-w-[60ch] text-[1.02rem] leading-[1.7] text-text2">{track.summary}</p>
           )}
 
-          {track.guides.length > 0 && <GuideRoute guides={track.guides} totalHours={totalHoursLabel(track.guides)} />}
+          {track.guides.length > 0 && <GuideRoute guides={track.guides} totalHours={totalHoursLabel(track.guides)} back={`/workshops#linea-${track.key}`} />}
 
           {track.past.length > 0 && (
             <div className={both ? "mt-16" : "mt-8"}>

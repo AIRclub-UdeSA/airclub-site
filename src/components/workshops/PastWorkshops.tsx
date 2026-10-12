@@ -1,16 +1,19 @@
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
-import type { PastWorkshop } from "@/lib/workshops";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { workshopHref, type PastWorkshop } from "@/lib/workshops";
 import { talkDateText } from "@/lib/talk-format";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { CountHeading } from "@/components/shared/CountHeading";
+import { DoneBadge } from "./DoneBadge";
 
-const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
+// Un único enlace por tarjeta la cubre entera (enlace estirado).
+const STRETCH = "after:absolute after:inset-0 after:content-['']";
 
 /**
  * Talleres presenciales que ya pasaron: el más reciente primero y más grande (tarjeta líder + módulos); si hay uno solo,
- * un panel horizontal. La foto va a color; sin foto, la trama diagonal de "lugar reservado" (no se rellena con fotos de
- * relleno).
+ * un panel horizontal. Cada tarjeta lleva a la página del taller. La foto va a color; sin foto, la trama diagonal de
+ * "lugar reservado" (no se rellena con fotos de relleno).
  */
 export function PastWorkshopList({ workshops }: { workshops: PastWorkshop[] }) {
   if (workshops.length === 1) return <PastTile workshop={workshops[0]} wide />;
@@ -47,7 +50,7 @@ export function UntrackedArchive({ workshops, className = "" }: { workshops: Pas
 function PastTile({ workshop: w, lead = false, wide = false }: { workshop: PastWorkshop; lead?: boolean; wide?: boolean }) {
   return (
     <article
-      className={`grid h-full min-w-0 grid-cols-1 border border-text bg-bg text-text ${
+      className={`group relative grid h-full min-w-0 grid-cols-1 border border-text bg-bg text-text transition-colors hover:border-crimson-text ${
         wide ? "lg:grid-cols-12" : "grid-rows-[auto_1fr]"
       }`}
     >
@@ -73,26 +76,26 @@ function PastTile({ workshop: w, lead = false, wide = false }: { workshop: PastW
         ) : (
           <div className="talk-hatch absolute inset-0 text-text" aria-hidden="true" />
         )}
+        <DoneBadge slug={w.slug} className="absolute left-4 top-4" />
       </div>
 
       <div className={`flex min-w-0 flex-col gap-3 p-5 sm:p-7 ${wide ? "lg:col-span-7 lg:justify-center lg:p-10" : ""}`}>
         <p className="font-mono text-[.72rem] uppercase tracking-[.14em] text-text3">
           {w.startsAt ? talkDateText(w.startsAt, w.dateLabel) : "Taller presencial"}
         </p>
-        <h3 className="font-display text-[clamp(1.3rem,2.1vw,1.85rem)] font-bold leading-[1.1] tracking-tight">{w.title}</h3>
+        <h3 className="font-display text-[clamp(1.3rem,2.1vw,1.85rem)] font-bold leading-[1.1] tracking-tight transition-colors group-hover:text-crimson-text">
+          <Link href={workshopHref(w.slug)} className={`${STRETCH} focus-visible:outline-none`}>
+            {w.title}
+          </Link>
+        </h3>
         <p className="max-w-[60ch] text-[.98rem] leading-[1.65] text-text2">{w.summary}</p>
-        {w.url && (
-          <a
-            href={w.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-auto inline-flex items-center gap-1.5 self-start pt-2 font-mono text-[.74rem] uppercase tracking-[.12em] underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
-          >
-            {w.urlLabel ?? "Material del taller"}
-            <ArrowUpRight size={13} aria-hidden="true" />
-            {NEW_TAB_HINT}
-          </a>
-        )}
+        <span
+          className="mt-auto inline-flex items-center gap-2 pt-2 font-mono text-[.74rem] font-semibold uppercase tracking-[.14em] transition-colors group-hover:text-crimson-text"
+          aria-hidden="true"
+        >
+          Ver taller
+          <ArrowRight size={14} className="transition-transform group-hover:translate-x-1 motion-reduce:transition-none" />
+        </span>
       </div>
     </article>
   );

@@ -1,6 +1,6 @@
 // Workshops asincrónicos del Challenge JAR 2026. La guía completa de cada uno vive en el sitio del JAR
 // (https://airclub-udesa.github.io/jar_site/workshops/) y el código en el repo jar_workshops; acá solo va lo que
-// necesita /workshops para presentarlos. Título, resultado, duración, nivel y prerequisitos salen del frontmatter de
+// necesita /workshops para presentarlos. Título, resumen, resultado, duración, nivel y prerequisitos salen del frontmatter de
 // cada guía (src/content/docs/workshops/semana-NN-*.md en jar_site): si cambian allá, actualizarlos acá.
 
 export type WorkshopLevel = "inicial" | "intermedio" | "avanzado";
@@ -56,6 +56,8 @@ export type SeedAsyncWorkshop = {
   /** Carpeta en jar_workshops y ruta de la guía en jar_site ("semana-01-talkers-listeners"). */
   slug: string;
   title: string;
+  /** De qué se trata (el `description` del frontmatter). */
+  summary: string;
   /** Qué te llevás al terminar, sin el "Al terminar," del frontmatter. */
   outcome: string;
   /** Duración estimada en minutos (rango). */
@@ -74,6 +76,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "01",
+    summary: "Completá un talker y un listener para entender cómo se comunican dos nodos de ROS 2.",
     slug: "semana-01-talkers-listeners",
     title: "Talkers y listeners",
     outcome: "Vas a poder publicar y suscribirte a un topic completando el código vos mismo.",
@@ -85,6 +88,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "02",
+    summary: "Combiná avance y desplazamiento lateral para programar una trayectoria mecanum.",
     slug: "semana-02-zigzag-mecanum",
     title: "Zigzag mecanum",
     outcome: "Vas a tener una trayectoria que combina avance y movimiento lateral.",
@@ -96,6 +100,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "03",
+    summary: "Armá una máquina de estados de 2 estados para esquivar obstáculos con el lidar.",
     slug: "semana-03-evasion-obstaculos",
     title: "Evasión de obstáculos",
     outcome: "Vas a tener a Donatello avanzando y esquivando obstáculos con el lidar.",
@@ -107,6 +112,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "04",
+    summary: "Detectá un cuadrado rojo con la cámara y proyectalo sobre el lidar para saber a qué distancia está.",
     slug: "semana-04-deteccion-color",
     title: "Detección de color",
     outcome: "Vas a saber a qué distancia y ángulo está un objeto rojo combinando cámara y lidar.",
@@ -118,6 +124,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "05",
+    summary: "Dejá de abrir cuatro terminales a mano: armá un launch file y guardá tu configuración de RViz.",
     slug: "semana-05-launch-rviz",
     title: "Launch files y RViz",
     outcome: "Vas a levantar simulador, nodos y RViz con un solo comando.",
@@ -129,6 +136,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "06",
+    summary: "Armá tu primer paquete ROS 2 desde cero y corregí el drift de la odometría contra el mapa con un filtro de partículas.",
     slug: "semana-06-localizacion",
     title: "Localización",
     outcome: "Tu robot corrige su pose contra el mapa con un filtro de partículas propio.",
@@ -140,6 +148,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "07",
+    summary: "Compará el /scan contra el mapa conocido y reportá la coordenada en map de lo que no debería estar ahí.",
     slug: "semana-07-obstaculos-no-mapeados",
     title: "Obstáculos fuera del mapa",
     outcome: "Tu robot detecta lo que el mapa no tiene registrado y publica la coordenada de cada objeto en map.",
@@ -151,6 +160,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "08",
+    summary: "Hacé que el robot recorra todo el mapa por su cuenta: cobertura por trazado de rayos y planificación de caminos con A*.",
     slug: "semana-08-cobertura-mapa",
     title: "Cobertura del mapa",
     outcome: "Tu robot explora todo el mapa por su cuenta, planificando caminos con A* sobre un costmap inflado.",
@@ -162,6 +172,7 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
   {
     track: "ros2",
     week: "09",
+    summary: "Reemplazá, checkpoint por checkpoint, cada módulo manual de las semanas anteriores por el stack real de navegación de ROS 2.",
     slug: "semana-09-nav2",
     title: "Nav2",
     outcome: "Corrés el stack real de Nav2 sobre el mismo laberinto y ves qué gana y qué pierde cada módulo manual.",
