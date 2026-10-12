@@ -38,19 +38,22 @@ export function TrackBoxes({ tracks }: { tracks: TrackBox[] }) {
   const started = tracks.some((t) => t.slugs.some((s) => completed.has(s)));
 
   return (
-    <ol className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {tracks.map((t, i) => (
-        <Box
-          key={t.key}
-          track={t}
-          order={String(i + 1).padStart(2, "0")}
-          state={states.get(t.key) ?? "todo"}
-          started={started}
-          showProgress={status === "ready"}
-          completed={completed}
-        />
-      ))}
-    </ol>
+    // En escritorio cada fila mide al menos un tercio del ancho (cajas cuadradas) y crece si el contenido no entra.
+    <div className="@container min-w-0">
+      <ol className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)]">
+        {tracks.map((t, i) => (
+          <Box
+            key={t.key}
+            track={t}
+            order={String(i + 1).padStart(2, "0")}
+            state={states.get(t.key) ?? "todo"}
+            started={started}
+            showProgress={status === "ready"}
+            completed={completed}
+          />
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -78,7 +81,7 @@ function Box({
   return (
     <li id={`workshop-${t.key}`} className="min-w-0 scroll-mt-28">
       <article
-        className={`group relative flex h-full min-h-[21rem] flex-col gap-5 p-6 transition-colors sm:p-8 lg:aspect-square ${CARD[state]}`}
+        className={`group relative flex h-full min-h-[21rem] flex-col gap-5 p-6 transition-colors sm:p-8 ${CARD[state]}`}
       >
         <div className="flex items-start justify-between gap-4">
           <span className={`font-logo text-[clamp(3.6rem,6vw,5.5rem)] leading-[0.8] ${done ? "text-text/25" : ""}`} aria-hidden="true">

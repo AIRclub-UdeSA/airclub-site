@@ -430,7 +430,7 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 4. Datos: `prisma/seed-data/workshops.ts` (workshops, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts` (`trackHref`, `workshopHref`). La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
 
 ### Trampas conocidas
-* Las cajas del mosaico son cuadradas solo desde `lg` (`lg:aspect-square`); más angostas llevan `min-h` y el resumen se corta a tres líneas (`line-clamp-3`), si no el contenido no entra en el cuadrado.
+* Las cajas del mosaico son cuadradas solo desde `lg`, y el cuadrado es un **mínimo**: la grilla usa `@container` y `auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)]`, así cada fila mide al menos un tercio del ancho y crece si el contenido no entra (las cajas de la fila crecen juntas). No usar `aspect-square` en la caja: con `h-full` deja el alto fijo y, con sesión, la fila de progreso empuja "Ver workshop" afuera (pasaba a ~1300 px). Más angostas llevan `min-h` y el resumen se corta a tres líneas (`line-clamp-3`).
 * La URL del `git clone` no entra en mobile: el `<pre>` scrollea de costado dentro de un contenedor `min-w-0`; sin eso ensancha toda la página.
 * En oscuro, el bloque de código (`#0e0407`) casi se funde con `bg2` (`#16070b`): por eso lleva contorno de 1px.
 * El manifiesto en mayúsculas: "SIMULADORES." tiene que entrar a 320px y en 7 columnas a 1440px; el `clamp(1.4rem,6.2vw,3.3rem)` sale de eso.
