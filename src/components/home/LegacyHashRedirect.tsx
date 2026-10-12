@@ -23,7 +23,9 @@ export function LegacyHashRedirect() {
 
       // "#/equipo/" y "#/equipo" son lo mismo. Un hash viejo desconocido (o "#/") queda en "/", sin el hash.
       const key = hash.slice(2).replace(/\/+$/, "").toLowerCase();
-      router.replace(LEGACY_ROUTES[key] ?? "/", { scroll: false });
+      // hasOwn y no LEGACY_ROUTES[key]: con "#/constructor" el índice devolvería la función heredada de Object.
+      const destino = Object.hasOwn(LEGACY_ROUTES, key) ? LEGACY_ROUTES[key] : "/";
+      router.replace(destino, { scroll: false });
     };
 
     redirect();
