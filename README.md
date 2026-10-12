@@ -87,6 +87,7 @@ No hay que aplicarla a mano: cuando el PR se mergea, el deploy de producción en
 | CI de GitHub (`npm run build`) | No | Ninguna (valores dummy) |
 
 - **Si la migración falla, el deploy falla** y producción sigue sirviendo la versión anterior.
+- **Si falla a la mitad**, Prisma la deja marcada como fallida en `_prisma_migrations` y todos los deploys siguientes fallan con `P3009` hasta resolverla a mano. Hay que revisar qué parte del SQL llegó a aplicarse y elegir una de dos salidas. Si se deshizo lo aplicado, se corre `npx prisma migrate resolve --config prisma7.config.ts --rolled-back <nombre>` y el próximo deploy la vuelve a correr. Si se terminó de aplicar a mano, se corre `--applied <nombre>`.
 - **`DIRECT_URL`** tiene que estar en las variables de Production de Vercel con el puerto 5432 (conexión de sesión). El 6543 del pooler no sirve para migrar.
 - **Migraciones que suman, no que borran.** Mientras corre el build, la versión anterior sigue atendiendo contra la base ya migrada: agregar columnas o tablas no la rompe, pero borrar o renombrar sí. Para eso van dos PRs: primero el código deja de usar la columna y después se borra.
 - **Previews de un PR con migración:** como la base todavía no tiene las columnas nuevas, las páginas con fallback muestran `seed-data` y las que no lo tienen (`/admin`) fallan hasta el merge. Una base propia para las previews está pendiente en [#26](https://github.com/AIRclub-UdeSA/airclub-site/issues/26).
