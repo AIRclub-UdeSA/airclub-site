@@ -34,6 +34,7 @@ export function buildSlalom(s: SlalomState, onLap: () => void) {
     .to(s, { nod: -0.08, duration: 0.25 }, "+=0.2")
     .to(s, { nod: 0, look: 0, duration: 0.35 }, "+=0.05")
     // cruza esquivando los conos, de derecha a izquierda
-    .to(s, { wu: 1, duration: 2.5, ease: "sine.inOut" }, ">-0.05");
+    // 4 s: más rápido no se alcanzaba a apreciar el robot ni el giro de las ruedas
+    .to(s, { wu: 1, duration: 4, ease: "sine.inOut" }, ">-0.05");
   return tl;
 }

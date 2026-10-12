@@ -323,6 +323,56 @@ function attachLidarScan(turret: THREE.Mesh, model: THREE.Object3D) {
   return scan;
 }
 
+type Wheels = { pivots: THREE.Group[]; axis: "x" | "y" | "z"; radius: number };
+
+/**
+ * Agrupa las ruedas mecanum para poder girarlas. En el CAD cada rueda viene en 37 piezas sueltas (`wheel_*`: el cuerpo,
+ * los rodillos, los pernos y el acople): los cuerpos son las cuatro piezas con más vértices, y cada pieza va con el
+ * cuerpo más cercano. Cada rueda queda en un grupo centrado en su eje (la dimensión más corta del cuerpo), que gira.
+ * El radio queda en unidades del CAD.
+ */
+function groupWheels(model: THREE.Object3D): Wheels | null {
+  if (model.userData.wheels) return model.userData.wheels as Wheels;
+  const meshes = model.children.filter((c): c is THREE.Mesh => (c as THREE.Mesh).isMesh && c.name.startsWith("wheel"));
+  if (meshes.length < 4) return null;
+  const boxOf = (m: THREE.Mesh) => {
+    m.geometry.computeBoundingBox();
+    m.updateMatrix();
+    return m.geometry.boundingBox!.clone().applyMatrix4(m.matrix);
+  };
+  const hubs = [...meshes].sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count).slice(0, 4);
+  const hubBox = boxOf(hubs[0]);
+  const size = hubBox.getSize(new THREE.Vector3());
+  const axis = size.x <= size.y && size.x <= size.z ? "x" : size.y <= size.z ? "y" : "z";
+  const radius = Math.max(size.x, size.y, size.z) / 2;
+
+  model.updateMatrixWorld(true);
+  const pivots = hubs.map((hub) => {
+    const pivot = new THREE.Group();
+    boxOf(hub).getCenter(pivot.position);
+    model.add(pivot);
+    pivot.updateMatrixWorld(true);
+    return pivot;
+  });
+  const centers = pivots.map((p) => p.position);
+  for (const m of meshes) {
+    const c = boxOf(m).getCenter(new THREE.Vector3());
+    let best = 0;
+    centers.forEach((p, i) => {
+      if (p.distanceToSquared(c) < centers[best].distanceToSquared(c)) best = i;
+    });
+    pivots[best].attach(m);
+  }
+  const wheels: Wheels = { pivots, axis, radius };
+  model.userData.wheels = wheels;
+  return wheels;
+}
+
+/** Pone las cuatro ruedas en un ángulo (fuera del componente: el compilador de React no deja mutar lo que viene de un efecto). */
+function spinWheels(wheels: Wheels, angle: number) {
+  for (const pivot of wheels.pivots) pivot.rotation[wheels.axis] = angle;
+}
+
 /** Con movimiento reducido el robot queda quieto, al centro de la pista, mientras la banda está a la vista. */
 let stillRun: Run | null = null;
 function reducedRun(): Run | null {
@@ -375,10 +425,11 @@ let wakeNow: () => void = () => {};
 function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | null> }) {
   const model = useRosmasterModel();
   // Piezas con vida propia (se preparan una sola vez, al montar): del LiDAR gira solo la torreta
-  const parts = useRef<{ lidar: THREE.Mesh | null; scan: THREE.Mesh | null; camera: THREE.Mesh | null }>({
+  const parts = useRef<{ lidar: THREE.Mesh | null; scan: THREE.Mesh | null; camera: THREE.Mesh | null; wheels: Wheels | null }>({
     lidar: null,
     scan: null,
     camera: null,
+    wheels: null,
   });
   useEffect(() => {
     const lidar = splitLidarTurret(model.getObjectByName("lidar_sensor"));
@@ -386,8 +437,12 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
       lidar,
       scan: lidar ? attachLidarScan(lidar, model) : null,
       camera: centerPivot(model.getObjectByName("rgbd_camera")),
+      wheels: groupWheels(model),
     };
   }, [model]);
+  // Dónde estaba el robot en el cuadro anterior (para girar las ruedas según lo que avanzó)
+  const lastPos = useRef<THREE.Vector3 | null>(null);
+  const wheelAngle = useRef(0);
   const shadowTex = useShadowTexture();
   const rig = useRef<THREE.Group>(null);
   const yawGroup = useRef<THREE.Group>(null);
@@ -400,6 +455,7 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
     const run = reduced ? reducedRun() : runRef.current;
     if (!run) {
       g.visible = false;
+      lastPos.current = null;
       return;
     }
     const { el, state: st } = run;
@@ -416,6 +472,22 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
     const { lidar, camera } = parts.current;
     if (lidar) lidar.rotation.y = reduced ? 0 : frame.clock.elapsedTime * 5;
     if (camera) camera.rotation.x = st.nod;
+
+    // Ruedas: giran según lo que el robot avanzó hacia adelante desde el cuadro anterior (en su propio sistema, sin la
+    // guiñada), dividido por el radio de la rueda en pantalla: rápido al cruzar, quietas cuando se frena, sin patinar.
+    const { wheels } = parts.current;
+    if (wheels && !reduced) {
+      const prev = lastPos.current;
+      if (prev && Math.abs(g.position.x - prev.x) < W / 2) {
+        const dx = g.position.x - prev.x;
+        const dz = g.position.z - prev.z;
+        const forward = dx * Math.sin(pose.yaw) + dz * Math.cos(pose.yaw);
+        const radiusPx = wheels.radius * model.scale.x * g.scale.x;
+        if (radiusPx > 0) wheelAngle.current += forward / radiusPx;
+        spinWheels(wheels, wheelAngle.current);
+      }
+      lastPos.current = (prev ?? new THREE.Vector3()).copy(g.position);
+    }
 
     // El barrido del LiDAR gira con la torreta (es su hija); con movimiento reducido no se muestra
     if (parts.current.scan) {
