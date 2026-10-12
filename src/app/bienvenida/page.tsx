@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { safeNext } from "@/lib/safe-next";
 
@@ -17,9 +17,9 @@ export default async function BienvenidaPage({ searchParams }: PageProps<"/bienv
   const { next } = await searchParams;
   const target = safeNext(Array.isArray(next) ? next[0] : next);
 
-  const session = await auth();
-  if (!session?.user?.email) redirect("/");
+  const email = await getSessionEmail();
+  if (!email) redirect("/");
 
-  const profile = await prisma.userProfile.findUnique({ where: { email: session.user.email } });
+  const profile = await prisma.userProfile.findUnique({ where: { email } });
   redirect(profile ? target : `/perfil/completar?next=${encodeURIComponent(target)}`);
 }

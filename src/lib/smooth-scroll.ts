@@ -7,10 +7,6 @@ export function setSmoothScroll(lenis: Lenis | null) {
   instance = lenis;
 }
 
-export function getSmoothScroll(): Lenis | null {
-  return instance;
-}
-
 /** Lleva la página a un selector (`#contenido`) o a una posición, con Lenis si está activo y con scroll nativo si no. */
 export function scrollToTarget(target: string | number, duration = 1.2) {
   if (instance) {
