@@ -206,6 +206,13 @@ function AccountMenu({ className, variant = "dropdown" }: { className?: string; 
       >
         Mi perfil
       </Link>
+      <Link
+        href="/perfil/aprendizaje"
+        onClick={() => setOpen(false)}
+        className="block rounded-xl px-3 py-2 font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
+      >
+        Mi aprendizaje
+      </Link>
       <SignOutButton className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text">
         Cerrar sesión
       </SignOutButton>
