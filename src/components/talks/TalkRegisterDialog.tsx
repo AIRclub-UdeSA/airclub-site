@@ -4,7 +4,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Calendar, Check, X } from "lucide-react";
 import type { TimelineTalk } from "./TalksTimeline";
 import { buildGoogleCalendarUrl } from "@/lib/calendar-types";
-import { registerForTalkAction, type RegisterResult } from "@/app/talks/register-actions";
+import {
+  cancelTalkRegistrationAction,
+  registerForTalkAction,
+  type CancelResult,
+  type RegisterResult,
+} from "@/app/talks/register-actions";
 
 interface TalkRegisterDialogProps {
   talk: TimelineTalk | null;
@@ -16,10 +21,13 @@ interface TalkRegisterDialogProps {
 // animaciones, este diálogo solo cambia el tamaño del panel.
 const CLOSE_MS = 200;
 
-type Status = "confirm" | "pending" | "error" | RegisterResult["status"];
+type Status = "confirm" | "pending" | "error" | RegisterResult["status"] | CancelResult["status"];
 
 export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialogProps) {
   const [status, setStatus] = useState<Status>("confirm");
+  // Qué reintenta "Reintentar" si falla la red o el servidor: inscribirse o cancelar.
+  const [failedAction, setFailedAction] = useState<"register" | "cancel">("register");
+  const [cancelling, setCancelling] = useState(false);
   const [closing, setClosing] = useState(false);
   const [prevSlug, setPrevSlug] = useState(talk?.slug);
   const titleId = useId();
@@ -59,13 +67,29 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
 
   if (!visible || !talk) return null;
 
+  // Los casos esperables (charla cerrada, cupo completo) vuelven como estado; el catch queda solo
+  // para fallas de red o del servidor.
   async function handleConfirm() {
     setStatus("pending");
     try {
       const result = await registerForTalkAction(talk!.slug);
       setStatus(result.status);
     } catch {
+      setFailedAction("register");
       setStatus("error");
+    }
+  }
+
+  async function handleCancelRegistration() {
+    setCancelling(true);
+    try {
+      const result = await cancelTalkRegistrationAction(talk!.slug);
+      setStatus(result.status);
+    } catch {
+      setFailedAction("cancel");
+      setStatus("error");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -121,15 +145,35 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
         ) : status === "error" ? (
           <>
             <h2 id={titleId} className="pr-10 font-display text-[1.15rem] font-bold text-text">
-              No se pudo inscribir
+              {failedAction === "cancel" ? "No se pudo cancelar la inscripción" : "No se pudo inscribir"}
             </h2>
             <p className="font-body text-[.92rem] text-text2">Probá de nuevo en un momento.</p>
             <button
               type="button"
-              onClick={handleConfirm}
+              onClick={failedAction === "cancel" ? handleCancelRegistration : handleConfirm}
               className="w-fit rounded-[var(--r-pill)] border-[1.5px] border-crimson bg-crimson px-6 py-3 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-white transition-colors hover:bg-crimson-hover"
             >
               Reintentar
+            </button>
+          </>
+        ) : status === "closed" || status === "full" || status === "cancelled" ? (
+          <>
+            <h2 id={titleId} className="pr-10 font-display text-[1.15rem] font-bold text-text">
+              {status === "closed"
+                ? "La inscripción a esta charla está cerrada"
+                : status === "full"
+                  ? "No quedan lugares"
+                  : "Cancelaste tu inscripción"}
+            </h2>
+            <p className="font-body text-[.92rem] text-text2">
+              {status === "full" ? "Se completó el cupo de " : ""}&ldquo;{talk.title}&rdquo;{status === "full" ? "." : ""}
+            </p>
+            <button
+              type="button"
+              onClick={requestClose}
+              className="w-fit font-mono text-[.76rem] uppercase tracking-[.1em] text-text2 transition-colors hover:text-crimson-text"
+            >
+              Cerrar
             </button>
           </>
         ) : (
@@ -152,13 +196,23 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
                 Agregar a Google Calendar
               </a>
             )}
-            <button
-              type="button"
-              onClick={requestClose}
-              className="w-fit font-mono text-[.76rem] uppercase tracking-[.1em] text-text2 transition-colors hover:text-crimson-text"
-            >
-              Cerrar
-            </button>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <button
+                type="button"
+                onClick={requestClose}
+                className="w-fit font-mono text-[.76rem] uppercase tracking-[.1em] text-text2 transition-colors hover:text-crimson-text"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelRegistration}
+                disabled={cancelling}
+                className="w-fit font-mono text-[.76rem] uppercase tracking-[.1em] text-text3 underline underline-offset-4 transition-colors hover:text-crimson-text disabled:opacity-60"
+              >
+                {cancelling ? "Cancelando…" : "Cancelar mi inscripción"}
+              </button>
+            </div>
           </>
         )}
       </div>

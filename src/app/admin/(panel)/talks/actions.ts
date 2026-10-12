@@ -21,6 +21,12 @@ function optStr(formData: FormData, name: string): string | null {
   return str(formData, name) || null;
 }
 
+// Vacío = null (sin límite). Un valor inválido queda como NaN para que lo rechace validateTalkData.
+function optNumber(formData: FormData, name: string): number | null {
+  const raw = optStr(formData, name);
+  return raw === null ? null : Number(raw);
+}
+
 function combineDateTime(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
   return new Date(`${dateStr}T${timeStr || "00:00"}:00${AR_OFFSET}`);
@@ -121,6 +127,7 @@ function talkScalarData(formData: FormData) {
     ctaLabel: optStr(formData, "ctaLabel"),
     ctaUrl: optStr(formData, "ctaUrl"),
     registrationOpen: formData.get("registrationOpen") === "on",
+    capacity: optNumber(formData, "capacity"),
     confirmed: formData.get("confirmed") === "on",
     status: (formData.get("status") === "DRAFT" ? "DRAFT" : "PUBLISHED") as "DRAFT" | "PUBLISHED",
   };
@@ -135,6 +142,9 @@ function validateTalkData(data: ReturnType<typeof talkScalarData>): string | nul
   if (data.registrationOpen && data.ctaUrl) return "La inscripción propia y el link externo son excluyentes: vaciá uno de los dos.";
   if (!data.registrationOpen && Boolean(data.ctaLabel) !== Boolean(data.ctaUrl)) {
     return "El botón principal necesita label y URL, o ninguno de los dos.";
+  }
+  if (data.capacity !== null && (!Number.isInteger(data.capacity) || data.capacity < 1)) {
+    return "El cupo tiene que ser un número entero mayor a 0, o quedar vacío (sin límite).";
   }
   if (data.startsAt && data.endsAt && data.endsAt < data.startsAt) return "La fecha de fin no puede ser anterior a la de inicio.";
   return null;
@@ -161,6 +171,7 @@ function talkAuditSnapshot(talk: {
   ctaLabel: string | null;
   ctaUrl: string | null;
   registrationOpen: boolean;
+  capacity: number | null;
   confirmed: boolean;
   status: string;
   order: number;

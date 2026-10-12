@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { TalksEdit, TimelineTalk } from "./TalksTimeline";
 import { TalksHero } from "./TalksHero";
 import { TalksTimeline } from "./TalksTimeline";
@@ -26,6 +26,9 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
   const [activeSection, setActiveSection] = useState<TalkSection>("overview");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [registeringSlug, setRegisteringSlug] = useState<string | null>(null);
+  // Pedido de inscripción (botón o "?inscribir=") que espera a que termine de cargar la sesión.
+  const [requestedSlug, setRequestedSlug] = useState<string | null>(null);
+  const [loginSlug, setLoginSlug] = useState<string | null>(null);
   const { data: session, status } = useSession();
 
   const latest = talks.find((t) => t.slug === latestPastSlug);
@@ -44,25 +47,36 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
     if (section) setActiveSection(section);
   };
 
-  // "Inscribirme": sin sesion, dispara el login de Google y, al volver, bienvenida/page.tsx
-  // manda de nuevo a "/talks?inscribir=<slug>" (ver el useEffect de abajo) en vez de perderse
-  // en la home. Con sesion, abre el dialogo directo.
-  const handleRegister = (talk: TimelineTalk) => {
-    if (status === "loading") return;
-    if (!session?.user?.email) {
-      const next = encodeURIComponent(`/talks?inscribir=${talk.slug}`);
-      signIn("google", { redirectTo: `/bienvenida?next=${next}` });
-      return;
+  const handleRegister = (talk: TimelineTalk) => setRequestedSlug(talk.slug);
+
+  // "Inscribirme" y "?inscribir=<slug>" pasan por acá. Se espera a que cargue la sesión (si no,
+  // un clic temprano se perdía) y solo se sigue si la charla acepta inscripciones (mismo criterio
+  // que muestra el botón; el servidor lo vuelve a chequear). Con sesión, abre el diálogo; sin
+  // sesión, pasa a loginSlug para disparar el login (ver el efecto de abajo). Se ajusta el estado
+  // durante el render, igual que TalkRegisterDialog con su charla activa.
+  if (requestedSlug && status !== "loading") {
+    const talk = talks.find((t) => t.slug === requestedSlug);
+    setRequestedSlug(null);
+    if (talk?.registrationOpen && talk.isUpcoming) {
+      if (session?.user?.email) setRegisteringSlug(talk.slug);
+      else setLoginSlug(talk.slug);
     }
-    setRegisteringSlug(talk.slug);
-  };
+  }
+
+  // Al volver del login de Google, bienvenida/page.tsx manda de nuevo a "/talks?inscribir=<slug>"
+  // (pasando por /perfil/completar si falta el perfil) en vez de perderse en la home.
+  useEffect(() => {
+    if (!loginSlug) return;
+    const back = encodeURIComponent(`/talks?inscribir=${encodeURIComponent(loginSlug)}`);
+    signIn("google", { redirectTo: `/bienvenida?next=${back}` });
+  }, [loginSlug]);
 
   return (
     <>
       {/* useSearchParams() exige su propio limite de Suspense (si no, next build falla) — se
           aisla en un componente aparte que no renderiza nada, para no suspender el resto. */}
       <Suspense fallback={null}>
-        <RegisterDeepLink onOpen={setRegisteringSlug} />
+        <RegisterDeepLink onRequest={setRequestedSlug} />
       </Suspense>
 
       <TalksHero
@@ -100,20 +114,21 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
 }
 
 // Lee "?inscribir=<slug>" (lo deja bienvenida/page.tsx al volver de loguearse o completar el
-// perfil), abre el dialogo de esa charla y limpia el parametro para que un refresh no lo reabra.
-function RegisterDeepLink({ onOpen }: { onOpen: (slug: string) => void }) {
+// perfil), pide la inscripción a esa charla y limpia el parámetro para que un refresh no la
+// repita. Se queda en la ruta actual: TalksHub también se usa en /admin/talks.
+function RegisterDeepLink({ onRequest }: { onRequest: (slug: string) => void }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const slug = searchParams.get("inscribir");
     if (!slug) return;
-    onOpen(slug);
+    onRequest(slug);
     const params = new URLSearchParams(searchParams);
     params.delete("inscribir");
-    router.replace(params.size ? `/talks?${params.toString()}` : "/talks", { scroll: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router, onRequest]);
 
   return null;
 }

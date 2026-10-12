@@ -32,6 +32,7 @@ export default async function AdminTalksPage() {
     ctaLabel: talk.ctaLabel,
     ctaUrl: talk.ctaUrl,
     registrationOpen: talk.registrationOpen,
+    capacity: talk.capacity,
     confirmed: talk.confirmed,
     status: talk.status,
     media: talk.media.map((m) => ({
