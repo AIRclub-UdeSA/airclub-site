@@ -63,7 +63,7 @@ El equipo y las charlas viven en la base, y `npm run db:seed` carga en ella lo q
 - **Equipo:** se edita en `prisma/seed-data/team.ts` y se corre `npm run db:seed`, que crea o actualiza a cada persona. El array (`founders` / `collaborators`) define en qué lista aparece, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
 - **Charlas:** la fuente de verdad es la base (se editan desde el panel). El seed solo crea las charlas que no existen y nunca modifica una existente, así que correrlo no pisa lo editado.
 
-**Workshops:** `/workshops` se arma por líneas (ROS 2 y robótica, Linux…), definidas en `tracks` de `prisma/seed-data/workshops.ts`, donde también están las guías asincrónicas del Challenge JAR. Un taller presencial con fecha es un evento más, con `category: "workshop"` y su `track` en `prisma/seed-data/events.ts`: aparece en `/eventos` y en `/workshops` (en próximos y, cuando pasa, en su línea). Si un taller que ya se hizo todavía no tiene fecha, va en `pastWorkshops`.
+**Workshops:** `/workshops` se arma por líneas (ROS 2 y robótica, Linux…), definidas en `tracks` de `prisma/seed-data/workshops.ts`, donde también están las guías asincrónicas del Challenge JAR. Un taller presencial con fecha es un evento más, con `category: "workshop"` y su `track` en `prisma/seed-data/events.ts`: aparece en `/eventos` y en `/workshops` (en próximos y, cuando pasa, en su línea). Si un taller que ya se hizo todavía no tiene fecha, va en `pastWorkshops`. Cada workshop tiene su página (`/workshops/<slug>`, el `slug` es su identificador fijo: no cambiarlo, porque ahí se guarda quién lo marcó como hecho) y cada persona ve su recorrido en `/perfil/aprendizaje`.
 
 ### Imágenes
 
