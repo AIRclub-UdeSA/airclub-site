@@ -72,14 +72,14 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
         ) : (
           <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
             {profiles.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
-                <div>
+              <li key={p.id} className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <div className="min-w-0 break-words">
                   <p className="text-sm text-text">
                     {p.email} · <span className="text-text2">{ROLE_LABELS[p.role]}</span>
                   </p>
                   <p className="font-mono text-xs text-text3">{profileDetail(p)}</p>
                 </div>
-                <span className="font-mono text-xs text-text3">{formatDate(p.createdAt)}</span>
+                <span className="shrink-0 font-mono text-xs text-text3">{formatDate(p.createdAt)}</span>
               </li>
             ))}
           </ul>
@@ -139,15 +139,15 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                   {talk.registrations.map((r) => {
                     const profile = profileByEmail.get(r.email);
                     return (
-                      <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-                        <div>
+                      <li key={r.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                        <div className="min-w-0 break-words">
                           <p className="text-sm text-text2">
                             {r.email}
                             {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
                           </p>
                           {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
                         </div>
-                        <span className="font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
+                        <span className="shrink-0 font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
                       </li>
                     );
                   })}
