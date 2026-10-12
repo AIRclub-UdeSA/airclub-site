@@ -67,7 +67,16 @@ El contenido de la base se carga desde `/admin`, no desde el código. `seed-data
 
 ### Migraciones de la base
 
-Para cambiar el modelo de datos se edita `prisma/schema.prisma` y se genera la migración con `npx prisma migrate dev --config prisma7.config.ts --name que-cambia`, que queda en `prisma/migrations/` y se commitea en el mismo PR.
+Para cambiar el modelo de datos se edita `prisma/schema.prisma` y se genera el SQL de la migración comparando la base con el schema, sin escribir en la base:
+
+```bash
+mkdir prisma/migrations/AAAAMMDDhhmmss_que_cambia
+npx prisma migrate diff --config prisma7.config.ts \
+  --from-config-datasource --to-schema prisma/schema.prisma \
+  --script -o prisma/migrations/AAAAMMDDhhmmss_que_cambia/migration.sql
+```
+
+La carpeta se commitea en el mismo PR. **No usar `prisma migrate dev`**: mientras la base local sea la de producción, ante cualquier diferencia ofrece resetearla, y eso borra todo.
 
 No hay que aplicarla a mano: cuando el PR se mergea, el deploy de producción en Vercel corre `prisma migrate deploy` antes de `next build` (script `vercel-build` de `package.json`). Lo que hace cada entorno:
 
