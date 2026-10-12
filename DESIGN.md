@@ -409,18 +409,18 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 ### Idea rectora: tres niveles, y en cada uno el orden es el diseño
 | Nivel | URL | Qué muestra |
 | :--- | :--- | :--- |
-| Página general | `/workshops` | Hero y **una caja grande por workshop**, en orden (01 Linux, 02 ROS 2 y robótica…), unidas por una ruta de nodos. Abajo, los próximos talleres presenciales de todos. |
+| Página general | `/workshops` | Hero y **una caja por workshop en mosaico** (casi cuadradas, tres por fila en escritorio, dos en tablet, una en celular), en orden: 01 Linux, 02 ROS 2 y robótica… Abajo, los próximos talleres presenciales de todos. |
 | Workshop | `/workshops/<workshop>` | Número de orden en Anton, título y resumen; adentro, sus talleres (la ruta de 9 guías de ROS 2, el taller de Linux). |
 | Taller | `/workshops/<workshop>/<taller>` | Solo ese taller: de qué se trata, qué te llevás, comandos, datos, guía y código, anterior y siguiente, y el panel para marcarlo como hecho. "Volver" lleva a su caja en el workshop. |
 
-* **Pedido del dueño (2026-10-12):** la página general muestra solo las cajas de los workshops, no todo el contenido de cada uno. Linux va primero porque es lo inicial, después ROS 2. El orden de las cajas es el de `tracks` en `prisma/seed-data/workshops.ts`; un workshop nuevo es una entrada más ahí (su `key` va en la URL: no cambiarla). Los talleres-evento sin `track` caen en una caja "Otros talleres" (`/workshops/otros`).
+* **Pedidos del dueño (2026-10-12):** la página general muestra solo las cajas de los workshops, no todo el contenido de cada uno, y en mosaico (no tiras a todo el ancho) para que entren más; el orden lo da el número en Anton de cada caja. El texto del hero es general para todos los workshops (no habla de ROS 2). Linux va primero porque es lo inicial, después ROS 2. El orden de las cajas es el de `tracks` en `prisma/seed-data/workshops.ts`; un workshop nuevo es una entrada más ahí (su `key` va en la URL: no cambiarla). Los talleres-evento sin `track` caen en una caja "Otros talleres" (`/workshops/otros`).
 * Adentro de un workshop, el recorrido asincrónico es una **ruta**: una línea vertical de 1px con un nodo cuadrado por semana y el número en Anton (`01`–`09`), igual que la fecha en `/talks`. El **relleno del nodo dice el nivel**: vacío = inicial, medio = intermedio, macizo = avanzado. "Requiere 03 · 04" enlaza a las semanas previas (`#semana-NN`).
 
 ### Recorrido de cada persona (learning path)
 * Con sesión @udesa.edu.ar, cada persona marca un taller como hecho desde su página (y lo puede desmarcar).
 * **Colores del progreso (pedido del dueño), iguales en los dos niveles:** lo hecho pasa a **gris claro** (contorno tenue, número y texto apagados, sello "Hecho" o "Completo") y lo primero que falta va en **carmesí macizo** con el sello "Seguí acá"; sin nada hecho, "Empezá acá". En las cajas, un workshop está completo cuando hizo todos sus talleres; en la ruta, "el primero que falta" va por orden, no por prerequisitos (`routeStates` y `trackStates` en `src/lib/workshop-progress.ts`, compartidos con el perfil).
-* Cada caja y la intro de la ruta muestran la cifra en Anton (`01/09`) y un casillero por taller (gris = hecho, carmesí = siguiente, contorno = pendiente); sin sesión, invitación a ingresar.
-* **Perfil → Aprendizaje** (`/perfil/aprendizaje`, pestañas "Datos" / "Aprendizaje" en `PerfilTabs`): por workshop, cuánto lleva, la caja carmesí "Seguí con…" y la lista de lo hecho con la fecha en que lo marcó. También en el menú de la cuenta ("Mi aprendizaje").
+* Cada caja del mosaico y la intro de la ruta muestran la cifra en Anton (`01/09`) y un casillero por taller (gris = hecho, carmesí = siguiente, contorno = pendiente); sin sesión, invitación a ingresar.
+* **Perfil → Aprendizaje** (`/perfil/aprendizaje`, pestañas "Datos" / "Aprendizaje" en `PerfilTabs`): **solo los workshops donde la persona hizo algo** (pedido del dueño: no todos los que existen), cada uno como una tarjeta **plegada** (`<details>`) con el título y el conteo (`03/09`). Al desplegarla: los talleres que hizo con la fecha en que los marcó, "Seguí con…" y "Ver el workshop". Los talleres que le faltan no se listan acá: se ven entrando al workshop. También en el menú de la cuenta ("Mi aprendizaje").
 * Datos: tabla `WorkshopCompletion` (email + slug del taller, sin clave foránea porque los talleres no viven en la base). Server actions en `src/app/workshops/progress-actions.ts`; el progreso se pide desde el cliente (`WorkshopProgress.tsx`) para que las tres páginas sigan siendo estáticas (ISR), igual que la inscripción en `/talks`.
 
 ### Estructura y archivos
@@ -430,6 +430,7 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 4. Datos: `prisma/seed-data/workshops.ts` (workshops, guías del JAR y talleres pasados sin evento) leído por `src/lib/workshops.ts` (`trackHref`, `workshopHref`). La guía completa vive en el sitio del JAR y el código en `jar_workshops`: acá solo va lo que hace falta para presentarlas. Si cambia el frontmatter de una guía en `jar_site`, actualizar el seed.
 
 ### Trampas conocidas
+* Las cajas del mosaico son cuadradas solo desde `lg` (`lg:aspect-square`); más angostas llevan `min-h` y el resumen se corta a tres líneas (`line-clamp-3`), si no el contenido no entra en el cuadrado.
 * La URL del `git clone` no entra en mobile: el `<pre>` scrollea de costado dentro de un contenedor `min-w-0`; sin eso ensancha toda la página.
 * En oscuro, el bloque de código (`#0e0407`) casi se funde con `bg2` (`#16070b`): por eso lleva contorno de 1px.
 * El manifiesto en mayúsculas: "SIMULADORES." tiene que entrar a 320px y en 7 columnas a 1440px; el `clamp(1.4rem,6.2vw,3.3rem)` sale de eso.

@@ -11,7 +11,7 @@ import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgres
 export const metadata: Metadata = buildMetadata({
   title: "Workshops, AIR Club UdeSA",
   description:
-    "Formación práctica sin requisitos previos: talleres presenciales en el Campus Victoria y un recorrido asincrónico de ROS 2 con el simulador del Challenge JAR 2026.",
+    "Formación práctica sin requisitos previos: workshops en orden, con talleres presenciales en el Campus Victoria y guías para hacer a tu ritmo.",
   path: "/workshops",
 });
 

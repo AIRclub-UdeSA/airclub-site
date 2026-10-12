@@ -32,9 +32,9 @@ export function WorkshopsHero({
 
         <div className="min-w-0 lg:col-span-4 lg:col-start-9 lg:pt-2">
           <p className="max-w-[60ch] text-[1.05rem] leading-[1.7] text-text2">
-            Acá se aprende metiendo mano: se arma, se prueba, se rompe y se vuelve a armar. Hay talleres presenciales en
-            el Campus Victoria y un recorrido asincrónico para hacer a tu ritmo con el simulador, desde tu primer nodo de
-            ROS 2 hasta navegar un laberinto con Nav2.
+            Acá se aprende metiendo mano: se arma, se prueba, se rompe y se vuelve a armar. Cada workshop es un recorrido
+            en orden, con talleres presenciales en el Campus Victoria o guías para hacer a tu ritmo. Elegí uno y arrancá
+            por el primer taller.
           </p>
           <p className="mt-5 font-mono text-[.74rem] font-semibold uppercase tracking-[.16em] text-mauve">
             {String(trackCount).padStart(2, "0")} workshops · {String(itemCount).padStart(2, "0")} talleres

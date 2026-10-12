@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { requireUserProfile } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { getWorkshopTracks, trackHref, workshopHref, type WorkshopTrack } from "@/lib/workshops";
@@ -21,9 +21,10 @@ const formatDay = (d: Date) =>
 type DoneItem = { slug: string; href: string; code?: string; title: string; completedAt: Date };
 
 /**
- * Pestaña Aprendizaje del perfil: por cada línea de workshops, cuánto lleva la persona y por dónde seguir, y la lista de
- * lo que marcó como hecho (con la fecha en que lo marcó). Lee lo mismo que la ruta de /workshops (routeStates), así las
- * dos pantallas cuentan igual.
+ * Pestaña Aprendizaje del perfil: solo los workshops donde la persona ya hizo algo, cada uno como una tarjeta plegada
+ * (título y cuánto lleva). Al desplegarla, los talleres que hizo (con la fecha en que los marcó) y por dónde seguir; el
+ * resto de los talleres no se lista acá, se ve entrando al workshop. "El siguiente" sale de routeStates, igual que en la
+ * ruta de /workshops, así las dos pantallas cuentan igual.
  */
 export default async function AprendizajePage() {
   const profile = await requireUserProfile();
@@ -34,9 +35,9 @@ export default async function AprendizajePage() {
   const completedAt = new Map(rows.map((r) => [r.workshopSlug, r.completedAt]));
   const completed = new Set(completedAt.keys());
 
-  // Los workshops con algo para marcar (guías o talleres que ya pasaron), en el orden de las cajas de /workshops.
-  const groups = tracks.filter((t) => t.guides.length + t.past.length > 0);
-  const total = groups.reduce((n, t) => n + doneItems(t, completedAt).length, 0);
+  // Solo los workshops donde hizo algo, en el orden de las cajas de /workshops.
+  const groups = tracks.filter((t) => doneItems(t, completedAt).length > 0);
+  const total = groups.length;
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
@@ -68,9 +69,18 @@ export default async function AprendizajePage() {
         </section>
       )}
 
-      {groups.map((t) => (
-        <TrackProgress key={t.key} track={t} completed={completed} completedAt={completedAt} />
-      ))}
+      {groups.length > 0 && (
+        <section>
+          <h2 className={LABEL}>{groups.length === 1 ? "Workshop en el que avanzaste" : "Workshops en los que avanzaste"}</h2>
+          <ul className="mt-4 flex flex-col gap-3">
+            {groups.map((t) => (
+              <li key={t.key}>
+                <TrackProgress track={t} completed={completed} completedAt={completedAt} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -103,89 +113,64 @@ function TrackProgress({
   const next = guides.find((g) => states.get(g.slug) === "next");
   const done = doneItems(track, completedAt);
   const count = guides.length + past.length;
+  const complete = done.length === count;
 
+  // Plegada por defecto (<details> nativo, sin JS): a la vista solo el título y cuánto lleva.
   return (
-    <section className="border-t border-text pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <h2 className="font-display text-[clamp(1.2rem,4.4vw,2rem)] font-black uppercase leading-[0.98] tracking-tight text-text">
-          <Link href={trackHref(track.key)} className="transition-colors hover:text-crimson-text">
+    <details className="group border border-text open:border-crimson-text">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-5 transition-colors hover:text-crimson-text sm:p-6 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block font-display text-[clamp(1.15rem,4vw,1.6rem)] font-black uppercase leading-[1] tracking-tight [overflow-wrap:anywhere]">
             {title}
-          </Link>
-        </h2>
-        <p className="font-logo text-[2.8rem] leading-[0.8] text-crimson-text">
-          {String(done.length).padStart(2, "0")}
-          <span className="text-text3">/{String(count).padStart(2, "0")}</span>
-        </p>
-      </div>
-
-      {guides.length > 0 && (
-        <ol className="mt-5 flex flex-wrap gap-1.5" aria-label={`Progreso en ${title}`}>
-          {guides.map((g) => {
-            const state = states.get(g.slug);
-            return (
-              <li key={g.slug}>
-                <Link
-                  href={workshopHref(g)}
-                  title={`${g.week} · ${g.title}`}
-                  className={`block size-6 border transition-colors ${
-                    state === "done"
-                      ? "border-text/25 bg-text/20"
-                      : state === "next"
-                        ? "border-crimson bg-crimson"
-                        : "border-text/40 hover:border-crimson-text"
-                  }`}
-                >
-                  <span className="sr-only">
-                    Semana {g.week}: {state === "done" ? "hecho" : state === "next" ? "siguiente" : "pendiente"}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {next && (
-        <Link
-          href={workshopHref(next)}
-          className="group mt-6 flex items-center justify-between gap-6 bg-crimson p-5 text-white transition-colors hover:bg-crimson-hover sm:p-6"
-        >
-          <span className="flex min-w-0 items-end gap-4">
-            <span className="font-logo text-[3rem] leading-[0.8]" aria-hidden="true">
-              {next.week}
-            </span>
-            <span className="min-w-0">
-              <span className="block font-mono text-[.7rem] uppercase tracking-[.16em] text-white/80">
-                {done.length > 0 ? "Seguí con" : "Empezá con"}
-              </span>
-              <span className="block font-display text-[1.25rem] font-bold leading-[1.15] tracking-tight">{next.title}</span>
-            </span>
           </span>
-          <ArrowRight size={18} className="shrink-0 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true" />
-        </Link>
-      )}
+          <span className="mt-2 block font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
+            {complete ? "Completo" : `${done.length === 1 ? "1 taller hecho" : `${done.length} talleres hechos`}`}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-4">
+          <span className="font-logo text-[2.4rem] leading-[0.8] text-crimson-text">
+            {String(done.length).padStart(2, "0")}
+            <span className="text-text3">/{String(count).padStart(2, "0")}</span>
+          </span>
+          <ChevronDown size={20} className="transition-transform group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+        </span>
+      </summary>
 
-      {done.length > 0 && (
-        <>
-          <h3 className={`${LABEL} mt-8`}>Hechos</h3>
-          <ul className="mt-2">
-            {done.map((d) => (
-              <li key={d.slug} className="border-b border-text/15">
-                <Link
-                  href={d.href}
-                  className="group flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5"
-                >
-                  <span className="text-[1rem] text-text transition-colors group-hover:text-crimson-text">
-                    {d.code && <span className="mr-3 font-mono text-[.82rem] text-text3">{d.code}</span>}
-                    {d.title}
-                  </span>
-                  <span className="font-mono text-[.7rem] uppercase tracking-[.14em] text-text3">{formatDay(d.completedAt)}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
+      <div className="border-t border-text/15 px-5 pb-5 sm:px-6 sm:pb-6">
+        <ul>
+          {done.map((d) => (
+            <li key={d.slug} className="border-b border-text/15">
+              <Link href={d.href} className="group/item flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3.5">
+                <span className="text-[1rem] text-text transition-colors group-hover/item:text-crimson-text">
+                  {d.code && <span className="mr-3 font-mono text-[.82rem] text-text3">{d.code}</span>}
+                  {d.title}
+                </span>
+                <span className="font-mono text-[.7rem] uppercase tracking-[.14em] text-text3">{formatDay(d.completedAt)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+          {next && (
+            <Link
+              href={workshopHref(next)}
+              className="inline-flex max-w-full items-center gap-2 rounded-full bg-crimson px-5 py-3 font-mono text-[.74rem] font-semibold uppercase leading-tight tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
+            >
+              <span>
+                Seguí con la {next.week} · {next.title}
+              </span>
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          )}
+          <Link
+            href={trackHref(track.key)}
+            className="font-mono text-[.74rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text"
+          >
+            Ver el workshop
+          </Link>
+        </div>
+      </div>
+    </details>
   );
 }
