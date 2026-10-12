@@ -53,6 +53,9 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
     }),
   ]);
 
+  // Inscripción y perfil se unen por email (no hay relación en el schema). Los perfiles ya están cargados arriba.
+  const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
+
   return (
     <div className="flex flex-col gap-10">
       <div>
@@ -133,12 +136,21 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                   </span>
                 </p>
                 <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
-                  {talk.registrations.map((r) => (
-                    <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-                      <span className="text-sm text-text2">{r.email}</span>
-                      <span className="font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
-                    </li>
-                  ))}
+                  {talk.registrations.map((r) => {
+                    const profile = profileByEmail.get(r.email);
+                    return (
+                      <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                        <div>
+                          <p className="text-sm text-text2">
+                            {r.email}
+                            {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
+                          </p>
+                          {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
+                        </div>
+                        <span className="font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
