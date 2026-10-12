@@ -46,3 +46,7 @@ Thumbs.db
 
 # Capturas de auditoría / UI
 /public/eventos/capturas/
+
+# Python compilado (scripts de skills)
+__pycache__/
+*.pyc
