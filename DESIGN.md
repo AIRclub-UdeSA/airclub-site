@@ -329,7 +329,7 @@ Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a ma
 * Se verificó con el reloj de Playwright (`page.clock`) y cuadros intermedios; el ritmo real, con la rueda y en vivo, lo juzga el dueño.
 
 ### Scroll suave (Lenis)
-`SmoothScrollProvider` (en el layout) crea la instancia; el resto de la app pasa por `scrollToTarget` (`src/lib/smooth-scroll.ts`), que cae al scroll nativo si Lenis no está activo. No colgar la instancia de `window`. `allowNestedScroll` evita que Lenis trabe el modal de `/talks` y los paneles de `/admin`, y `html.lenis { scroll-behavior: auto }` evita que compita con el `scroll-behavior: smooth` nativo. Se desactiva con `prefers-reduced-motion`.
+`SmoothScrollProvider` (en el layout) crea la instancia; el resto de la app pasa por `scrollToTarget` (`src/lib/smooth-scroll.ts`), que cae al scroll nativo si Lenis no está activo. No colgar la instancia de `window`. `allowNestedScroll` evita que Lenis trabe el modal de `/talks` y los paneles de `/admin`, y `html.lenis { scroll-behavior: auto }` evita que compita con el `scroll-behavior: smooth` nativo. Se desactiva con `prefers-reduced-motion` y en `/perfil` (el provider no crea la instancia ahí: el formulario cambia de alto seguido y la inercia hace perder el cambio).
 
 ### Lo que el dueño aprobó (conservar)
 * El carrusel con su luz ambiental ("tono metálico con luz") y en Syne; si algún día se cambia, se pasa **solo** a Anton y no se mezclan.

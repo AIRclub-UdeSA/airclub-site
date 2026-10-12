@@ -1,9 +1,5 @@
 import { signIn } from "@/auth";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  AccessDenied: "Ese login no es válido: entrá con una cuenta @udesa.edu.ar.",
-};
-
 export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/login">) {
   const { error } = await searchParams;
   const errorKey = Array.isArray(error) ? error[0] : error;
@@ -13,7 +9,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
       <h1 className="font-display text-2xl font-black uppercase text-text">AIR Club UdeSA</h1>
       <p className="text-text2">Entrá con tu cuenta de Google de UdeSA (@udesa.edu.ar).</p>
       {errorKey && (
-        <p className="text-sm text-crimson">{ERROR_MESSAGES[errorKey] ?? "No se pudo iniciar sesión, probá de nuevo."}</p>
+        <p className="text-sm text-crimson">No se pudo iniciar sesión, probá de nuevo.</p>
       )}
       <form
         action={async () => {
