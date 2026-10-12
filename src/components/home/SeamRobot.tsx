@@ -39,9 +39,9 @@ type Run = {
 const clamp = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-// La escena arranca cuando el carril de la pista llega a esta altura de la pantalla (0 = arriba, 1 = abajo), así el
-// robot entra y se frena a mirar la cuenta regresiva ya a la vista...
-const START_AT = 0.92;
+// La escena arranca apenas el borde superior de la banda entra a la pantalla (0 = arriba, 1 = abajo): mientras se vea
+// algo de la pista, el robot ya está andando sobre su carril y los conos ya están puestos (nunca aparecen de la nada)...
+const START_AT = 1;
 // ...y su ventana termina cuando el borde inferior de la banda llega a esta altura (casi arriba del todo)
 const END_AT = 0.05;
 // Solo se descarta cuando el borde superior de la banda sale por completo por abajo
@@ -436,10 +436,9 @@ export function SeamRobot() {
     };
   }, [reduced]);
 
-  // La banda tiene una ventana de pantalla (de que su carril llega a START_AT hasta que su borde inferior llega a END_AT).
-  // Al entrar arranca la escena; al salir por arriba, o al volver a bajar el carril por debajo de START_AT, queda en
-  // pausa y sigue donde estaba si se vuelve; al salir la banda por completo por abajo se descarta y la próxima vez
-  // arranca de cero.
+  // La banda tiene una ventana de pantalla (de que su borde superior entra por abajo hasta que su borde inferior llega a
+  // END_AT). Al entrar arranca la escena; al salir por arriba queda en pausa y sigue donde estaba si se vuelve; al salir
+  // la banda por completo por abajo se descarta y la próxima vez arranca de cero.
   useGSAP(
     () => {
       if (!mounted || reduced) return;
@@ -483,15 +482,14 @@ export function SeamRobot() {
         sync();
       };
 
-      // Posición de scroll en la que el borde (o el carril) de la banda llega a `frac` de la altura de la pantalla
-      const at = (frac: number, edge: "top" | "lane" | "bottom" = "top") => () => {
+      // Posición de scroll en la que el borde de la banda llega a `frac` de la altura de la pantalla
+      const at = (frac: number, edge: "top" | "bottom" = "top") => () => {
         const r = el.getBoundingClientRect();
-        const y = edge === "bottom" ? r.bottom : edge === "lane" ? r.top + r.height * LANE : r.top;
-        return y + window.scrollY - frac * window.innerHeight;
+        return (edge === "bottom" ? r.bottom : r.top) + window.scrollY - frac * window.innerHeight;
       };
       ScrollTrigger.create({
         trigger: el,
-        start: at(START_AT, "lane"),
+        start: at(START_AT),
         end: at(END_AT, "bottom"),
         invalidateOnRefresh: true,
         onEnter: enter,
