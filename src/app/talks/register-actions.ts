@@ -12,6 +12,9 @@ import { getSessionEmail } from "@/lib/perfil/require-profile";
 export type RegisterResult = { status: "registered" | "already" | "closed" | "full" };
 export type CancelResult = { status: "cancelled" | "closed" };
 
+// Intentos de la transacción de inscripción ante un conflicto de serialización (P2034).
+const MAX_ATTEMPTS = 3;
+
 /**
  * Pide sesión y perfil completo. No usa requireUserProfile() a propósito: esa redirige a
  * /perfil/completar sin el parámetro `next`, así que si falta el perfil se perdería la charla
@@ -52,32 +55,36 @@ export async function registerForTalkAction(talkSlug: string): Promise<RegisterR
   const talk = await findUpcomingTalk(talkSlug);
   if (!talk || !talk.registrationOpen) return { status: "closed" };
 
-  try {
-    // Serializable: el conteo del cupo y la inscripción tienen que ser atómicos, si no dos
-    // inscripciones simultáneas pueden pasarse del cupo.
-    return await prisma.$transaction(
-      async (tx): Promise<RegisterResult> => {
-        const existing = await tx.talkRegistration.findUnique({
-          where: { talkId_email: { talkId: talk.id, email } },
-          select: { id: true },
-        });
-        if (existing) return { status: "already" };
+  // Serializable: el conteo del cupo y la inscripción tienen que ser atómicos, si no dos
+  // inscripciones simultáneas pueden pasarse del cupo. Si chocan, Postgres aborta una (P2034) y
+  // se reintenta: en el segundo intento ya ve la otra inscripción y responde "full" si corresponde.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await prisma.$transaction(
+        async (tx): Promise<RegisterResult> => {
+          const existing = await tx.talkRegistration.findUnique({
+            where: { talkId_email: { talkId: talk.id, email } },
+            select: { id: true },
+          });
+          if (existing) return { status: "already" };
 
-        if (talk.capacity !== null) {
-          const taken = await tx.talkRegistration.count({ where: { talkId: talk.id } });
-          if (taken >= talk.capacity) return { status: "full" };
-        }
+          if (talk.capacity !== null) {
+            const taken = await tx.talkRegistration.count({ where: { talkId: talk.id } });
+            if (taken >= talk.capacity) return { status: "full" };
+          }
 
-        await tx.talkRegistration.create({ data: { talkId: talk.id, email } });
-        return { status: "registered" };
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return { status: "already" };
+          await tx.talkRegistration.create({ data: { talkId: talk.id, email } });
+          return { status: "registered" };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2002") return { status: "already" };
+        if (e.code === "P2034" && attempt < MAX_ATTEMPTS) continue;
+      }
+      throw e;
     }
-    throw e;
   }
 }
 
