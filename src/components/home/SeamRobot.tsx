@@ -39,27 +39,39 @@ type Run = {
 const clamp = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-// La escena arranca cuando el borde superior de la banda llega a esta altura de la pantalla (0 = arriba, 1 = abajo)...
-const START_AT = 0.9;
+// La escena arranca cuando el carril de la pista llega a esta altura de la pantalla (0 = arriba, 1 = abajo), así el
+// robot entra y se frena a mirar la cuenta regresiva ya a la vista...
+const START_AT = 0.92;
 // ...y su ventana termina cuando el borde inferior de la banda llega a esta altura (casi arriba del todo)
 const END_AT = 0.05;
 // Solo se descarta cuando el borde superior de la banda sale por completo por abajo
 const RESET_AT = 1.05;
 // Altura del carril (la línea roja de la pista) dentro de la banda
 const LANE = 0.64;
-// Hasta que el carril sube, el robot va por el piso visible de la banda (a FLOOR px del borde inferior de la pantalla) y se
-// achica para caber en ella: no pisa lo que hay encima. Crece a medida que la banda sube, como si se acercara.
-const FLOOR = 14;
 // Mientras corre la primera vuelta la rueda rinde esto (1 = normal), para que alcance a verse. Sube y baja suave.
 const DWELL_SPEED = 0.4;
 
-const trackSizeFor = (W: number) => clamp(W * 0.22, 130, 300);
+// Tamaño del robot sobre la pista (lo que mide su dimensión mayor, en px). Chico, como visto de lejos: más grande se
+// pierde en la banda y los conos no tienen lugar.
+const trackSizeFor = (W: number) => clamp(W * 0.15, 84, 210);
+// Margen para que el robot entre o salga entero: lo que más sobresale es el abanico del LiDAR, a 0,64 de su tamaño
+// por delante del centro
+const clearFor = (W: number) => trackSizeFor(W) * 0.7 + 16;
 /**
- * Posición horizontal sobre la pista: u = 0 en el borde derecho y u = 1 ya afuera por la izquierda. La vuelta termina
- * a 0,7 veces el tamaño del robot del borde (lo que más sobresale es el abanico del LiDAR, a 0,64 por delante del
- * centro): así sale entero y vuelve a entrar por la derecha sin que se vea el salto. Robot y conos usan la misma cuenta.
+ * Posición horizontal sobre la pista: u = 0 ya entero adentro por la derecha (ahí se frena a mirar la cuenta regresiva)
+ * y u = 1 entero afuera por la izquierda (así vuelve a entrar por la derecha sin que se vea el salto). Robot y conos
+ * usan la misma cuenta.
  */
-const laneX = (u: number, W: number) => lerp(W, -(trackSizeFor(W) * 0.7 + 16), u);
+const laneX = (u: number, W: number) => lerp(W - clearFor(W), -clearFor(W), u);
+/**
+ * Avance del zigzag (0 a 1) para una posición del carril: solo en la parte visible, desde donde se frena hasta que
+ * empieza a salir por la izquierda. Ahí van los conos; después sale derecho. Sin esto, en pantallas angostas el último
+ * cono quedaba fuera de la pantalla.
+ */
+const weaveU = (x: number, W: number) => (W - clearFor(W) - x) / (W - 2 * clearFor(W));
+const weaveX = (v: number, W: number) => lerp(W - clearFor(W), clearFor(W), v);
+// Alto de los conos respecto del tamaño del robot
+const CONE_H = 0.34;
 
 type Pose = {
   x: number;
@@ -79,24 +91,37 @@ type Pose = {
 function slalomPose(el: HTMLElement, st: SlalomState): Pose {
   const W = window.innerWidth;
   const r = el.getBoundingClientRect();
-  const lane = Math.min(r.top + r.height * LANE, window.innerHeight - FLOOR);
-  const weave = Math.sin(st.wu * Math.PI * 3);
-  const heading = Math.cos(st.wu * Math.PI * 3);
+  // Siempre sobre el carril real de la pista: si la banda todavía no entró, el robot y los conos quedan abajo, fuera de
+  // la pantalla, y suben con ella (no se los adelanta al borde de la pantalla)
+  const lane = r.top + r.height * LANE;
+  const v = Math.min(1, weaveU(laneX(st.wu, W), W));
+  // una curva del zigzag por cono: el robot pasa por delante y por detrás de cada uno, alternando
+  const n = conesFor(W).length;
+  const weave = Math.sin(v * Math.PI * n);
+  const heading = Math.cos(v * Math.PI * n);
   // el robot mide más o menos su tamaño de alto: lo que entre en el piso visible de la banda (con aire arriba)
   const size = Math.min(trackSizeFor(W), Math.max(0, lane - r.top - 8) / 1.05);
   return {
     lane,
-    x: laneX(st.wu, W) + st.x * W,
+    // entra desde afuera por la derecha (st.x = 1) hasta el comienzo del carril (st.x = 0)
+    x: lerp(laneX(st.wu, W), W + clearFor(W), st.x),
     y: lane + weave * Math.min(r.height * 0.12, (lane - r.top) * 0.2),
     size: size * (1 + weave * 0.16),
     yaw: lerp(FACE_L + heading * 0.45, FACE_CAM, st.look), // gira hacia donde va; más hacia cámara cuando se acerca
-    depth: weave * 80,
+    // Profundidad: en los extremos del zigzag el robot pasa entero por delante o por detrás del cono, sin meterse en él
+    // (medio robot de profundidad, más media base del cono, más aire)
+    depth: weave * (trackSizeFor(W) * (0.55 + CONE_H * 0.32) + 12),
     scan: st.wu > 0.02,
   };
 }
 
-// Conos de la pista: fijos en pantalla, en los tres puntos donde el robot está en el extremo del zigzag.
-const CONE_U = [1 / 6, 1 / 2, 5 / 6];
+// Conos de la pista: fijos en pantalla, en los puntos donde el robot está en el extremo del zigzag. En pantallas
+// angostas van dos: con tres, el primero queda debajo de la trompa del robot mientras mira la cuenta regresiva.
+const MAX_CONES = 3;
+const conesFor = (W: number) => {
+  const n = W < 640 ? 2 : MAX_CONES;
+  return Array.from({ length: n }, (_, k) => (2 * k + 1) / (2 * n));
+};
 
 /** Luz de estudio con reflejos: sin esto los metales del CAD quedan planos y oscuros. Se genera en el cliente, sin descargar nada. */
 function setupStudioLight({ gl, scene }: { gl: THREE.WebGLRenderer; scene: THREE.Scene }) {
@@ -238,6 +263,36 @@ function reducedRun(): Run | null {
   return stillRun;
 }
 
+/**
+ * Cono de tránsito de 1 de alto, apoyado en y = 0: base cuadrada, cuerpo cónico y dos franjas blancas reflectivas, en
+ * el rosa de la paleta. Inclinado como el robot para que se vea la base desde arriba.
+ */
+const CONE_BODY = { bottom: 0.27, top: 0.05, from: 0.06 };
+const coneRadiusAt = (y: number) =>
+  lerp(CONE_BODY.bottom, CONE_BODY.top, (y - CONE_BODY.from) / (1 - CONE_BODY.from));
+function TrafficCone() {
+  const band = (y0: number, y1: number) => (
+    <mesh position={[0, (y0 + y1) / 2, 0]}>
+      <cylinderGeometry args={[coneRadiusAt(y1) * 1.02, coneRadiusAt(y0) * 1.02, y1 - y0, 28, 1, true]} />
+      <meshStandardMaterial color="#fbf6f8" roughness={0.25} metalness={0.1} />
+    </mesh>
+  );
+  return (
+    <group rotation={[0.3, 0, 0]}>
+      <mesh position={[0, 0.03, 0]}>
+        <boxGeometry args={[0.66, 0.06, 0.66]} />
+        <meshStandardMaterial color="#f0357f" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, (1 + CONE_BODY.from) / 2, 0]}>
+        <cylinderGeometry args={[CONE_BODY.top, CONE_BODY.bottom, 1 - CONE_BODY.from, 28]} />
+        <meshStandardMaterial color="#f0357f" roughness={0.5} />
+      </mesh>
+      {band(0.34, 0.45)}
+      {band(0.55, 0.64)}
+    </group>
+  );
+}
+
 // Avisa a SeamRobot que cambió la escena activa (para prender o apagar el canvas)
 let wakeNow: () => void = () => {};
 
@@ -255,7 +310,7 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
   const rig = useRef<THREE.Group>(null);
   const yawGroup = useRef<THREE.Group>(null);
   const fan = useRef<THREE.Mesh>(null);
-  const cones = useRef<(THREE.Mesh | null)[]>([]);
+  const cones = useRef<(THREE.Group | null)[]>([]);
 
   useFrame((frame) => {
     const g = rig.current;
@@ -287,15 +342,18 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
       fan.current.rotation.z = Math.sin(frame.clock.elapsedTime * 3.2) * 0.4;
     }
 
-    // Conos de la pista
-    const coneSize = Math.min(trackSizeFor(window.innerWidth) * 0.2, Math.max(0, pose.lane - el.getBoundingClientRect().top - 8) * 0.8);
-    CONE_U.forEach((cu, i) => {
-      const m = cones.current[i];
+    // Conos de la pista: fijos, siempre en el mismo lugar del carril mientras la pista está a la vista (no aparecen ni
+    // desaparecen con cada vuelta)
+    const coneSize = Math.min(trackSizeFor(window.innerWidth) * CONE_H, Math.max(0, pose.lane - el.getBoundingClientRect().top - 8) * 0.8);
+    const coneUs = conesFor(window.innerWidth);
+    cones.current.forEach((m, i) => {
       if (!m) return;
-      const appear = reduced ? 0 : st.cones;
-      m.visible = appear > 0.01;
-      m.position.set(laneX(cu, window.innerWidth) - W / 2, Hc / 2 - pose.lane + coneSize * 0.5, 0);
-      m.scale.setScalar(coneSize * appear);
+      const cu = coneUs[i];
+      m.visible = cu !== undefined;
+      if (cu === undefined) return;
+      // la base apoyada en el carril (el cono va de y = 0 a 1)
+      m.position.set(weaveX(cu, window.innerWidth) - W / 2, Hc / 2 - pose.lane, 0);
+      m.scale.setScalar(coneSize);
     });
   });
 
@@ -321,17 +379,16 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
           <meshBasicMaterial color="#ff2a6d" transparent opacity={0.28} side={THREE.DoubleSide} depthWrite={false} />
         </mesh>
       </group>
-      {CONE_U.map((_, i) => (
-        <mesh
+      {Array.from({ length: MAX_CONES }, (_, i) => (
+        <group
           key={i}
           ref={(m) => {
             cones.current[i] = m;
           }}
           visible={false}
         >
-          <coneGeometry args={[0.5, 1, 20]} />
-          <meshStandardMaterial color="#f0357f" roughness={0.45} />
-        </mesh>
+          <TrafficCone />
+        </group>
       ))}
     </>
   );
@@ -379,9 +436,10 @@ export function SeamRobot() {
     };
   }, [reduced]);
 
-  // La banda tiene una ventana de pantalla (de que su borde superior llega a START_AT hasta que el inferior llega a
-  // END_AT). Al entrar desde abajo arranca la escena; al salir por arriba queda en pausa y sigue donde estaba si se vuelve;
-  // al salir por completo por abajo se descarta y la próxima vez arranca de cero.
+  // La banda tiene una ventana de pantalla (de que su carril llega a START_AT hasta que su borde inferior llega a END_AT).
+  // Al entrar arranca la escena; al salir por arriba, o al volver a bajar el carril por debajo de START_AT, queda en
+  // pausa y sigue donde estaba si se vuelve; al salir la banda por completo por abajo se descarta y la próxima vez
+  // arranca de cero.
   useGSAP(
     () => {
       if (!mounted || reduced) return;
@@ -425,19 +483,24 @@ export function SeamRobot() {
         sync();
       };
 
-      // Posición de scroll en la que el borde de la banda llega a `frac` de la altura de la pantalla
-      const at = (frac: number, edge: "top" | "bottom" = "top") => () => {
+      // Posición de scroll en la que el borde (o el carril) de la banda llega a `frac` de la altura de la pantalla
+      const at = (frac: number, edge: "top" | "lane" | "bottom" = "top") => () => {
         const r = el.getBoundingClientRect();
-        return (edge === "bottom" ? r.bottom : r.top) + window.scrollY - frac * window.innerHeight;
+        const y = edge === "bottom" ? r.bottom : edge === "lane" ? r.top + r.height * LANE : r.top;
+        return y + window.scrollY - frac * window.innerHeight;
       };
       ScrollTrigger.create({
         trigger: el,
-        start: at(START_AT),
+        start: at(START_AT, "lane"),
         end: at(END_AT, "bottom"),
         invalidateOnRefresh: true,
         onEnter: enter,
         onEnterBack: enter,
         onLeave: () => {
+          inWindow = false;
+          sync();
+        },
+        onLeaveBack: () => {
           inWindow = false;
           sync();
         },
@@ -472,7 +535,8 @@ export function SeamRobot() {
         // 1 unidad = 1 px de pantalla, con el origen al centro y el eje Y hacia arriba
         camera={{ zoom: 1, position: [0, 0, 1000], near: 0.1, far: 4000 }}
         frameloop={active ? "always" : "never"}
-        dpr={[1, 1.5]}
+        // hasta 2: con el robot más chico, a 1,5 se perdían los detalles (lentes, sensores) en pantallas de alta densidad
+        dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
         onCreated={setupStudioLight}
       >
