@@ -45,7 +45,12 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       include: { registrations: { orderBy: { createdAt: "desc" } } },
       orderBy: { startsAt: "desc" },
     }),
-    prisma.talk.findMany({ where: { registrationOpen: true }, select: { slug: true, title: true }, orderBy: { title: "asc" } }),
+    // Las abiertas y también las que ya cerraron pero tienen inscriptos, para poder filtrarlas.
+    prisma.talk.findMany({
+      where: { OR: [{ registrationOpen: true }, { registrations: { some: {} } }] },
+      select: { slug: true, title: true },
+      orderBy: { title: "asc" },
+    }),
   ]);
 
   return (
@@ -82,9 +87,14 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
         <h3 className="font-display text-lg font-bold text-text">Inscriptos por charla</h3>
 
         <form className="flex flex-wrap items-end gap-3 rounded-[var(--r-md)] border border-border bg-card-muted p-4">
-          <label className="flex flex-col gap-1 text-sm text-text2">
+          {/* Con ancho acotado: si no, el select toma el ancho del título más largo y en mobile desborda la página. */}
+          <label className="flex w-full flex-col gap-1 text-sm text-text2 sm:w-auto sm:max-w-md">
             Charla
-            <select name="charla" defaultValue={charlaSlug} className="rounded-[var(--r-sm)] border border-border bg-card px-3 py-2 text-sm text-text">
+            <select
+              name="charla"
+              defaultValue={charlaSlug}
+              className="w-full rounded-[var(--r-sm)] border border-border bg-card px-3 py-2 text-sm text-text"
+            >
               <option value="">Todas</option>
               {registrableTalks.map((t) => (
                 <option key={t.slug} value={t.slug}>
@@ -117,7 +127,9 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                 <p className="text-sm font-medium text-text">
                   {talk.title}{" "}
                   <span className="font-mono text-xs font-normal text-text3">
-                    — {talk.registrations.length} inscripto{talk.registrations.length === 1 ? "" : "s"}
+                    — {talk.registrations.length}
+                    {talk.capacity === null ? "" : ` de ${talk.capacity}`} inscripto
+                    {talk.registrations.length === 1 && talk.capacity === null ? "" : "s"}
                   </span>
                 </p>
                 <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
