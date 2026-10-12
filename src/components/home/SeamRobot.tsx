@@ -54,9 +54,11 @@ const DWELL_SPEED = 0.4;
 // Tamaño del robot sobre la pista (lo que mide su dimensión mayor, en px). Chico, como visto de lejos: más grande se
 // pierde en la banda y los conos no tienen lugar.
 const trackSizeFor = (W: number) => clamp(W * 0.15, 84, 210);
-// Margen para que el robot entre o salga entero: lo que más sobresale es el abanico del LiDAR, a 0,64 de su tamaño
-// por delante del centro
-const clearFor = (W: number) => trackSizeFor(W) * 0.7 + 16;
+// Radio del barrido del LiDAR, en largos del robot. Más chico en pantallas angostas: con el grande, el margen para
+// entrar y salir entero dejaba tan poco carril a la vista que el robot se frenaba encima de un cono.
+const scanRFor = (W: number) => (W < 640 ? 0.6 : 1.2);
+// Margen para que el robot entre o salga entero: lo que más sobresale es el barrido del LiDAR
+const clearFor = (W: number) => trackSizeFor(W) * scanRFor(W) + 16;
 /**
  * Posición horizontal sobre la pista: u = 0 ya entero adentro por la derecha (ahí se frena a mirar la cuenta regresiva)
  * y u = 1 entero afuera por la izquierda (así vuelve a entrar por la derecha sin que se vea el salto). Robot y conos
@@ -81,8 +83,6 @@ type Pose = {
   yaw: number;
   /** Profundidad: positivo = más cerca de la cámara (pasa por delante de los conos). */
   depth: number;
-  /** Muestra el barrido del LiDAR. */
-  scan: boolean;
   /** Altura del carril (para ubicar los conos). */
   lane: number;
 };
@@ -111,7 +111,6 @@ function slalomPose(el: HTMLElement, st: SlalomState): Pose {
     // Profundidad: en los extremos del zigzag el robot pasa entero por delante o por detrás del cono, sin meterse en él
     // (medio robot de profundidad, más media base del cono, más aire)
     depth: weave * (trackSizeFor(W) * (0.55 + CONE_H * 0.32) + 12),
-    scan: st.wu > 0.02,
   };
 }
 
@@ -247,6 +246,83 @@ function splitLidarTurret(node: THREE.Object3D | undefined) {
   return turret;
 }
 
+/**
+ * Textura del barrido del LiDAR 360°, como un radar visto desde arriba: un haz fino en el ángulo 0, una estela que se
+ * desvanece detrás (un cuarto de vuelta) y dos anillos tenues de alcance sobre un disco apenas teñido. Se dibuja una
+ * sola vez en el cliente.
+ */
+let scanTexture: THREE.CanvasTexture | null = null;
+function lidarScanTexture() {
+  if (scanTexture) return scanTexture;
+  const S = 512;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const ctx = c.getContext("2d")!;
+  const R = S / 2 - 4;
+  ctx.translate(S / 2, S / 2);
+  const disc = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+  disc.addColorStop(0, "rgba(255,42,109,0.14)");
+  disc.addColorStop(0.75, "rgba(255,42,109,0.05)");
+  disc.addColorStop(1, "rgba(255,42,109,0)");
+  ctx.fillStyle = disc;
+  ctx.beginPath();
+  ctx.arc(0, 0, R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,42,109,0.28)";
+  ctx.lineWidth = 2;
+  for (const k of [0.5, 0.97]) {
+    ctx.beginPath();
+    ctx.arc(0, 0, R * k, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // estela: gajos cada vez más transparentes detrás del haz (sin conic-gradient, que no está en todos los navegadores)
+  const TRAIL = Math.PI / 2;
+  const STEPS = 60;
+  for (let i = 0; i < STEPS; i++) {
+    // del lado de los ángulos positivos: es el que queda detrás del haz con el sentido en que gira la torreta
+    const a0 = (i * TRAIL) / STEPS;
+    const a1 = ((i + 1) * TRAIL) / STEPS;
+    ctx.fillStyle = `rgba(255,42,109,${0.5 * (1 - i / STEPS) ** 2})`;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, a0, a1);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(255,150,185,0.95)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(R, 0);
+  ctx.stroke();
+  scanTexture = new THREE.CanvasTexture(c);
+  scanTexture.colorSpace = THREE.SRGBColorSpace;
+  return scanTexture;
+}
+
+/**
+ * El barrido del LiDAR, pegado a la torreta: un disco horizontal a la altura de las ventanas del sensor, que gira con
+ * ella. Visto con la inclinación del robot se lee como la elipse de un escaneo 360°. El disco mide un largo del robot de
+ * radio y se escala por cuadro a `scanRFor`.
+ */
+function attachLidarScan(turret: THREE.Mesh, model: THREE.Object3D) {
+  if (turret.userData.scan) return turret.userData.scan as THREE.Mesh;
+  // la torreta está en unidades del CAD; el modelo entero se escaló para medir ROSMASTER_UNITS de largo
+  const length = ROSMASTER_UNITS / model.scale.x;
+  turret.geometry.computeBoundingBox();
+  const box = turret.geometry.boundingBox!;
+  const scan = new THREE.Mesh(
+    new THREE.CircleGeometry(length, 64),
+    new THREE.MeshBasicMaterial({ map: lidarScanTexture(), transparent: true, depthWrite: false, side: THREE.DoubleSide }),
+  );
+  scan.rotation.x = -Math.PI / 2;
+  scan.position.y = lerp(box.min.y, box.max.y, 0.55);
+  scan.renderOrder = 1;
+  turret.add(scan);
+  turret.userData.scan = scan;
+  return scan;
+}
+
 /** Con movimiento reducido el robot queda quieto, al centro de la pista, mientras la banda está a la vista. */
 let stillRun: Run | null = null;
 function reducedRun(): Run | null {
@@ -299,17 +375,22 @@ let wakeNow: () => void = () => {};
 function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | null> }) {
   const model = useRosmasterModel();
   // Piezas con vida propia (se preparan una sola vez, al montar): del LiDAR gira solo la torreta
-  const parts = useRef<{ lidar: THREE.Mesh | null; camera: THREE.Mesh | null }>({ lidar: null, camera: null });
+  const parts = useRef<{ lidar: THREE.Mesh | null; scan: THREE.Mesh | null; camera: THREE.Mesh | null }>({
+    lidar: null,
+    scan: null,
+    camera: null,
+  });
   useEffect(() => {
+    const lidar = splitLidarTurret(model.getObjectByName("lidar_sensor"));
     parts.current = {
-      lidar: splitLidarTurret(model.getObjectByName("lidar_sensor")),
+      lidar,
+      scan: lidar ? attachLidarScan(lidar, model) : null,
       camera: centerPivot(model.getObjectByName("rgbd_camera")),
     };
   }, [model]);
   const shadowTex = useShadowTexture();
   const rig = useRef<THREE.Group>(null);
   const yawGroup = useRef<THREE.Group>(null);
-  const fan = useRef<THREE.Mesh>(null);
   const cones = useRef<(THREE.Group | null)[]>([]);
 
   useFrame((frame) => {
@@ -336,10 +417,10 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
     if (lidar) lidar.rotation.y = reduced ? 0 : frame.clock.elapsedTime * 5;
     if (camera) camera.rotation.x = st.nod;
 
-    // LiDAR: un abanico que barre hacia adelante (el robot va hacia la izquierda)
-    if (fan.current) {
-      fan.current.visible = pose.scan && !reduced;
-      fan.current.rotation.z = Math.sin(frame.clock.elapsedTime * 3.2) * 0.4;
+    // El barrido del LiDAR gira con la torreta (es su hija); con movimiento reducido no se muestra
+    if (parts.current.scan) {
+      parts.current.scan.visible = !reduced;
+      parts.current.scan.scale.setScalar(scanRFor(window.innerWidth));
     }
 
     // Conos de la pista: fijos, siempre en el mismo lugar del carril mientras la pista está a la vista (no aparecen ni
@@ -373,11 +454,6 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
             <primitive object={model} />
           </group>
         </group>
-        {/* abanico del LiDAR: un sector que apunta hacia -X y se mueve de lado a lado */}
-        <mesh ref={fan} position={[-0.1, 1.3, 0]} scale={[ROSMASTER_UNITS * 0.6, ROSMASTER_UNITS * 0.6, 1]} visible={false}>
-          <circleGeometry args={[1, 24, Math.PI - 0.32, 0.64]} />
-          <meshBasicMaterial color="#ff2a6d" transparent opacity={0.28} side={THREE.DoubleSide} depthWrite={false} />
-        </mesh>
       </group>
       {Array.from({ length: MAX_CONES }, (_, i) => (
         <group
