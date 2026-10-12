@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { saveProfileAction, type ActionState } from "@/app/perfil/actions";
 import { CareerSelect } from "./CareerSelect";
 import { MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
@@ -8,10 +8,6 @@ import { cn } from "@/lib/utils";
 import type { ProfileRole, StudentStatus } from "../../../generated/prisma/client";
 
 const initialState: ActionState = { error: null };
-
-const CURRENT_YEAR = new Date().getFullYear();
-// Mas reciente primero: la mayoria de quienes completan esto arrancaron su carrera hace poco.
-const START_YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - MIN_START_YEAR + 1 }, (_, i) => CURRENT_YEAR - i);
 
 export type ExistingProfile = {
   role: ProfileRole;
@@ -72,9 +68,24 @@ export function PerfilForm({
   const [role, setRole] = useState<"STUDENT" | "PROFESSOR" | "OTHER">(existing?.role ?? "STUDENT");
   const [careers, setCareers] = useState<string[]>(existing?.careers ?? []);
   const [studentStatus, setStudentStatus] = useState<"STUDYING" | "GRADUATED" | null>(existing?.studentStatus ?? null);
+  const [, startTransition] = useTransition();
+
+  // En cada render y no al cargar el modulo, para que no quede viejo al cambiar de año.
+  const currentYear = new Date().getFullYear();
+  // Mas reciente primero: la mayoria de quienes completan esto arrancaron su carrera hace poco.
+  const startYearOptions = Array.from({ length: currentYear - MIN_START_YEAR + 1 }, (_, i) => currentYear - i);
 
   return (
-    <form action={formAction} className="flex flex-col gap-8 rounded-[var(--r-md)] border border-border bg-card p-6 sm:p-10">
+    <form
+      // La accion se llama a mano y no con `action={formAction}`: React 19 resetea el formulario al terminar una
+      // accion de <form action>, y despues de un error del servidor se perdian el año y los radios.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+      className="flex flex-col gap-8 border border-border bg-card p-6 sm:p-10"
+    >
       <input type="hidden" name="next" value={next} />
       <fieldset className="flex flex-col gap-2.5">
         <legend className={labelClass}>¿Cuál es tu rol?</legend>
@@ -142,7 +153,7 @@ export function PerfilForm({
                 <option value="" disabled>
                   Elegí un año
                 </option>
-                {START_YEAR_OPTIONS.map((year) => (
+                {startYearOptions.map((year) => (
                   <option key={year} value={year}>
                     {year}
                   </option>

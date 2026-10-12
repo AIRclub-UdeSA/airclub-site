@@ -74,8 +74,12 @@ function fromTalk(talk: TalkItem, now: Date): CalendarActivity {
     location: talk.location || "Campus Victoria, UdeSA",
     description: talk.abstract,
     abstract: talk.abstract,
-    externalUrl: talk.cta?.url || `/talks`,
-    ctaLabel: isUp ? (talk.cta?.label || "Confirmar asistencia") : "Ver detalles",
+    // Con inscripción propia, el link abre directo el diálogo de esa charla en /talks.
+    externalUrl:
+      talk.cta?.url || (isUp && talk.registrationOpen ? `/talks?inscribir=${encodeURIComponent(talk.slug)}` : `/talks`),
+    ctaLabel: isUp
+      ? talk.cta?.label || (talk.registrationOpen ? talk.registrationLabel || "Inscribirme" : "Confirmar asistencia")
+      : "Ver detalles",
     cta: talk.cta,
     talkSlug: talk.slug,
     instructorOrSpeaker: talk.speaker ? `${talk.speaker.name} (${talk.speaker.role})` : undefined,

@@ -191,6 +191,7 @@ model Talk {
   ctaLabel           String?
   ctaUrl             String?
   registrationOpen   Boolean     @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
+  capacity           Int? // cupo de la inscripcion propia; null = sin limite
   status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
   confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
   order              Int         @default(0)

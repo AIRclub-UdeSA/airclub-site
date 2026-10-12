@@ -51,6 +51,8 @@ export type TalkItem = {
   registrationOpen: boolean;
   /** Texto del boton de inscripcion propia (viene de ctaLabel). Si no se cargo, el boton usa "Inscribirme". */
   registrationLabel?: string;
+  /** Cupo de la inscripcion propia; sin definir = sin limite. */
+  capacity?: number;
   /** true = borrador: no aparece en /talks. Solo lo ve /admin/talks. */
   draft?: boolean;
 };
@@ -119,6 +121,7 @@ export function toTalkItem(row: TalkRow): TalkItem {
     cta: row.ctaUrl ? { label: row.ctaLabel ?? "", url: row.ctaUrl } : undefined,
     registrationOpen: row.registrationOpen,
     registrationLabel: row.ctaLabel ?? undefined,
+    capacity: row.capacity ?? undefined,
     draft: row.status === "DRAFT" || undefined,
   };
 }

@@ -7,7 +7,7 @@ const ALLOWED_EMAIL_DOMAIN = "@udesa.edu.ar";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [Google],
   session: { strategy: "jwt" },
-  pages: { signIn: "/admin/login" },
+  pages: { signIn: "/admin/login", error: "/ingresar/error" },
   callbacks: {
     async signIn({ user }) {
       return !!user.email?.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
