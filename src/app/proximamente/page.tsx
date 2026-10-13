@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Wrench, Calendar, FolderGit2, Bot } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Wrench, FolderGit2, Bot } from "lucide-react";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Próximamente, AIR Club UdeSA",
-  description:
-    "Espacio en desarrollo: estamos preparando nuevas secciones, talleres y plataformas de robótica e inteligencia artificial.",
-  path: "/proximamente",
-});
+// Página de "en construcción": no tiene que aparecer en buscadores.
+export const metadata: Metadata = {
+  ...buildMetadata({
+    title: "Próximamente, AIR Club UdeSA",
+    description:
+      "Espacio en desarrollo: estamos preparando nuevas secciones, talleres y plataformas de robótica e inteligencia artificial.",
+    path: "/proximamente",
+  }),
+  robots: { index: false },
+};
 
 type SectionInfo = {
   key: string;
@@ -17,25 +21,11 @@ type SectionInfo = {
   title: string;
   tagline: string;
   description: string;
-  icon: typeof Calendar;
+  icon: typeof Wrench;
   items: string[];
 };
 
 const SECTIONS: Record<string, SectionInfo> = {
-  eventos: {
-    key: "eventos",
-    badge: "Workshops & Actividades",
-    title: "Estamos armando el calendario de talleres y encuentros",
-    tagline: "Aprender metiendo mano",
-    description:
-      "Talleres prácticos de robótica móvil, visión artificial y simulación sin requisitos previos. Conectamos cables, cargamos código y movemos motores en el Campus Victoria.",
-    icon: Calendar,
-    items: [
-      "Workshops prácticos con microcontroladores, sensores y motores",
-      "Sesiones de simulación de entornos autónomos en ROS 2 y Gazebo",
-      "Encuentros de integración para nuevos miembros del club",
-    ],
-  },
   proyectos: {
     key: "proyectos",
     badge: "Proyectos Estudiantiles",
