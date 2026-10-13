@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { getAllEventSlugs } from "@/lib/events";
-import { getRobots } from "@/lib/robots";
 import { SITE_URL } from "@/lib/seo";
 
+// Solo rutas públicas que responden 200: /proximamente y lo que redirige ahí (/plataformas, /proyectos) no van.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [eventSlugs, robots] = await Promise.all([getAllEventSlugs(), getRobots()]);
+  const eventSlugs = await getAllEventSlugs();
 
-  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/plataformas", "/equipo", "/contacto"].map((path) => ({
+  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/equipo", "/contacto"].map((path) => ({
     url: new URL(path || "/", SITE_URL).toString(),
     lastModified: new Date(),
   }));
@@ -16,10 +16,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  const robotRoutes: MetadataRoute.Sitemap = robots.map((robot) => ({
-    url: new URL(`/plataformas/${robot.slug}`, SITE_URL).toString(),
-    lastModified: new Date(),
-  }));
-
-  return [...staticRoutes, ...eventRoutes, ...robotRoutes];
+  return [...staticRoutes, ...eventRoutes];
 }

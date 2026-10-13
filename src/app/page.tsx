@@ -9,6 +9,7 @@ import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
 import { SeamRobot } from "@/components/home/SeamRobot";
 import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
+import { LegacyHashRedirect } from "@/components/home/LegacyHashRedirect";
 import { getFeaturedCountdownEvent } from "@/lib/events";
 
 // ISR, igual que /eventos y /talks: la landing se pre-renderiza como página estática y se revalida cada 60s.
@@ -25,6 +26,8 @@ export default async function HomePage() {
       {/* El hero usa las letras A/R como logo decorativo, no como texto real:
           este h1 le da a lectores de pantalla y buscadores el titulo real de la pagina. */}
       <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
+      {/* Enlaces del sitio viejo con hash (/#/equipo): ver LegacyHashRedirect. */}
+      <LegacyHashRedirect />
       <ArmHero />
       {/* El Rosmaster viaja por las uniones entre secciones (ver SeamRobot). */}
       <SeamRobot />
