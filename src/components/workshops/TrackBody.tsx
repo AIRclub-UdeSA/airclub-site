@@ -13,7 +13,13 @@ export function TrackBody({ track }: { track: WorkshopTrack }) {
   return (
     <>
       {track.guides.length > 0 && (
-        <GuideRoute guides={track.guides} totalHours={totalHoursLabel(track.guides)} back={trackHref(track.key)} />
+        <GuideRoute
+          guides={track.guides}
+          totalHours={totalHoursLabel(track.guides)}
+          back={trackHref(track.key)}
+          setupUrl={track.setupUrl}
+          repoUrl={track.repoUrl}
+        />
       )}
 
       {track.past.length > 0 && (

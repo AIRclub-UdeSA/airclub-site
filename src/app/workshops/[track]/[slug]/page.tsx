@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import {
   getWorkshopDetail,
   getWorkshopItems,
-  JAR_SITE_URL,
+  trackEntryHref,
   trackHref,
   workshopHref,
   type AsyncWorkshop,
@@ -18,10 +17,10 @@ import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgres
 import { CompletionPanel } from "@/components/workshops/CompletionPanel";
 import { SetupBlock } from "@/components/workshops/GuideRoute";
 import { LEVEL_LABEL, LevelNode } from "@/components/workshops/level";
+import { SessionMaterial } from "@/components/workshops/SessionMaterial";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 const CONTAINER = "mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12";
-const KICKER = "font-mono text-[.78rem] font-semibold uppercase tracking-[.16em] text-mauve";
 const LABEL = "font-mono text-[.7rem] uppercase tracking-[.16em] text-text3";
 
 // Se pre-renderizan todas al compilar y se revalidan cada hora (un taller pasa a "pasado" por su fecha). El progreso de
@@ -61,10 +60,11 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[tr
         <div className={CONTAINER}>
           <Link
             href={backHref(detail)}
-            className="inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
+            // Por encima del número en Anton: con `leading-[0.8]` su caja sube hasta acá y se comía el clic.
+            className="relative z-10 inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
           >
             <ArrowLeft size={14} aria-hidden="true" />
-            {detail.track.title}
+            {skipsTrackPage(detail) ? "Todos los workshops" : detail.track.title}
           </Link>
         </div>
 
@@ -74,7 +74,12 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[tr
   );
 }
 
+// Si el workshop tiene un solo taller, su caja lleva directo acá (trackEntryHref): "volver" va a esa caja y no a la página
+// intermedia del workshop, que se salteó al entrar.
+const skipsTrackPage = (detail: WorkshopDetail) => trackEntryHref(detail.track) !== trackHref(detail.track.key);
+
 function backHref(detail: WorkshopDetail) {
+  if (skipsTrackPage(detail)) return `/workshops#workshop-${detail.track.key}`;
   const anchor = detail.kind === "guide" ? `semana-${detail.guide.week}` : `taller-${detail.workshop.slug}`;
   return `${trackHref(detail.track.key)}#${anchor}`;
 }
@@ -87,10 +92,7 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
   return (
     <>
       <header className={`${CONTAINER} mt-10 md:mt-14`}>
-        <p className={KICKER}>
-          {track.title} · Semana {w.week}
-        </p>
-        <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-4">
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
           <span className="font-logo text-[clamp(6rem,16vw,14rem)] leading-[0.8] text-crimson-text" aria-hidden="true">
             {w.week}
           </span>
@@ -120,27 +122,31 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
               <ArrowUpRight size={15} aria-hidden="true" />
               {NEW_TAB_HINT}
             </a>
-            <a
-              href={w.codeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-text px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-text transition-colors hover:border-crimson hover:bg-crimson hover:text-white"
-            >
-              <span>Ver el código</span>
-              <ArrowUpRight size={15} aria-hidden="true" />
-              {NEW_TAB_HINT}
-            </a>
+            {w.codeUrl && (
+              <a
+                href={w.codeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-text px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-text transition-colors hover:border-crimson hover:bg-crimson hover:text-white"
+              >
+                <span>Ver el código</span>
+                <ArrowUpRight size={15} aria-hidden="true" />
+                {NEW_TAB_HINT}
+              </a>
+            )}
           </div>
           <p className="mt-4 max-w-[56ch] text-[.92rem] leading-[1.65] text-text3">
-            La guía paso a paso está en el sitio del Challenge JAR; el código, en el repositorio jar_workshops.
+            {w.codeUrl ? "La guía paso a paso y el código se abren en otra pestaña." : "La guía paso a paso se abre en otra pestaña."}
           </p>
 
-          <SetupBlock
-            ros2Package={w.ros2Package}
-            caption={w.week === "01" ? "Antes de empezar" : `Compilar la semana ${w.week}`}
-            clone={w.week === "01"}
-            className="mt-10 block"
-          />
+          {w.ros2Package && (
+            <SetupBlock
+              ros2Package={w.ros2Package}
+              caption={prev ? `Compilar la semana ${w.week}` : "Antes de empezar"}
+              repoUrl={prev ? undefined : track.repoUrl}
+              className="mt-10 block"
+            />
+          )}
         </div>
 
         <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
@@ -158,34 +164,40 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
                 {LEVEL_LABEL[w.level]}
               </span>
             </Fact>
-            <Fact label="Paquete">
-              <code className="font-mono text-[.9rem] [overflow-wrap:anywhere]">{w.ros2Package}</code>
-            </Fact>
-            <Fact label="Necesitás">
-              <ul className="flex flex-col gap-1">
-                <li>
-                  <a
-                    href={`${JAR_SITE_URL}/setup/`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline decoration-text/30 underline-offset-4 transition-colors hover:text-crimson-text"
-                  >
-                    El setup del simulador
-                    {NEW_TAB_HINT}
-                  </a>
-                </li>
-                {requires.map((r) => (
-                  <li key={r.slug}>
-                    <Link
-                      href={workshopHref(r)}
-                      className="underline decoration-text/30 underline-offset-4 transition-colors hover:text-crimson-text"
-                    >
-                      {r.week} · {r.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </Fact>
+            {w.ros2Package && (
+              <Fact label="Paquete">
+                <code className="font-mono text-[.9rem] [overflow-wrap:anywhere]">{w.ros2Package}</code>
+              </Fact>
+            )}
+            {(track.setupUrl || requires.length > 0) && (
+              <Fact label="Necesitás">
+                <ul className="flex flex-col gap-1">
+                  {track.setupUrl && (
+                    <li>
+                      <a
+                        href={track.setupUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-text/30 underline-offset-4 transition-colors hover:text-crimson-text"
+                      >
+                        El setup del simulador
+                        {NEW_TAB_HINT}
+                      </a>
+                    </li>
+                  )}
+                  {requires.map((r) => (
+                    <li key={r.slug}>
+                      <Link
+                        href={workshopHref(r)}
+                        className="underline decoration-text/30 underline-offset-4 transition-colors hover:text-crimson-text"
+                      >
+                        {r.week} · {r.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Fact>
+            )}
           </dl>
         </aside>
       </div>
@@ -239,60 +251,44 @@ function Neighbor({ guide, dir }: { guide: AsyncWorkshop; dir: "prev" | "next" }
 
 /* ---------- Taller presencial que ya pasó ---------- */
 
+/**
+ * Con el formato de una charla de /talks: arriba el número del taller en Anton (como el número de semana en una guía) y
+ * debajo el material (fotos, Resumen / Diapositivas / Video). Al costado, marcarlo como hecho y los datos, con la fecha.
+ */
 function PastDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "past" }> }) {
   const { workshop: w, track } = detail;
+  // Por orden cronológico dentro del workshop: el primero que se hizo es el 01, así el número no cambia al sumar talleres.
+  // Los que todavía no tienen fecha van al final.
+  const time = (p: { startsAt?: string }) => (p.startsAt ? Date.parse(p.startsAt) : Infinity);
+  const number = String([...track.past].sort((a, b) => time(a) - time(b)).findIndex((p) => p.slug === w.slug) + 1).padStart(2, "0");
 
   return (
     <>
       <header className={`${CONTAINER} mt-10 md:mt-14`}>
-        <p className={KICKER}>{track.title} · Taller presencial</p>
-        <h1 className="mt-4 max-w-[18ch] font-display text-[clamp(1.8rem,6vw,5rem)] font-black uppercase leading-[0.98] tracking-tight text-text [overflow-wrap:anywhere]">
-          {w.title}
-        </h1>
+        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+          <span className="font-logo text-[clamp(6rem,16vw,14rem)] leading-[0.8] text-crimson-text" aria-hidden="true">
+            {number}
+          </span>
+          <h1 className="min-w-0 pb-2 font-display text-[clamp(1.6rem,5.4vw,4.4rem)] font-black uppercase leading-[0.98] tracking-tight text-text [overflow-wrap:anywhere]">
+            <span className="sr-only">Taller {number}: </span>
+            {w.title}
+          </h1>
+        </div>
       </header>
 
       <div className={`${CONTAINER} mt-12 grid grid-cols-1 gap-12 md:mt-16 lg:grid-cols-12 lg:gap-4`}>
         <div className="min-w-0 lg:col-span-7">
-          <figure className="relative aspect-[16/10] overflow-hidden border border-text bg-bg2">
-            {w.imageUrl ? (
-              <Image
-                src={w.imageUrl}
-                alt={`Registro del taller ${w.title}`}
-                fill
-                sizes="(min-width: 1024px) 58vw, 100vw"
-                loading="eager"
-                fetchPriority="high"
-                className="object-cover"
-              />
-            ) : (
-              <div className="talk-hatch absolute inset-0 text-text" aria-hidden="true" />
-            )}
-          </figure>
-          <p className="mt-8 max-w-[62ch] text-[1.1rem] leading-[1.7] text-text2">{w.summary}</p>
-          {w.url && (
-            <a
-              href={w.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 inline-flex items-center gap-2 rounded-full border border-text px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-text transition-colors hover:border-crimson hover:bg-crimson hover:text-white"
-            >
-              <span>{w.urlLabel ?? "Material del taller"}</span>
-              <ArrowUpRight size={15} aria-hidden="true" />
-              {NEW_TAB_HINT}
-            </a>
-          )}
+          <SessionMaterial workshop={w} />
         </div>
 
         <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
           <CompletionPanel slug={w.slug} href={workshopHref(w)} question="¿Viniste?" />
 
-          {(w.startsAt || w.location || w.instructor) && (
-            <dl className="grid grid-cols-1 border-t border-text">
-              {w.startsAt && <Fact label="Fecha">{talkDateText(w.startsAt, w.dateLabel)}</Fact>}
-              {w.location && <Fact label="Lugar">{w.location}</Fact>}
-              {w.instructor && <Fact label="A cargo de">{w.instructor}</Fact>}
-            </dl>
-          )}
+          <dl className="grid grid-cols-1 border-t border-text">
+            <Fact label="Fecha">{w.startsAt ? talkDateText(w.startsAt, w.dateLabel) : (w.dateLabel ?? "Taller presencial")}</Fact>
+            {w.location && <Fact label="Lugar">{w.location}</Fact>}
+            {w.instructor && <Fact label="A cargo de">{w.instructor}</Fact>}
+          </dl>
         </aside>
       </div>
     </>

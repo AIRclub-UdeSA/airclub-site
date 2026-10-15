@@ -44,7 +44,8 @@ export default async function TrackPage({ params }: PageProps<"/workshops/[track
         <div className={CONTAINER}>
           <Link
             href={`/workshops#workshop-${track.key}`}
-            className="inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
+            // Por encima del número en Anton: con `leading-[0.8]` su caja sube hasta acá y se comía el clic.
+            className="relative z-10 inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
           >
             <ArrowLeft size={14} aria-hidden="true" />
             Todos los workshops
@@ -52,11 +53,7 @@ export default async function TrackPage({ params }: PageProps<"/workshops/[track
         </div>
 
         <header className={`${CONTAINER} mt-10 md:mt-14`}>
-          <p className="font-mono text-[.78rem] font-semibold uppercase tracking-[.16em] text-mauve">
-            Workshop {String(index + 1).padStart(2, "0")}
-            {track.label && ` · ${track.label}`}
-          </p>
-          <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-4">
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
             <span className="font-logo text-[clamp(6rem,16vw,14rem)] leading-[0.8] text-crimson-text" aria-hidden="true">
               {String(index + 1).padStart(2, "0")}
             </span>

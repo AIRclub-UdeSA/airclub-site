@@ -59,7 +59,7 @@ export function CompletionPanel({
   if (done) {
     return (
       <section className="border border-text/15 p-6 text-text3 sm:p-8">
-        <p className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em]">
+        <p className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em] text-text2">
           <Check size={11} aria-hidden="true" /> Hecho
         </p>
         <p className="mt-4 max-w-[46ch] text-[.98rem] leading-[1.65]">Lo marcaste como hecho. Ya cuenta en tu aprendizaje.</p>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
-import { workshopHref, type AsyncWorkshop } from "@/lib/workshops";
+import type { AsyncWorkshop, WorkshopLevel } from "@/lib/workshops";
+import { workshopHref } from "@/lib/workshop-href";
 import { routeStates, type StepState } from "@/lib/workshop-progress";
 import { useWorkshopProgress } from "./WorkshopProgress";
 import { LEVEL_LABEL, LevelNode } from "./level";
@@ -13,22 +14,37 @@ const STRETCH = "after:absolute after:inset-0 after:content-['']";
 /**
  * Las paradas de la ruta. Cada tarjeta es grande y entera es un enlace a la página del workshop. El color sigue el
  * progreso de la persona: lo hecho pasa a gris claro y el primero que le falta va en carmesí macizo ("Seguí acá"). Sin
- * sesión, o mientras carga, la 01 es la que va en carmesí ("Empezá acá").
+ * sesión, la 01 es la que va en carmesí ("Empezá acá"). Mientras carga, ninguna: si no, se veía la 01 en carmesí y
+ * después saltaba al progreso real.
  */
 export function RouteSteps({ guides }: { guides: AsyncWorkshop[] }) {
-  const { completed } = useWorkshopProgress();
+  const { status, completed } = useWorkshopProgress();
   const slugs = guides.map((g) => g.slug);
-  const states = routeStates(slugs, completed);
+  const states = status === "loading" ? new Map<string, StepState>() : routeStates(slugs, completed);
   const started = slugs.some((s) => completed.has(s));
 
   return (
-    <ol className="relative mt-12 grid min-w-0 grid-cols-1 gap-3 md:mt-16">
-      {/* La ruta: una línea de 1px que une los nodos de todas las semanas. */}
-      <span className="absolute bottom-8 left-[6px] top-8 w-px bg-text/30" aria-hidden="true" />
-      {guides.map((w) => (
-        <RouteStop key={w.slug} workshop={w} state={states.get(w.slug) ?? "todo"} started={started} />
-      ))}
-    </ol>
+    <div className="mt-12 md:mt-16">
+      {/* La leyenda va pegada a la ruta: sus cuadrados quedan en la misma columna que los nodos que explica. */}
+      <dl className="flex flex-wrap gap-x-6 gap-y-3 font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
+        {(Object.keys(LEVEL_LABEL) as WorkshopLevel[]).map((level) => (
+          <div key={level} className="flex items-center gap-2">
+            <dt>
+              <LevelNode level={level} />
+            </dt>
+            <dd>{LEVEL_LABEL[level]}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <ol className="relative mt-6 grid min-w-0 grid-cols-1 gap-3">
+        {/* La ruta: una línea de 1px que une los nodos de todas las semanas. */}
+        <span className="absolute bottom-8 left-[6px] top-8 w-px bg-text/30" aria-hidden="true" />
+        {guides.map((w) => (
+          <RouteStop key={w.slug} workshop={w} state={states.get(w.slug) ?? "todo"} started={started} />
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -76,7 +92,7 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
               </span>
             )}
             {done && (
-              <span className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em]">
+              <span className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em] text-text2">
                 <Check size={11} aria-hidden="true" /> Hecho
               </span>
             )}
@@ -96,7 +112,7 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
           <p className={`flex flex-wrap gap-x-4 gap-y-1 font-mono text-[.72rem] uppercase tracking-[.14em] ${muted}`}>
             <span>{w.durationLabel}</span>
             <span>{LEVEL_LABEL[w.level]}</span>
-            <span className="normal-case tracking-normal [overflow-wrap:anywhere]">{w.ros2Package}</span>
+            {w.ros2Package && <span className="normal-case tracking-normal [overflow-wrap:anywhere]">{w.ros2Package}</span>}
           </p>
 
           {w.requires.length > 0 && (

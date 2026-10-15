@@ -1,25 +1,32 @@
-// Workshops asincrónicos del Challenge JAR 2026. La guía completa de cada uno vive en el sitio del JAR
-// (https://airclub-udesa.github.io/jar_site/workshops/) y el código en el repo jar_workshops; acá solo va lo que
-// necesita /workshops para presentarlos. Título, resumen, resultado, duración, nivel y prerequisitos salen del frontmatter de
-// cada guía (src/content/docs/workshops/semana-NN-*.md en jar_site): si cambian allá, actualizarlos acá.
+// Contenido inicial de /workshops. La fuente de verdad es la base: los workshops, sus guías y sus talleres presenciales se
+// editan desde /admin/workshops. Esto solo sirve para poblar una base vacía (`npm run db:seed`, que crea lo que falta y no
+// pisa nada) y como respaldo cuando no hay base (el build de CI con credenciales de mentira), igual que las charlas.
+//
+// Las guías son las del Challenge JAR 2026: la guía completa de cada una vive en el sitio del JAR
+// (https://airclub-udesa.github.io/jar_site/workshops/) y el código en el repo jar_workshops. Título, resumen, resultado,
+// duración, nivel y prerequisitos salen del frontmatter de cada guía (src/content/docs/workshops/semana-NN-*.md en jar_site).
+
+import type { TalkMedia, TalkSlide } from "./talks";
 
 export type WorkshopLevel = "inicial" | "intermedio" | "avanzado";
 
-/**
- * Workshop (o línea): cada uno es una caja en /workshops y tiene su página, /workshops/<key>, con sus talleres adentro.
- * El orden de `tracks` es el orden de las cajas (el recorrido sugerido). Para sumar un workshop, agregarlo acá.
- */
-export type WorkshopTrackKey = "linux" | "ros2";
-
+/** Workshop (o línea): cada uno es una caja en /workshops y tiene su página, /workshops/<key>, con sus talleres adentro. */
 export type SeedWorkshopTrack = {
   /** Va en la URL (/workshops/<key>): no cambiarlo una vez publicado. */
-  key: WorkshopTrackKey;
+  key: string;
   title: string;
-  /** Nota mono junto al título ("Challenge JAR 2026"). */
+  /** Nota mono en la caja ("Challenge JAR 2026"). */
   label?: string;
   /** De qué se trata, en una o dos frases: va en la caja y arriba de su página. */
   summary: string;
+  /** Guía de instalación que piden sus guías asincrónicas. */
+  setupUrl?: string;
+  /** Repositorio que se clona antes de la primera guía. */
+  repoUrl?: string;
 };
+
+export const JAR_SITE_URL = "https://airclub-udesa.github.io/jar_site";
+export const JAR_WORKSHOPS_REPO = "https://github.com/AIRclub-UdeSA/jar_workshops";
 
 export const tracks: SeedWorkshopTrack[] = [
   {
@@ -33,21 +40,32 @@ export const tracks: SeedWorkshopTrack[] = [
     label: "Challenge JAR 2026",
     summary:
       "Un recorrido asincrónico para hacer a tu ritmo con el simulador, desde tu primer nodo de ROS 2 hasta navegar un laberinto con Nav2.",
+    setupUrl: `${JAR_SITE_URL}/setup/`,
+    repoUrl: JAR_WORKSHOPS_REPO,
   },
 ];
 
 /**
- * Taller presencial que ya se hizo y no está cargado como evento (por ejemplo, porque todavía falta la fecha o las
- * fotos). Los que tienen fecha pueden ir en prisma/seed-data/events.ts con `category: "workshop"` y su `track`.
+ * Taller presencial que ya se hizo, con el mismo material que una charla de /talks. Los que vienen (con fecha y botón para
+ * inscribirse) son eventos de categoría "workshop" en prisma/seed-data/events.ts.
  */
 export type SeedPastWorkshop = {
+  /** Con esto se guarda quién lo hizo: no cambiarlo una vez publicado. */
   slug: string;
-  track: WorkshopTrackKey;
+  track: string;
   title: string;
   summary: string;
   startsAt?: Date;
-  /** Foto del taller (en public/ o en el bucket de Supabase). */
-  imageUrl?: string;
+  endsAt?: Date;
+  dateLabel?: string;
+  location?: string;
+  instructor?: string;
+  /** Grabación completa, si existe: siempre un link externo de YouTube. */
+  recordingUrl?: string;
+  /** Fotos y videos, en orden. La primera foto es la de su tarjeta. */
+  media?: TalkMedia[];
+  slides?: TalkSlide[];
+  links?: { label: string; url: string }[];
 };
 
 export const pastWorkshops: SeedPastWorkshop[] = [
@@ -55,12 +73,26 @@ export const pastWorkshops: SeedPastWorkshop[] = [
     slug: "instalacion-linux",
     track: "linux",
     title: "Instalación de Linux",
-    summary: "Instalamos Linux en las laptops de quienes vinieron, para dejarlas listas para trabajar con el club.",
+    summary:
+      "Instalamos Ubuntu en las laptops de quienes vinieron, junto a Windows (dual boot), para dejarlas listas para trabajar con ROS 2 y con los robots del club. Arrancamos por qué es Linux, qué es una distribución y por qué elegimos Ubuntu LTS; después preparamos Windows (BitLocker, inicio rápido y espacio en el disco), entramos a la BIOS/UEFI e hicimos la instalación paso a paso.\n\n" +
+      "En la segunda parte, con Ubuntu ya andando, revisamos que funcionaran Wi-Fi, Bluetooth, pantalla, audio y cámara, y que se pudiera abrir el disco de Windows. Después aprendimos a movernos por la terminal y a entender los permisos, a instalar programas con APT y Snap y a mirar recursos y drivers; escribimos un primer script en Bash, compilamos un programa en C y dejamos VS Code configurado.",
+    // Sin hora: es el día del taller (17/09), como una charla cargada sin horario.
+    startsAt: new Date("2026-09-17T00:00:00-03:00"),
+    endsAt: new Date("2026-09-17T23:59:00-03:00"),
+    media: [{ type: "image", src: "/workshops/linux/taller.jpg" }],
+    slides: [
+      {
+        title: "Taller de instalación de Linux",
+        // Link de solo lectura de Canva: `?embed` es la versión que se puede incrustar.
+        embedUrl: "https://www.canva.com/design/DAHVaHDVqqY/ArxZp2QEAciibps9eynt7w/view?embed",
+        openUrl: "https://www.canva.com/design/DAHVaHDVqqY/ArxZp2QEAciibps9eynt7w/view",
+      },
+    ],
   },
 ];
 
 export type SeedAsyncWorkshop = {
-  track: WorkshopTrackKey;
+  track: string;
   /** Número de semana, "01" a "09". Es el numeral grande de la página. */
   week: string;
   /** Carpeta en jar_workshops y ruta de la guía en jar_site ("semana-01-talkers-listeners"). */
@@ -74,15 +106,23 @@ export type SeedAsyncWorkshop = {
   minutes: [number, number];
   level: WorkshopLevel;
   /** Paquete ROS 2 que se compila esa semana. */
-  ros2Package: string;
+  ros2Package?: string;
   /** Semanas que hay que tener hechas antes (además del setup del simulador, que vale para todas). */
   requires: string[];
+  /** La guía completa. */
+  guideUrl: string;
+  /** Su código. */
+  codeUrl?: string;
 };
 
-export const JAR_SITE_URL = "https://airclub-udesa.github.io/jar_site";
-export const JAR_WORKSHOPS_REPO = "https://github.com/AIRclub-UdeSA/jar_workshops";
+// Las guías del JAR: la guía está en jar_site y el código en jar_workshops, las dos en una carpeta con el slug.
+const jarUrls = (slug: string) => ({
+  guideUrl: `${JAR_SITE_URL}/workshops/${slug}/`,
+  codeUrl: `${JAR_WORKSHOPS_REPO}/tree/main/${slug}`,
+});
 
-export const asyncWorkshops: SeedAsyncWorkshop[] = [
+export const asyncWorkshops: SeedAsyncWorkshop[] = (
+  [
   {
     track: "ros2",
     week: "01",
@@ -191,4 +231,5 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = [
     ros2Package: "nav2_bringup",
     requires: ["06"],
   },
-];
+] satisfies Omit<SeedAsyncWorkshop, "guideUrl" | "codeUrl">[]
+).map((w) => ({ ...w, ...jarUrls(w.slug) }));

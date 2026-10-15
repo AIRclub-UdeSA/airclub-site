@@ -34,13 +34,20 @@ const CARD: Record<StepState, string> = {
  */
 export function TrackBoxes({ tracks }: { tracks: TrackBox[] }) {
   const { status, completed } = useWorkshopProgress();
-  const states = trackStates(tracks, completed);
+  // Mientras carga, ninguna caja destacada (como la ruta): si no, se veía la 01 en carmesí y después saltaba.
+  const states = status === "loading" ? new Map<string, StepState>() : trackStates(tracks, completed);
   const started = tracks.some((t) => t.slugs.some((s) => completed.has(s)));
 
   return (
-    // En escritorio cada fila mide al menos un tercio del ancho (cajas cuadradas) y crece si el contenido no entra.
+    // En escritorio cada fila mide al menos un tercio del ancho (cajas cuadradas) y crece si el contenido no entra. Con dos
+    // workshops van en dos columnas: en tres quedaba un hueco a la derecha que se leía como incompleto. La fila sigue
+    // midiendo un tercio, así las dos cajas no se vuelven cuadrados gigantes.
     <div className="@container min-w-0">
-      <ol className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)]">
+      <ol
+        className={`grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)] ${
+          tracks.length === 2 ? "" : "lg:grid-cols-3"
+        }`}
+      >
         {tracks.map((t, i) => (
           <Box
             key={t.key}
@@ -93,7 +100,7 @@ function Box({
             </span>
           )}
           {done && (
-            <span className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em]">
+            <span className="inline-flex -rotate-3 items-center gap-1 border border-text/30 px-2 py-1 font-mono text-[.66rem] font-semibold uppercase tracking-[.18em] text-text2">
               <Check size={11} aria-hidden="true" /> Completo
             </span>
           )}
