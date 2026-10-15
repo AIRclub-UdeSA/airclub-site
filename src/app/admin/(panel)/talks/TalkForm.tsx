@@ -5,13 +5,13 @@ import { createTalk, discardTalkUploads, prepareTalkUploads, updateTalk, validat
 import { FileField } from "./FileField";
 import { ListEditor } from "./ListEditor";
 import { uploadToSignedUrl } from "@/lib/admin/upload-client";
-import type { MediaItem, SlideItem, LinkItem } from "./types";
+import type { MediaItem, SlideItem, LinkItem, SpeakerItem } from "./types";
 import { PENDING_PREFIX } from "@/lib/upload-rules";
 
 const PENDING_PATTERN = new RegExp(`${PENDING_PREFIX}[0-9a-f-]{36}`, "g");
 
 /** Copia del FormData con cada marcador de archivo pendiente reemplazado por su URL ya subida
- * (los marcadores aparecen sueltos, como en speakerAvatar, o dentro del JSON de media). */
+ * (los marcadores van dentro del JSON de oradores y de media). */
 function withUploadedUrls(formData: FormData, urls: Map<string, string>): FormData {
   const next = new FormData();
   for (const [key, value] of formData) {
@@ -28,12 +28,7 @@ export type EditingTalk = {
   abstract: string;
   topic: string | null;
   location: string | null;
-  speakerName: string | null;
-  speakerRole: string | null;
-  speakerAffiliation: string | null;
-  speakerAvatar: string | null;
-  speakerLinkedin: string | null;
-  speakerBio: string | null;
+  speakers: SpeakerItem[];
   startsAt: Date | null;
   endsAt: Date | null;
   dateLabel: string | null;
@@ -114,7 +109,6 @@ export function TalkForm({
   const titleRef = useRef<HTMLInputElement>(null);
   const slugRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
-  const [speakerAvatar, setSpeakerAvatar] = useState(values?.speakerAvatar ?? "");
   const [multiDay, setMultiDay] = useState(() => isDifferentDay(values?.startsAt ?? null, values?.endsAt ?? null));
 
   // Mientras sube, cerrar la pestaña cortaría la subida a la mitad: el navegador pide confirmación.
@@ -287,64 +281,75 @@ export function TalkForm({
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-mono text-xs uppercase tracking-wide text-text3">Orador</legend>
-        <div className="flex flex-wrap gap-3">
-          <label className={labelClass}>
-            Nombre
-            <input type="text" name="speakerName" defaultValue={values?.speakerName ?? ""} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            Rol
-            <input
-              type="text"
-              name="speakerRole"
-              placeholder="Investigador LINAR y Docente UdeSA"
-              defaultValue={values?.speakerRole ?? ""}
-              className={inputClass}
-            />
-          </label>
-          <label className={labelClass}>
-            Afiliación
-            <input
-              type="text"
-              name="speakerAffiliation"
-              placeholder="Laboratorio de Inteligencia Artificial y Robótica (LINAR)"
-              defaultValue={values?.speakerAffiliation ?? ""}
-              className={inputClass}
-            />
-          </label>
-          <div className={labelClass}>
-            Foto
-            <FileField
-              name="speakerAvatar"
-              kind="image"
-              value={speakerAvatar}
-              onChange={setSpeakerAvatar}
-              pickLabel="Elegir foto"
-              placeholder="https://…"
-              storagePrefix={storagePrefix}
-              pickFile={pickFile}
-              pendingFile={pendingFile}
-            />
-          </div>
-          <label className={labelClass}>
-            LinkedIn
-            <input type="url" name="speakerLinkedin" defaultValue={values?.speakerLinkedin ?? ""} className={inputClass} />
-          </label>
-          <label className="flex w-full flex-col gap-1 text-sm text-text2">
-            Bio del orador
-            <textarea
-              name="speakerBio"
-              rows={3}
-              defaultValue={values?.speakerBio ?? ""}
-              placeholder="Trayectoria o resumen biográfico del orador..."
-              className={inputClass}
-            />
-          </label>
-        </div>
+        <legend className="font-mono text-xs uppercase tracking-wide text-text3">Oradores (el primero es el que se ve en el hero y en las tarjetas)</legend>
+        <ListEditor<SpeakerItem>
+          name="speakers"
+          initialItems={values?.speakers ?? []}
+          makeEmpty={() => ({ name: "", role: "", affiliation: "", avatar: "", linkedin: "", bio: "" })}
+          addLabel="+ Agregar orador"
+          emptyLabel="Sin oradores todavía (se muestra “Orador a confirmar”)."
+          renderRow={(item, update) => (
+            <>
+              <div className="flex w-full flex-wrap gap-3">
+                <label className={labelClass}>
+                  Nombre
+                  <input type="text" required value={item.name} onChange={(e) => update({ name: e.target.value })} className={inputClass} />
+                </label>
+                <label className={labelClass}>
+                  Rol
+                  <input
+                    type="text"
+                    placeholder="Investigador LINAR y Docente UdeSA"
+                    value={item.role}
+                    onChange={(e) => update({ role: e.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+                <label className={labelClass}>
+                  Afiliación
+                  <input
+                    type="text"
+                    placeholder="Laboratorio de Inteligencia Artificial y Robótica (LINAR)"
+                    value={item.affiliation}
+                    onChange={(e) => update({ affiliation: e.target.value })}
+                    className={inputClass}
+                  />
+                </label>
+                <div className={labelClass}>
+                  Foto
+                  <FileField
+                    kind="image"
+                    value={item.avatar}
+                    onChange={(avatar) => update({ avatar })}
+                    pickLabel="Elegir foto"
+                    placeholder="https://…"
+                    storagePrefix={storagePrefix}
+                    pickFile={pickFile}
+                    pendingFile={pendingFile}
+                  />
+                </div>
+                <label className={labelClass}>
+                  LinkedIn
+                  <input type="url" value={item.linkedin} onChange={(e) => update({ linkedin: e.target.value })} className={inputClass} />
+                </label>
+                <label className="flex w-full flex-col gap-1 text-sm text-text2">
+                  Bio del orador
+                  <textarea
+                    rows={3}
+                    value={item.bio}
+                    onChange={(e) => update({ bio: e.target.value })}
+                    placeholder="Trayectoria o resumen biográfico del orador..."
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+            </>
+          )}
+        />
         <p className="text-xs text-text3">
-          Rol = el cargo/título de la persona (se ve en rojo debajo del nombre). Afiliación = a qué institución/laboratorio/empresa
-          pertenece (se ve más chico, debajo del rol) — es opcional, se puede dejar vacío.
+          Rol = el cargo/título de la persona (se ve en rojo debajo del nombre). Afiliación = a qué institución/laboratorio/empresa/proyecto
+          pertenece (se ve más chico, debajo del rol) — es opcional. Con más de un orador, las tarjetas muestran al primero y &ldquo;y N
+          más&rdquo;; el detalle de la charla los lista a todos.
         </p>
       </fieldset>
 
