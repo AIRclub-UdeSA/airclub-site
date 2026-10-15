@@ -5,12 +5,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { getWorkshopItems, workshopHref } from "@/lib/workshops";
+import { completionsOf, setCompletion } from "@/lib/workshop-completions";
 
 export type ProgressResult = { signedIn: false } | { signedIn: true; completed: string[] };
 
+/** Lo marcado a mano más los presenciales terminados con inscripción (#70). */
 async function completedOf(email: string): Promise<string[]> {
-  const rows = await prisma.workshopCompletion.findMany({ where: { email }, select: { workshopSlug: true } });
-  return rows.map((r) => r.workshopSlug);
+  return [...(await completionsOf(email)).keys()];
 }
 
 /**
@@ -38,15 +39,7 @@ export async function setWorkshopDoneAction(slug: string, done: boolean): Promis
   const profile = await prisma.userProfile.findUnique({ where: { email }, select: { email: true } });
   if (!profile) redirect(`/perfil/completar?next=${encodeURIComponent(workshopHref(item))}`);
 
-  if (done) {
-    await prisma.workshopCompletion.upsert({
-      where: { email_workshopSlug: { email, workshopSlug: slug } },
-      create: { email, workshopSlug: slug },
-      update: {},
-    });
-  } else {
-    await prisma.workshopCompletion.deleteMany({ where: { email, workshopSlug: slug } });
-  }
+  await setCompletion(email, slug, done);
 
   revalidatePath("/perfil/aprendizaje");
   return { signedIn: true, completed: await completedOf(email) };

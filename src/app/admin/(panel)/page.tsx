@@ -37,7 +37,7 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
   {
     href: "/admin/comunidad",
     title: "Comunidad",
-    description: "Perfiles públicos creados en el sitio y quién se inscribió a cada charla.",
+    description: "Perfiles públicos creados en el sitio y quién se inscribió a cada charla y a cada taller.",
     section: null,
   },
 ];

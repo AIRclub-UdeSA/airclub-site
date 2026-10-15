@@ -2,8 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Calendar, Check, X } from "lucide-react";
-import type { TimelineTalk } from "./TalksTimeline";
-import { buildGoogleCalendarUrl } from "@/lib/calendar-types";
+import { buildGoogleCalendarUrl, type SchedulableActivity } from "@/lib/calendar-types";
 import {
   cancelTalkRegistrationAction,
   registerForTalkAction,
@@ -11,10 +10,22 @@ import {
   type RegisterResult,
 } from "@/app/talks/register-actions";
 
+/** Lo que se inscribe: una charla de /talks o un taller presencial de /workshops (#70), con el mismo diálogo. */
+type Kind = "charla" | "taller";
+
+const COPY: Record<Kind, { to: string; this: string }> = {
+  charla: { to: "a la charla", this: "a esta charla" },
+  taller: { to: "al taller", this: "a este taller" },
+};
+
 interface TalkRegisterDialogProps {
-  talk: TimelineTalk | null;
+  talk: (SchedulableActivity & { slug: string; title: string }) | null;
   isOpen: boolean;
   onClose: () => void;
+  /** Por defecto, una charla con las acciones de /talks. */
+  kind?: Kind;
+  register?: (slug: string) => Promise<RegisterResult>;
+  cancel?: (slug: string) => Promise<CancelResult>;
 }
 
 // Mismo timing que TalkModal.tsx (.talk-modal[data-closing] en globals.css): reusa esas
@@ -23,7 +34,14 @@ const CLOSE_MS = 200;
 
 type Status = "confirm" | "pending" | "error" | RegisterResult["status"] | CancelResult["status"];
 
-export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialogProps) {
+export function TalkRegisterDialog({
+  talk,
+  isOpen,
+  onClose,
+  kind = "charla",
+  register = registerForTalkAction,
+  cancel = cancelTalkRegistrationAction,
+}: TalkRegisterDialogProps) {
   const [status, setStatus] = useState<Status>("confirm");
   // Qué reintenta "Reintentar" si falla la red o el servidor: inscribirse o cancelar.
   const [failedAction, setFailedAction] = useState<"register" | "cancel">("register");
@@ -72,7 +90,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
   async function handleConfirm() {
     setStatus("pending");
     try {
-      const result = await registerForTalkAction(talk!.slug);
+      const result = await register(talk!.slug);
       setStatus(result.status);
     } catch {
       setFailedAction("register");
@@ -83,7 +101,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
   async function handleCancelRegistration() {
     setCancelling(true);
     try {
-      const result = await cancelTalkRegistrationAction(talk!.slug);
+      const result = await cancel(talk!.slug);
       setStatus(result.status);
     } catch {
       setFailedAction("cancel");
@@ -122,7 +140,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
         {status === "confirm" || status === "pending" ? (
           <>
             <h2 id={titleId} className="pr-10 font-display text-[1.3rem] font-bold leading-tight text-text">
-              Te estás inscribiendo a la charla &ldquo;{talk.title}&rdquo;
+              Te estás inscribiendo {COPY[kind].to} &ldquo;{talk.title}&rdquo;
             </h2>
             <div className="flex items-center gap-3 pt-1">
               <button
@@ -160,7 +178,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
           <>
             <h2 id={titleId} className="pr-10 font-display text-[1.15rem] font-bold text-text">
               {status === "closed"
-                ? "La inscripción a esta charla está cerrada"
+                ? `La inscripción ${COPY[kind].this} está cerrada`
                 : status === "full"
                   ? "No quedan lugares"
                   : "Cancelaste tu inscripción"}

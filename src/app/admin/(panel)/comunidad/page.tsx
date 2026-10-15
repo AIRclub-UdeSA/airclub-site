@@ -38,7 +38,7 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
   const params = await searchParams;
   const charlaSlug = firstParam(params.charla);
 
-  const [profiles, talksWithRegistrations, registrableTalks] = await Promise.all([
+  const [profiles, talksWithRegistrations, registrableTalks, workshopsWithRegistrations] = await Promise.all([
     prisma.userProfile.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.talk.findMany({
       where: { registrations: { some: {} }, ...(charlaSlug && { slug: charlaSlug }) },
@@ -51,6 +51,12 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       select: { slug: true, title: true },
       orderBy: { title: "asc" },
     }),
+    // Talleres presenciales con inscriptos (#70), el más reciente primero.
+    prisma.workshopSession.findMany({
+      where: { registrations: { some: {} } },
+      include: { registrations: { orderBy: { createdAt: "desc" } }, track: { select: { title: true } } },
+      orderBy: { startsAt: "desc" },
+    }),
   ]);
 
   // Inscripción y perfil se unen por email (no hay relación en el schema). Los perfiles ya están cargados arriba.
@@ -61,7 +67,8 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       <div>
         <h2 className="font-display text-xl font-bold text-text">Comunidad</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Personas con perfil público creado en el sitio, y quién se inscribió a cada AIR Talk. Solo lectura: nada acá se edita ni se borra.
+          Personas con perfil público creado en el sitio, y quién se inscribió a cada AIR Talk y a cada taller presencial. Solo lectura:
+          nada acá se edita ni se borra.
         </p>
       </div>
 
@@ -144,6 +151,46 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                           <p className="text-sm text-text2">
                             {r.email}
                             {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
+                          </p>
+                          {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
+                        </div>
+                        <span className="shrink-0 font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h3 className="font-display text-lg font-bold text-text">Inscriptos por taller</h3>
+        {workshopsWithRegistrations.length === 0 ? (
+          <p className="text-sm text-text3">Todavía no hay inscriptos en ningún taller presencial.</p>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {workshopsWithRegistrations.map((w) => (
+              <div key={w.id} className="flex flex-col gap-2">
+                <p className="text-sm font-medium text-text">
+                  {w.title} <span className="font-normal text-text3">· {w.track.title}</span>{" "}
+                  <span className="font-mono text-xs font-normal text-text3">
+                    — {w.registrations.length}
+                    {w.capacity === null ? "" : ` de ${w.capacity}`} inscripto
+                    {w.registrations.length === 1 && w.capacity === null ? "" : "s"}
+                  </span>
+                </p>
+                <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
+                  {w.registrations.map((r) => {
+                    const profile = profileByEmail.get(r.email);
+                    return (
+                      <li key={r.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                        <div className="min-w-0 break-words">
+                          <p className="text-sm text-text2">
+                            {r.email}
+                            {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
+                            {r.markedAbsent && <span className="text-text3"> · dijo que no fue</span>}
                           </p>
                           {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
                         </div>

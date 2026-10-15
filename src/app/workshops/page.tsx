@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel, trackEntryHref, type WorkshopTrack } from "@/lib/workshops";
+import { getWorkshopTracks, registrableOf, totalHoursLabel, trackEntryHref, upcomingOf, type WorkshopTrack } from "@/lib/workshops";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopsHero } from "@/components/workshops/WorkshopsHero";
@@ -7,6 +7,7 @@ import { TrackBoxes, type TrackBox } from "@/components/workshops/TrackBoxes";
 import { UpcomingWorkshops } from "@/components/workshops/UpcomingWorkshops";
 import { ProposeWorkshop } from "@/components/workshops/ProposeWorkshop";
 import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
+import { WorkshopRegistration } from "@/components/workshops/WorkshopRegistration";
 
 export const metadata: Metadata = buildMetadata({
   title: "Workshops, AIR Club UdeSA",
@@ -37,11 +38,8 @@ function factsOf(t: WorkshopTrack): string[] {
  * caja abre la página del workshop, o directo su taller si es el único que tiene.
  */
 export default async function WorkshopsPage() {
-  const [tracks, upcoming, propose] = await Promise.all([
-    getWorkshopTracks(),
-    getUpcomingWorkshops(),
-    getContactReason("workshop"),
-  ]);
+  const [tracks, propose] = await Promise.all([getWorkshopTracks(), getContactReason("workshop")]);
+  const upcoming = upcomingOf(tracks);
 
   const boxes: TrackBox[] = tracks.map((t) => ({
     key: t.key,
@@ -61,20 +59,22 @@ export default async function WorkshopsPage() {
 
   return (
     <WorkshopProgressProvider>
-      <WorkshopsHero trackCount={tracks.length} itemCount={itemCount} firstTrackHref={boxes[0]?.href} />
+      <WorkshopRegistration workshops={registrableOf(upcoming)}>
+        <WorkshopsHero trackCount={tracks.length} itemCount={itemCount} firstTrackHref={boxes[0]?.href} />
 
-      {/* Primero lo que tiene fecha (y el botón para inscribirse), después el mosaico de workshops. */}
-      {upcoming.length > 0 && upcomingBand}
+        {/* Primero lo que tiene fecha (y el botón para inscribirse), después el mosaico de workshops. */}
+        {upcoming.length > 0 && upcomingBand}
 
-      <section id="workshops" aria-label="Workshops" className="scroll-mt-24 py-16 md:py-24">
-        <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
-          <TrackBoxes tracks={boxes} />
-        </div>
-      </section>
+        <section id="workshops" aria-label="Workshops" className="scroll-mt-24 py-16 md:py-24">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
+            <TrackBoxes tracks={boxes} />
+          </div>
+        </section>
 
-      {upcoming.length === 0 && upcomingBand}
+        {upcoming.length === 0 && upcomingBand}
 
-      <ProposeWorkshop reason={propose} />
+        <ProposeWorkshop reason={propose} />
+      </WorkshopRegistration>
     </WorkshopProgressProvider>
   );
 }
