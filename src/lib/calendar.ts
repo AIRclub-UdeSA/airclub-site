@@ -48,6 +48,13 @@ function calculateStatus(startsAt?: Date, endsAt?: Date, now = new Date()): Cale
   return "past";
 }
 
+// Un orador: "Nombre (Rol)", como siempre. Varios: el primero y cuántos más, para que entre en una línea.
+function speakersLabel(speakers: NonNullable<TalkItem["speakers"]>): string {
+  const [first, ...rest] = speakers;
+  const label = first.role ? `${first.name} (${first.role})` : first.name;
+  return rest.length ? `${label} y ${rest.length} más` : label;
+}
+
 function fromTalk(talk: TalkItem, now: Date): CalendarActivity {
   const startsAt = talk.startsAt;
   const endsAt = talk.endsAt;
@@ -82,7 +89,7 @@ function fromTalk(talk: TalkItem, now: Date): CalendarActivity {
       : "Ver detalles",
     cta: talk.cta,
     talkSlug: talk.slug,
-    instructorOrSpeaker: talk.speaker ? `${talk.speaker.name} (${talk.speaker.role})` : undefined,
+    instructorOrSpeaker: talk.speakers?.length ? speakersLabel(talk.speakers) : undefined,
     speaker: talk.speaker,
     speakers: talk.speakers || (talk.speaker ? [talk.speaker] : undefined),
     topic: talk.topic,

@@ -162,6 +162,7 @@ Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para 
 * **Hero**: rectángulos rectos a todo el ancho. Le gusta "mucho"; no cambiar su composición sin pedirlo. Tiene que entrar en el primer viewport a 1440×900 (la altura de los paneles se calcula con `100dvh` menos el alto del título).
 * **Cronograma**: tipografía y numerales (los conserva); formas rectas con contorno de 1px (`border-text`), sin esquinas redondeadas.
 * **Modal**: centrado (no un cajón lateral), `<dialog>` nativo, 62rem de ancho, organización minimalista. Arriba, un slideshow de fotos con puntos (el activo más ancho, se va llenando de carmesí para mostrar cuándo cambia; avanza solo cada 5 s, tocar la foto pasa a la siguiente, tocar un punto salta a esa foto; el cursor encima no lo pausa; los videos van mudos con botón de sonido). Pestañas solo **Resumen / Diapositivas / Video**: no hay pestaña de Fotos.
+* **Varios oradores**: el hero y las tarjetas muestran al primero y "y N más" (sin rol, que sería el de uno solo); el modal los lista a todos. Cada charla guarda sus oradores en `TalkSpeaker`.
 * **Forma**: los botones siguen siendo píldora (`rounded-full`); los paneles y tarjetas de `/talks` son rectos. La landing conserva `rounded-card`. Las subpáginas (`/talks`, `/equipo`, `/contacto`) comparten el lenguaje recto; la landing conserva `rounded-card`. Decisión del dueño al empezar la pasada de `/equipo` y `/contacto` (ver sección 9).
 
 ### Rechazado (no reintroducir)

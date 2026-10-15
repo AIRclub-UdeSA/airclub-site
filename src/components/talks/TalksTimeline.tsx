@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff, Presentation } from "lucide-react";
 import type { TalkMedia, TalkSlide, TalkSpeaker } from "@/lib/talks";
 import type { TalkSection } from "./TalkModal";
-import { talkCover, talkDateParts } from "@/lib/talk-format";
+import { moreSpeakersLabel, talkCover, talkDateParts } from "@/lib/talk-format";
 import { cn } from "@/lib/utils";
 
 export type TimelineTalk = {
@@ -358,7 +358,11 @@ function TalkColumn({
           {talk.speaker ? (
             <p className="mt-2 text-[.92rem] leading-snug text-text2">
               <span className="font-semibold text-text">{talk.speaker.name}</span>
-              <span className="block">{talk.speaker.role}</span>
+              {moreSpeakersLabel(talk.speakers) ? (
+                <span> {moreSpeakersLabel(talk.speakers)}</span>
+              ) : (
+                <span className="block">{talk.speaker.role}</span>
+              )}
             </p>
           ) : (
             <p className="mt-2 text-[.92rem] italic text-text3">Orador a confirmar</p>

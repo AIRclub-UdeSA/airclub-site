@@ -4,7 +4,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import type { TimelineTalk } from "./TalksTimeline";
 import type { TalkSection } from "./TalkModal";
-import { shortDayLabel, talkCover, talkDateParts } from "@/lib/talk-format";
+import { moreSpeakersLabel, shortDayLabel, talkCover, talkDateParts } from "@/lib/talk-format";
 
 interface TalksHeroProps {
   latest?: TimelineTalk;
@@ -121,7 +121,11 @@ function LatestPanel({
               )}
               <p className="text-[.95rem] leading-snug">
                 <span className="font-semibold">{talk.speaker.name}</span>
-                <span className="block text-white/70">{talk.speaker.role}</span>
+                {moreSpeakersLabel(talk.speakers) ? (
+                  <span className="text-white/70"> {moreSpeakersLabel(talk.speakers)}</span>
+                ) : (
+                  <span className="block text-white/70">{talk.speaker.role}</span>
+                )}
               </p>
             </div>
           )}
