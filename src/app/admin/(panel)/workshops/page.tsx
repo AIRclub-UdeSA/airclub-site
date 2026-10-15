@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fetchWorkshopRows } from "@/lib/workshops";
+import { storedGuideBlocks } from "@/lib/guide-blocks";
 import { requireSectionEdit } from "@/lib/admin/permissions";
 import { storagePublicPrefix } from "@/lib/storage-url";
 import { WorkshopsManager, type AdminTrack } from "./WorkshopsManager";
@@ -33,6 +34,7 @@ export default async function AdminWorkshopsPage() {
       requires: g.requires,
       guideUrl: g.guideUrl,
       codeUrl: g.codeUrl,
+      content: storedGuideBlocks(g.content),
       status: g.status,
     })),
     sessions: t.sessions.map((s) => ({

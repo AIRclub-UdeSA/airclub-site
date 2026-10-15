@@ -5,7 +5,9 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionEdit, type AdminSession } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
+import { isSiteImageUrl, storagePublicPrefix } from "@/lib/storage-url";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
+import { guideBlockImageUrls, parseGuideBlocks, storedGuideBlocks, type GuideBlock } from "@/lib/guide-blocks";
 
 const SECTION = "workshops";
 // Argentina no tiene horario de verano: offset fijo, como en /admin/talks.
@@ -118,10 +120,21 @@ function guideData(formData: FormData) {
     requires: str(formData, "requires")
       .split(/[\s,]+/)
       .filter(Boolean),
-    guideUrl: str(formData, "guideUrl"),
+    guideUrl: optStr(formData, "guideUrl"),
     codeUrl: optStr(formData, "codeUrl"),
     status: status(formData),
   };
+}
+
+/** Los bloques del contenido propio (#69), del JSON del editor de bloques. */
+function guideContent(formData: FormData): { blocks: GuideBlock[] } | { error: string } {
+  const raw = str(formData, "content");
+  if (!raw) return { blocks: [] };
+  try {
+    return parseGuideBlocks(JSON.parse(raw));
+  } catch {
+    return { error: "El contenido de la guía no tiene un formato válido." };
+  }
 }
 
 function sessionData(formData: FormData) {
@@ -151,7 +164,7 @@ function validateTrack(d: ReturnType<typeof trackData>): string | null {
   return null;
 }
 
-function validateGuide(d: ReturnType<typeof guideData>): string | null {
+function validateGuide(d: ReturnType<typeof guideData>, blocks: GuideBlock[]): string | null {
   if (!d.trackId) return "Falta el workshop.";
   if (!d.slug || !KEY_PATTERN.test(d.slug)) return "El slug es obligatorio y solo puede tener minúsculas, números y guiones.";
   if (!/^\d{2}$/.test(d.week)) return "La semana va con dos cifras (01, 02…).";
@@ -162,7 +175,12 @@ function validateGuide(d: ReturnType<typeof guideData>): string | null {
     return "La duración son dos números enteros de minutos, y el máximo no puede ser menor que el mínimo.";
   }
   if (d.requires.some((w) => !/^\d{2}$/.test(w))) return "\"Requiere\" son semanas de dos cifras separadas por coma (01, 02).";
-  if (!d.guideUrl) return "El link de la guía es obligatorio.";
+  if (!d.guideUrl && blocks.length === 0) return "La guía necesita contenido propio, un link a la guía en otro sitio, o las dos cosas.";
+  // next/image solo acepta nuestro bucket y public/ (next.config.ts): una imagen de otro sitio rompería la página de la guía.
+  const prefix = storagePublicPrefix(process.env.SUPABASE_URL);
+  if (guideBlockImageUrls(blocks).some((src) => !isPendingUpload(src) && !isSiteImageUrl(src, prefix))) {
+    return "Hay una imagen con un link de otro sitio: no se vería en la página. Descargala y elegila desde tu compu.";
+  }
   return null;
 }
 
@@ -266,20 +284,30 @@ export async function saveGuide(_prev: ActionState, formData: FormData): Promise
   const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
   const data = guideData(formData);
-  const error = validateGuide(data);
+  const content = guideContent(formData);
+  if ("error" in content) return { error: content.error };
+  const error = validateGuide(data, content.blocks);
   if (error) return { error };
+  if (guideBlockImageUrls(content.blocks).some(isPendingUpload)) {
+    return { error: "Hay imágenes que no se terminaron de subir. Probá guardar de nuevo." };
+  }
+  // Sin bloques se guarda null, no una lista vacía: la guía vive solo en otro sitio.
+  const fields = { ...data, content: content.blocks.length ? (content.blocks as Prisma.InputJsonValue) : Prisma.DbNull };
 
+  let replacedFiles: string[] = [];
   try {
     await prisma.$transaction(async (tx) => {
       if (id) {
         const before = await tx.workshopGuide.findUniqueOrThrow({ where: { id } });
         // El slug es con lo que se guarda quién la hizo: no cambia.
-        const after = await tx.workshopGuide.update({ where: { id }, data: { ...data, slug: before.slug } });
+        const after = await tx.workshopGuide.update({ where: { id }, data: { ...fields, slug: before.slug } });
         await audit(tx, actor, id, "update", before, after);
+        const kept = new Set(guideFileUrls(after));
+        replacedFiles = guideFileUrls(before).filter((url) => !kept.has(url));
       } else {
         if (await slugTaken(data.slug, { entity: "guide" })) throw new Error("Ya hay una guía o un taller con ese slug.");
         const last = await tx.workshopGuide.findFirst({ where: { trackId: data.trackId }, orderBy: { order: "desc" }, select: { order: true } });
-        const created = await tx.workshopGuide.create({ data: { ...data, order: (last?.order ?? -1) + 1 } });
+        const created = await tx.workshopGuide.create({ data: { ...fields, order: (last?.order ?? -1) + 1 } });
         await audit(tx, actor, created.id, "create", null, created);
       }
     });
@@ -287,7 +315,21 @@ export async function saveGuide(_prev: ActionState, formData: FormData): Promise
     return failure(err, "No se pudo guardar la guía.");
   }
 
+  await removeUnusedWorkshopFiles(replacedFiles);
   revalidateWorkshops();
+  return { error: null };
+}
+
+/** Chequea los datos de la guía antes de subir las imágenes de sus bloques, como validateSessionForm. */
+export async function validateGuideForm(formData: FormData): Promise<ActionState> {
+  await requireSectionEdit(SECTION);
+  const data = guideData(formData);
+  const content = guideContent(formData);
+  if ("error" in content) return { error: content.error };
+  const error = validateGuide(data, content.blocks);
+  if (error) return { error };
+  const id = str(formData, "id");
+  if (!id && (await slugTaken(data.slug, { entity: "guide" }))) return { error: "Ya hay una guía o un taller con ese slug." };
   return { error: null };
 }
 
@@ -344,7 +386,7 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
     return failure(err, "No se pudo guardar el taller.");
   }
 
-  await removeUnusedSessionFiles(replacedFiles);
+  await removeUnusedWorkshopFiles(replacedFiles);
   revalidateWorkshops();
   return { error: null };
 }
@@ -363,11 +405,12 @@ export async function deleteWorkshopEntity(entity: WorkshopEntity, id: string): 
           where: { id },
           include: { guides: true, sessions: { include: SESSION_RELATIONS } },
         });
-        deletedFiles = target.sessions.flatMap(sessionFileUrls);
+        deletedFiles = [...target.sessions.flatMap(sessionFileUrls), ...target.guides.flatMap(guideFileUrls)];
         await tx.workshopTrack.delete({ where: { id } }); // borra en cascada sus guías y talleres
         await audit(tx, actor, id, "delete", target);
       } else if (entity === "guide") {
         const target = await tx.workshopGuide.findUniqueOrThrow({ where: { id } });
+        deletedFiles = guideFileUrls(target);
         await tx.workshopGuide.delete({ where: { id } });
         await audit(tx, actor, id, "delete", target);
       } else {
@@ -381,7 +424,7 @@ export async function deleteWorkshopEntity(entity: WorkshopEntity, id: string): 
     return failure(err, "No se pudo borrar.");
   }
 
-  await removeUnusedSessionFiles(deletedFiles);
+  await removeUnusedWorkshopFiles(deletedFiles);
   revalidateWorkshops();
   return { error: null };
 }
@@ -429,7 +472,7 @@ export async function moveWorkshopEntity(entity: WorkshopEntity, id: string, dir
   return { error: null };
 }
 
-/* ---------- Archivos en Storage (fotos y videos de los talleres) ---------- */
+/* ---------- Archivos en Storage (fotos y videos de los talleres, imágenes de las guías) ---------- */
 // Mismo esquema que /admin/talks: los archivos se suben recién al guardar, y se borra lo que deja de usarse.
 
 const STORAGE_FOLDER = "workshops";
@@ -439,18 +482,25 @@ function sessionFileUrls(session: { media: { src: string; poster: string | null 
   return session.media.flatMap((m) => [m.src, m.poster]).filter((url): url is string => !!url);
 }
 
-/** Borra del bucket los archivos que ya no usa ningún taller. */
-async function removeUnusedSessionFiles(urls: string[]): Promise<void> {
+function guideFileUrls(guide: { content: unknown }): string[] {
+  return guideBlockImageUrls(storedGuideBlocks(guide.content));
+}
+
+/** Borra del bucket los archivos que ya no usa ningún taller ni ninguna guía (la misma imagen puede estar en dos). */
+async function removeUnusedWorkshopFiles(urls: string[]): Promise<void> {
   if (urls.length === 0) return;
   try {
-    const used = await prisma.workshopSessionMedia.findMany({
-      where: { OR: [{ src: { in: urls } }, { poster: { in: urls } }] },
-      select: { src: true, poster: true },
-    });
-    const stillUsed = new Set(used.flatMap((m) => [m.src, m.poster]));
+    const [media, guides] = await Promise.all([
+      prisma.workshopSessionMedia.findMany({
+        where: { OR: [{ src: { in: urls } }, { poster: { in: urls } }] },
+        select: { src: true, poster: true },
+      }),
+      prisma.workshopGuide.findMany({ where: { NOT: { content: { equals: Prisma.DbNull } } }, select: { content: true } }),
+    ]);
+    const stillUsed = new Set([...media.flatMap((m) => [m.src, m.poster]), ...guides.flatMap(guideFileUrls)]);
     await removeStorageFiles(urls.filter((url) => !stillUsed.has(url)));
   } catch (err) {
-    console.error("No se pudieron limpiar archivos de talleres:", err);
+    console.error("No se pudieron limpiar archivos de workshops:", err);
   }
 }
 
@@ -480,8 +530,8 @@ export async function prepareWorkshopUploads(files: { type: string; size: number
   return { uploads };
 }
 
-/** Borra lo recién subido cuando el guardado falla (solo archivos de la carpeta de talleres que nadie use). */
+/** Borra lo recién subido cuando el guardado falla (solo archivos de la carpeta de workshops que nadie use). */
 export async function discardWorkshopUploads(urls: string[]): Promise<void> {
   await requireSectionEdit(SECTION);
-  await removeUnusedSessionFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
+  await removeUnusedWorkshopFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
 }

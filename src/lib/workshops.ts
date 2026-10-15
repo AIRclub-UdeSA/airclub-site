@@ -9,6 +9,7 @@ import { getPastEvents, getUpcomingEvents, type EventItem } from "@/lib/events";
 import { talkCover } from "@/lib/talk-format";
 import { trackHref, workshopHref } from "@/lib/workshop-href";
 import type { TalkMedia, TalkSlide } from "@/lib/talks";
+import { storedGuideBlocks, type GuideBlock } from "@/lib/guide-blocks";
 
 export type { WorkshopLevel } from "../../prisma/seed-data/workshops";
 
@@ -39,8 +40,11 @@ export type AsyncWorkshop = {
   ros2Package?: string;
   /** Semanas del mismo workshop que hay que tener hechas antes. */
   requires: string[];
-  guideUrl: string;
+  /** La guía en otro sitio (las del JAR); sin él, la guía es solo su contenido propio. */
+  guideUrl?: string;
   codeUrl?: string;
+  /** Contenido propio (#69): los bloques cargados en el panel, en orden. Vacío si la guía vive en otro sitio. */
+  content: GuideBlock[];
   /** "60–90 min" o "2–3 h". */
   durationLabel: string;
 };
@@ -192,8 +196,9 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
         level: LEVELS[g.level],
         ros2Package: g.ros2Package ?? undefined,
         requires: g.requires,
-        guideUrl: g.guideUrl,
+        guideUrl: g.guideUrl ?? undefined,
         codeUrl: g.codeUrl ?? undefined,
+        content: storedGuideBlocks(g.content),
         durationLabel: formatMinutes([g.minutesMin, g.minutesMax]),
       })),
     ),
@@ -225,7 +230,7 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
 function fromSeed(): WorkshopContent {
   return {
     tracks: seedTracks,
-    guides: seedAsyncWorkshops.map((w) => ({ ...w, durationLabel: formatMinutes(w.minutes) })),
+    guides: seedAsyncWorkshops.map((w) => ({ ...w, content: w.content ?? [], durationLabel: formatMinutes(w.minutes) })),
     past: seedPastWorkshops.map((w) => {
       const media = w.media ?? [];
       return {
