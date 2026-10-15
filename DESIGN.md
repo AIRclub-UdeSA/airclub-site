@@ -430,6 +430,26 @@ Pedido del review: no inventar un formato nuevo, reutilizar el de `/talks`. La p
 * **Perfil → Aprendizaje** (`/perfil/aprendizaje`, pestañas "Datos" / "Aprendizaje" en `PerfilTabs`): **solo los workshops donde la persona hizo algo** (pedido del dueño: no todos los que existen), cada uno como una tarjeta **plegada** (`<details>`) con el título y el conteo (`03/09`). Al desplegarla: los talleres que hizo con la fecha en que los marcó, "Seguí con…" y "Ver el workshop". Los talleres que le faltan no se listan acá: se ven entrando al workshop. También en el menú de la cuenta ("Mi aprendizaje").
 * Datos: tabla `WorkshopCompletion` (email + slug del taller, sin clave foránea porque los talleres no viven en la base). Server actions en `src/app/workshops/progress-actions.ts`; el progreso se pide desde el cliente (`WorkshopProgress.tsx`) para que las tres páginas sigan siendo estáticas (ISR), igual que la inscripción en `/talks`.
 
+### Cómo se carga un workshop: tres casos
+Criterio del club (#69). Los tres se cargan desde `/admin/workshops`, sin tocar código:
+
+| Workshop | Cómo se carga |
+| :--- | :--- |
+| **Presencial** | Taller presencial con lo que se haya preparado: diapositivas, fotos, videos, grabación, links, resumen corto y "qué se vio" (como Linux). |
+| **Asincrónico con página externa** | Guías en tarjetas, como la ruta de ROS 2 (semana, título, qué te llevás, duración, nivel, requisitos), con el botón a la guía completa en su sitio. |
+| **Asincrónico sin página externa** | Las mismas tarjetas, con la guía armada adentro del sitio con bloques (ver abajo). |
+
+No se arma una guía con bloques para repetir lo que ya está en las diapositivas de un presencial: se probó con la postinstalación de Linux y se descartó por duplicada.
+
+### Guías con contenido propio (#69)
+Una guía puede vivir en otro sitio (las del JAR: link a `jar_site` y código en `jar_workshops`), dentro de este, o las dos cosas. El contenido propio se arma en `/admin/workshops` con **bloques** (decisión de #69, en lugar de Markdown o de traerlo de `jar_site`): subtítulo, texto, pasos, código, imagen, aviso y checkpoint. Cada bloque se dibuja con componentes del sitio (`GuideContent.tsx`), así quien carga no decide nada de diseño:
+* **Pasos**: numerales en Anton carmesí (`01`, `02`…) entre líneas de 1px, como el orden en el resto de `/workshops`.
+* **Código**: el bloque oscuro fijo de `SetupBlock`; en bash, comandos en rosa y comentarios apagados. Sin resaltado de sintaxis para otros lenguajes.
+* **Aviso**: "Ojo" con contorno carmesí, o "Dato" sobre `bg2`. **Checkpoint**: contorno de 1px y "Si ves esto, vas bien".
+* **Texto**: solo `` `código` ``, `**negrita**` y `[enlace](url)` (`src/lib/guide-blocks.ts`); nunca HTML cargado a mano.
+* Con contenido propio, el panel de "Marcar como hecho" acompaña el scroll en escritorio (`lg:sticky`). El progreso sigue siendo por guía entera.
+* Las imágenes van al bucket (`workshops/`) o a `public/`: una de otro sitio no pasa la validación, porque `next/image` no la mostraría.
+
 ### Estructura y archivos
 1. `src/app/workshops/page.tsx`, de arriba hacia abajo: `WorkshopsHero.tsx` (título "WORKSHOPS" en Anton a dos tonos, párrafo corto, "02 workshops · 10 talleres", "Empezar por el 01"), `UpcomingWorkshops.tsx` sobre `bg-bg2` (eventos de categoría `workshop`; sin ninguno, panel con trama "Todavía no hay fecha", y va después del mosaico), `TrackBoxes.tsx` (el mosaico) y `ProposeWorkshop.tsx` (banda oscura con el motivo `workshop` de `src/lib/contact.ts`).
 2. `src/app/workshops/[track]/page.tsx`: la página de un workshop. Adentro, `TrackBody.tsx`: `GuideRoute.tsx` (intro, progreso `RouteProgress.tsx`, bloque de código oscuro fijo y las cajas de `RouteSteps.tsx`) si tiene guías, y `PastWorkshopList` (`PastWorkshops.tsx`: tarjeta líder + módulos, o un panel horizontal si hay uno solo; foto a color o trama diagonal) si tiene talleres presenciales pasados. Si tiene fechas próximas, también `UpcomingWorkshops`.

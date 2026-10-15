@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, EyeOff, Pencil, Plus, X } from "lucide-react";
 import { deleteWorkshopEntity, moveWorkshopEntity, type WorkshopEntity } from "./actions";
 import { GuideForm, SessionForm, TrackForm } from "./WorkshopForms";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
+import type { GuideBlock } from "@/lib/guide-blocks";
 
 type Status = "DRAFT" | "PUBLISHED";
 
@@ -22,8 +23,9 @@ export type AdminGuide = {
   level: "INICIAL" | "INTERMEDIO" | "AVANZADO";
   ros2Package: string | null;
   requires: string[];
-  guideUrl: string;
+  guideUrl: string | null;
   codeUrl: string | null;
+  content: GuideBlock[];
   status: Status;
 };
 
@@ -275,7 +277,7 @@ function EditDrawer({
     form = <TrackForm item={editing.item} onDone={onClose} onSavingChange={setBusy} />;
   } else if (editing.entity === "guide") {
     const track = tracks.find((t) => t.id === editing.trackId);
-    form = <GuideForm trackId={editing.trackId} trackKey={track?.key ?? ""} item={editing.item} nextWeek={editing.nextWeek} onDone={onClose} onSavingChange={setBusy} />;
+    form = <GuideForm trackId={editing.trackId} trackKey={track?.key ?? ""} item={editing.item} nextWeek={editing.nextWeek} storagePrefix={storagePrefix} onDone={onClose} onSavingChange={setBusy} />;
   } else {
     form = <SessionForm trackId={editing.trackId} item={editing.item} storagePrefix={storagePrefix} onDone={onClose} onSavingChange={setBusy} />;
   }
