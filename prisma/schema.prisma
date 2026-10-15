@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URLs are no longer set here in Prisma 7 — see prisma7.config.ts (CLI/migrate,
+  // uses DIRECT_URL) and src/lib/prisma.ts (runtime client, uses DATABASE_URL via a driver adapter).
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum RobotSpecGroup {
+  HARDWARE
+  SOFTWARE
+}
+
+enum AdminRole {
+  ADMIN // acceso total, incluida la gestion de personas autorizadas
+  EDITOR // acceso solo a las secciones listadas en AdminUser.sections
+}
+
+// Personas con acceso a /admin. Loguearse con Google restringido a @udesa.edu.ar no alcanza
+// por si solo: hace falta ademas estar cargado aca. Ver src/lib/admin/permissions.ts.
+model AdminUser {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  role      AdminRole
+  sections  String[] // ids de seccion (ej: "talks"); ADMIN ignora este campo, ve todo
+  // Sacar el acceso desactiva, no borra: AuditLog apunta a esta fila (onDelete: Restrict) y
+  // el historial tiene que seguir diciendo quien hizo cada cambio.
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
+}
+
+// Registro de cada accion de escritura hecha desde /admin. Se escribe en la misma
+// transaccion que el cambio que audita (ver Etapa 3 de PLAN-ADMIN.md).
+model AuditLog {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+  section     String // ej: "talks"
+  entityId    String // id del registro afectado
+  action      String // ej: "create" | "update" | "delete" | "publish"
+  before      Json?
+  after       Json?
+  createdAt   DateTime  @default(now())
+
+  @@index([section, entityId])
+  @@index([adminUserId])
+}
+
+enum ProfileRole {
+  STUDENT
+  PROFESSOR
+  OTHER
+}
+
+enum StudentStatus {
+  STUDYING
+  GRADUATED
+}
+
+// Perfil publico de cualquier cuenta @udesa.edu.ar (no es AdminUser: una persona puede
+// tener las dos filas, por el mismo email, sin relacion entre ellas). Se completa una sola
+// vez al loguearse por primera vez (ver requireUserProfile en src/lib/perfil/require-profile.ts)
+// y despues sirve para autocompletar la inscripcion a charlas (ver #50).
+model UserProfile {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  role          ProfileRole
+  otherRole     String? // detalle libre, solo si role = OTHER
+  careers       String[] // slugs de src/lib/perfil/careers.ts, solo si role = STUDENT
+  otherCareer   String? // detalle libre, solo si careers incluye el slug "otra"
+  startYear     Int? // ano de inicio de la carrera, solo si role = STUDENT
+  studentStatus StudentStatus? // solo si role = STUDENT
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum TalkMediaType {
+  IMAGE
+  VIDEO
+}
+
+model Event {
+  id                   String              @id @default(cuid())
+  slug                 String              @unique
+  title                String
+  tagline              String?
+  description          String              @db.Text
+  location             String?
+  startsAt             DateTime
+  endsAt               DateTime?
+  status               EventStatus         @default(PUBLISHED)
+  externalUrl          String? // e.g. JAR site link, or a Google Form until RSVP ships
+  rsvpEnabled          Boolean             @default(false) // stays false until the RSVP feature (deferred) ships
+  capacity             Int?
+  featuredForCountdown Boolean             @default(false)
+  imageUrl             String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  registrations        EventRegistration[]
+
+  @@index([startsAt])
+}
+
+// Schema is ready for RSVP now (deferred feature — no form/UI ships yet, see AGENTS/plan notes).
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, email]) // one RSVP per person per event; also the future account-linking key
+  @@index([eventId])
+}
+
+model Robot {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  status      String // free text badge, e.g. "En desarrollo activo"
+  category    String?
+  tags        String[]
+  description String      @db.Text
+  imageUrl    String
+  imageAlt    String
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  specs       RobotSpec[]
+  links       RobotLink[]
+}
+
+model RobotSpec {
+  id      String         @id @default(cuid())
+  robotId String
+  robot   Robot          @relation(fields: [robotId], references: [id], onDelete: Cascade)
+  group   RobotSpecGroup // HARDWARE | SOFTWARE
+  label   String
+  value   String
+  order   Int            @default(0)
+
+  @@index([robotId])
+}
+
+model RobotLink {
+  id      String @id @default(cuid())
+  robotId String
+  robot   Robot  @relation(fields: [robotId], references: [id], onDelete: Cascade)
+  label   String
+  url     String
+  order   Int    @default(0)
+
+  @@index([robotId])
+}
+
+enum TalkStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Talk {
+  id                 String      @id @default(cuid())
+  slug               String      @unique
+  title              String
+  subtitle           String
+  abstract           String      @db.Text
+  speakerName        String?
+  speakerRole        String?
+  speakerAffiliation String?
+  speakerAvatar      String?
+  speakerLinkedin    String?
+  speakerBio         String?     @db.Text
+  startsAt           DateTime?
+  endsAt             DateTime?
+  dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
+  location           String?
+  topic              String?
+  recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
+  ctaLabel           String?
+  ctaUrl             String?
+  registrationOpen   Boolean     @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
+  capacity           Int? // cupo de la inscripcion propia; null = sin limite
+  status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
+  confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
+  order              Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  media              TalkMedia[]
+  slides             TalkSlide[]
+  links              TalkLink[]
+  registrations      TalkRegistration[]
+}
+
+// Inscripcion propia de una charla (talk.registrationOpen = true), gemelo de EventRegistration.
+// No guarda nombre: se completa con el email de la sesion y el resto sale de UserProfile (#49).
+model TalkRegistration {
+  id        String   @id @default(cuid())
+  talkId    String
+  talk      Talk     @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  email     String
+  createdAt DateTime @default(now())
+
+  @@unique([talkId, email])
+  @@index([talkId])
+}
+
+model TalkMedia {
+  id        String        @id @default(cuid())
+  talkId    String
+  talk      Talk          @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  type      TalkMediaType
+  src       String
+  poster    String? // solo para videos
+  lightBg   Boolean       @default(false)
+  objectFit String? // "contain" | "cover"
+  order     Int           @default(0)
+
+  @@index([talkId])
+}
+
+model TalkSlide {
+  id       String @id @default(cuid())
+  talkId   String
+  talk     Talk   @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  title    String
+  embedUrl String
+  openUrl  String
+  order    Int    @default(0)
+
+  @@index([talkId])
+}
+
+model TalkLink {
+  id     String @id @default(cuid())
+  talkId String
+  talk   Talk   @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  label  String
+  url    String
+  order  Int    @default(0)
+
+  @@index([talkId])
+}
+
+enum TeamGroup {
+  FOUNDER // se lista en "Fundadores" en /equipo
+  COLLABORATOR // se lista en "Colaboradores"
+}
+
+// Foto grupal de una lista de /equipo y el texto del cartel sobre ella (hoy solo Fundadores muestra una).
+// Sin fila, /equipo usa la foto y el texto fijos del código (/equipo.jpg, "Los fundadores del AIR Club").
+model TeamGroupPhoto {
+  group     TeamGroup @id
+  photoUrl  String
+  caption   String
+  updatedAt DateTime  @updatedAt
+}
+
+model TeamMember {
+  id            String    @id @default(cuid())
+  // Identificador estable (ej. "juan-kaplan"): el seed actualiza por slug en vez de borrar y
+  // recrear, así el id no cambia y otras tablas pueden apuntar a una persona sin romperse.
+  slug          String    @unique
+  name          String
+  group         TeamGroup // en qué lista de /equipo aparece; no confundir con role
+  role          String? // cargo de la persona (ej. "Presidente"), opcional; no afecta en qué lista aparece
+  photoUrl      String? // nullable: currently one group photo, not per-person
+  bio           String?   @db.Text
+  linkedin      String? // perfil publico de LinkedIn
+  linkedinPhoto String? // foto de LinkedIn: no se puede traer automaticamente, se sube a mano (URL o ruta)
+  github        String? // perfil publico de GitHub
+  order         Int       @default(0)
+  active        Boolean   @default(true) // soft-remove without losing history
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
