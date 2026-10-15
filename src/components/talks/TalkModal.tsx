@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Download, ExternalLink, X } from "lucide-react";
 import { LinkedinIcon } from "@/components/equipo/SocialIcons";
+import { RegisterButton, type RegistrationState } from "./RegisterButton";
 import type { TimelineTalk } from "./TalksTimeline";
 import { TalkSlideshow } from "./TalkSlideshow";
 import { talkDateParts, talkDateText } from "@/lib/talk-format";
@@ -21,6 +22,7 @@ interface TalkModalProps {
   onClose: () => void;
   onSelectTalk: (slug: string, section?: TalkSection) => void;
   onRegister: (talk: TimelineTalk) => void;
+  registrationOf: (slug: string) => RegistrationState;
 }
 
 // Coincide con la duración de la animación de salida en globals.css (.talk-modal[data-closing]).
@@ -38,6 +40,7 @@ export function TalkModal({
   onClose,
   onSelectTalk,
   onRegister,
+  registrationOf,
 }: TalkModalProps) {
   const [activeSection, setActiveSection] = useState<TalkSection>(initialSection);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -399,14 +402,7 @@ export function TalkModal({
                           : "Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación."}
                       </p>
                       {talk.registrationOpen ? (
-                        <button
-                          type="button"
-                          onClick={() => onRegister(talk)}
-                          className="mt-5 inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-white px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-crimson transition-colors hover:bg-bg2"
-                        >
-                          <span>{talk.registrationLabel ?? "Inscribirme"}</span>
-                          <ArrowUpRight size={15} aria-hidden="true" />
-                        </button>
+                        <RegisterButton talk={talk} state={registrationOf(talk.slug)} variant="modal" onRegister={onRegister} />
                       ) : (
                         talk.cta && (
                           <a
