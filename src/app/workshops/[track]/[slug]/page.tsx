@@ -286,7 +286,7 @@ function PastDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "past"
 
           <dl className="grid grid-cols-1 border-t border-text">
             <Fact label="Fecha">{w.startsAt ? talkDateText(w.startsAt, w.dateLabel) : (w.dateLabel ?? "Taller presencial")}</Fact>
-            {w.location && <Fact label="Lugar">{w.location}</Fact>}
+            {w.location && <Fact label="Aula">{w.location}</Fact>}
             {w.instructor && <Fact label="A cargo de">{w.instructor}</Fact>}
           </dl>
         </aside>

@@ -238,5 +238,20 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = (
     ros2Package: "nav2_bringup",
     requires: ["06"],
   },
+  {
+    track: "ros2",
+    week: "10",
+    summary:
+      "Corré tus nodos de las semanas 04, 06 y 07 contra un bag grabado con el robot real, descubrí qué deja de funcionar y ubicá en el mapa el centro de cada caja roja.",
+    slug: "semana-10-sim-a-real",
+    title: "Del simulador al robot real",
+    outcome:
+      "Tu launch localiza al robot real sobre el mapa de la arena vacía con la odometría corregida, junta las detecciones de rojo en una posición por caja y saca 200 de 200 en el evaluador.",
+    minutes: [180, 240],
+    level: "avanzado",
+    // Esta semana compila dos paquetes (README de jar_workshops); colcon acepta los dos en --packages-select.
+    ros2Package: "mapa_laberinto evaluador_victimas",
+    requires: ["04", "05", "06", "07"],
+  },
 ] satisfies Omit<SeedAsyncWorkshop, "guideUrl" | "codeUrl">[]
 ).map((w) => ({ ...w, ...jarUrls(w.slug) }));
