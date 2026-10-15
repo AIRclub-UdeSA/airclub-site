@@ -4,12 +4,12 @@ import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 
 export function AboutSection() {
   return (
-    <section id="nosotros" className="px-6 sm:px-10 md:px-16 min-h-[calc(100vh-4.5rem)] flex items-center justify-center max-w-[1400px] mx-auto py-12 w-full">
+    <section id="nosotros" className="px-6 sm:px-10 md:px-16 flex items-center justify-center max-w-[1400px] mx-auto pt-24 pb-[calc(5rem_+_var(--edge-h))] sm:pt-32 sm:pb-[calc(6rem_+_var(--edge-h))] w-full">
       <RevealOnScroll className="w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-24 items-center w-full">
           {/* Lado izquierdo: Declaración tipográfica monumental posicionada con amplio respiro */}
           <div className="lg:col-span-6 xl:col-span-5 text-left">
-            <h2 className="font-display text-[clamp(2.4rem,4.4vw,4.3rem)] font-black leading-[0.94] tracking-tight text-text uppercase text-left">
+            <h2 className="font-display text-[clamp(1.5rem,7.8vw,4.3rem)] sm:text-[clamp(2.4rem,4.4vw,4.3rem)] font-black leading-[0.94] tracking-tight text-text uppercase text-left">
               Construir.
               <br />
               <span className="text-crimson">Competir.</span>

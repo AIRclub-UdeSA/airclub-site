@@ -1,5 +1,7 @@
 # Contexto para retomar este proyecto
 
+> **Histórico (escrito el 2026-09-10).** Donde difiera de `DESIGN.md` (§3 y §8-11) o del `README.md`, valen esos.
+
 Este documento es para quien (persona o agente) se sume a trabajar en esta rama sin
 haber estado en la conversación donde se tomaron estas decisiones. Léelo antes de tocar
 nada — especialmente si venís a trabajar en diseño/frontend.
@@ -30,7 +32,7 @@ por PR contra `v2`, no contra `main` — ver README.md para el flujo completo.
   como acentos (`--crimson #a40c4c`, `--rose #ddaabc`, `--mauve #8f5261`). El dueño del
   proyecto rechazó explícitamente reemplazar esto por una paleta nueva.
 - **Tipografía**: Syne (headings) + Outfit (body) + JetBrains Mono (labels/datos) + Anton
-  (reservada para las letras del logo en el hero). Ya están cargadas vía `next/font/google`
+  (ver reglas en DESIGN.md §3). Ya están cargadas vía `next/font/google`
   en `src/app/layout.tsx`.
 - Contenido y commits en **español** (ver README.md, sección Convenciones).
 
@@ -73,6 +75,18 @@ de esa sesión:
 - Revisión Fase 1.5: `https://claude.ai/code/artifact/866fad2e-bd74-47ee-abe5-997faf473b95`
 - Intento 1 (rechazado): `https://claude.ai/code/artifact/05463884-5295-477a-9fd6-47304328aa63`
 - Intento 2 (rechazado): `https://claude.ai/code/artifact/d43d4cdb-86ea-497f-aeb2-87e9881ab23c`
+
+### Subpágina `/talks`
+
+Fue rediseñada por completo en una sesión posterior y ya tiene un sistema propio (la fecha como
+ancla visual, color según estado, formas rectas). Todo el detalle, lo aprobado, lo rechazado y las
+trampas técnicas están en **DESIGN.md, sección 8**: leerla antes de tocar `src/components/talks/`.
+
+### Subpáginas `/equipo` y `/contacto`
+
+También rediseñadas en una pasada propia, con el mismo lenguaje recto de `/talks`. Las decisiones, lo
+rechazado y las trampas están en **DESIGN.md, secciones 9 (`/equipo`) y 10 (`/contacto`)**: leerlas antes de
+tocar `src/components/equipo/` o `src/components/contacto/`.
 
 ## Backend: dónde está parado esto
 

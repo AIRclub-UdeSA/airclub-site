@@ -3,6 +3,8 @@
 
 /* ===== Design tokens ===== */
 :root {
+  /* Alto de las curvas entre secciones (SectionEdge); las secciones de arriba dejan al menos esto de padding inferior. */
+  --edge-h: clamp(48px, 7.5vw, 110px);
   --bg: #faf8f8;
   --bg2: #f4efef;
   --card: #ffffff;
@@ -92,6 +94,10 @@ html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: rgba(164, 12, 76, 0.2) transparent;
+}
+/* Con Lenis activo el scroll suave lo hace él; el nativo encima lo haría arrastrar y vibrar. */
+html.lenis {
+  scroll-behavior: auto;
 }
 body {
   background: var(--bg);
@@ -237,6 +243,143 @@ body {
   }
 }
 
+/* ===== AIR Talks ===== */
+/* Lo pasado se ve en blanco y negro, como un archivo, y "se revela" a color al interactuar. */
+.talk-photo {
+  filter: grayscale(1) contrast(1.06) brightness(0.72);
+  transition: filter 0.6s var(--ease-club);
+}
+@media (hover: hover) {
+  .talk-photo-host:hover .talk-photo {
+    filter: grayscale(0) contrast(1) brightness(0.88);
+  }
+}
+.talk-photo-host:focus-within .talk-photo {
+  filter: grayscale(0) contrast(1) brightness(0.88);
+}
+/* El mismo revelado, una sola vez, cuando la foto entra en pantalla (hero y drawer). */
+@keyframes talk-develop {
+  from {
+    opacity: 0;
+    filter: grayscale(1) contrast(1.06) brightness(0.35);
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    filter: grayscale(1) contrast(1.06) brightness(0.72);
+    transform: scale(1);
+  }
+}
+.talk-develop {
+  animation: talk-develop 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes talk-develop-color {
+  from {
+    filter: grayscale(1) contrast(1.06) brightness(0.75);
+  }
+  to {
+    filter: grayscale(0) contrast(1) brightness(1);
+  }
+}
+.talk-develop-color {
+  animation: talk-develop-color 0.9s var(--ease-club) 0.25s backwards;
+}
+
+/* Trama diagonal: "lugar reservado" para las charlas que todavía no tienen orador. Toma el color del texto. */
+.talk-hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, currentColor 18%, transparent) 0,
+    color-mix(in srgb, currentColor 18%, transparent) 1px,
+    transparent 1px,
+    transparent 11px
+  );
+}
+
+/* Entrada del hero: sube y aparece, una sola vez. --d = retraso. */
+@keyframes talk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.talk-rise {
+  animation: talk-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Modal de detalle: aparece en el centro (sube y se aclara) y sale más rápido de lo que entró. */
+@keyframes talk-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes talk-scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes talk-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+}
+@keyframes talk-modal-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+.talk-modal::backdrop {
+  background: rgb(13 4 7 / 0.66);
+  animation: talk-scrim-in 0.3s ease-out both;
+}
+.talk-modal[data-closing="true"]::backdrop {
+  animation: talk-scrim-out 0.2s ease-in both;
+}
+.talk-modal-panel {
+  animation: talk-modal-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.talk-modal[data-closing="true"] .talk-modal-panel {
+  animation: talk-modal-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* Slideshow del modal: el punto activo se llena y, al terminar, pasa a la siguiente foto. */
+@keyframes talk-dot-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.talk-dot-fill {
+  animation: talk-dot-fill var(--dur, 5s) linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talk-develop,
+  .talk-develop-color,
+  .talk-rise,
+  .talk-modal::backdrop,
+  .talk-modal-panel {
+    animation: none !important;
+  }
+  /* Sin auto-avance: el punto activo queda lleno y las fotos se cambian a mano. */
+  .talk-dot-fill {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .talk-photo {
+    transition: none;
+  }
+}
+
 /* ===== Arm Hero: 100vh Gate Screen (Flying Papers style) ===== */
 .arm-gate-screen {
   min-height: 100vh;
@@ -282,15 +425,18 @@ body {
 }
 
 .arm-canvas-container {
-  height: calc(var(--hero-h) * 0.78);
-  width: calc(var(--hero-h) * 0.40);
-  max-width: 200px;
-  min-width: 70px;
+  /* Alto del espaciador como variable: la foto fija de ArmHero se dimensiona y centra en funcion de
+     este valor (ver ArmStillImage), asi que tiene que ser una sola fuente de verdad. */
+  --arm-h: calc(var(--hero-h) * 0.94);
+  height: var(--arm-h);
+  width: calc(var(--hero-h) * 0.45);
+  max-width: 250px;
+  min-width: 80px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  margin: 0 clamp(-14px, -1.4vw, -2px);
-  margin-bottom: 0;
+  margin: 0 clamp(-12px, -1.2vw, -2px);
+  margin-bottom: calc(var(--hero-h) * -0.02);
   position: relative;
   touch-action: pan-y;
 }
@@ -358,4 +504,32 @@ html.dark .page-hero {
   .scroll-hint {
     display: none;
   }
+}
+
+/* Barra de progreso del carrusel de la landing (WordSlideshow): se llena durante el tiempo de cada
+   diapositiva; la duración se pone inline. Es solo visual: el avance lo dispara un timer en el componente. */
+@keyframes ws-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.ws-progress-fill {
+  animation: ws-progress 3400ms linear forwards;
+}
+
+/* Cambio de tema (ThemeToggle): el tema nuevo se abre como un círculo desde el botón. El navegador hace por defecto un
+   fundido entre las dos capturas; se apaga para que solo se vea el recorte animado desde JS. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+::view-transition-old(root) {
+  z-index: 1;
 }

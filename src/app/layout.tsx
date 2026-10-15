@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Anton, Syne, Outfit, JetBrains_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
+import "lenis/dist/lenis.css";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
-import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { Footer } from "@/components/layout/Footer";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { ScrollTopButton } from "@/components/layout/ScrollTopButton";
 import { ParticlesBackground } from "@/components/shared/ParticlesBackground";
+import { SmoothScrollProvider } from "@/components/shared/SmoothScrollProvider";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
 
 const anton = Anton({ variable: "--font-anton", weight: "400", subsets: ["latin"] });
@@ -46,14 +47,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="overflow-x-hidden bg-bg font-body text-text antialiased">
-        <SkipLink />
-        <ParticlesBackground />
-        <Nav />
-        <main id="main-content">{children}</main>
-        <SponsorStrip />
-        <Footer />
-        <ThemeToggle />
-        <ScrollTopButton />
+        {/* Envuelve toda la página (no solo el Nav) para que cualquier componente cliente,
+            como el diálogo de inscripción de /talks (#50), pueda usar useSession(). Es un
+            wrapper cliente alrededor de children ya armados en el servidor (mismo patrón que
+            SmoothScrollProvider): no vuelve dinámica la página ni le rompe el ISR. */}
+        <SessionProvider>
+          <SmoothScrollProvider>
+            <SkipLink />
+            <ParticlesBackground />
+            <Nav />
+            <main id="main-content">{children}</main>
+            <Footer />
+            <ScrollTopButton />
+          </SmoothScrollProvider>
+        </SessionProvider>
       </body>
     </html>
   );

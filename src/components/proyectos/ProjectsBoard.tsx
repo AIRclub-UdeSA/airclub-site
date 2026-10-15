@@ -6,12 +6,11 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, CircleDashed, LoaderCircle,
 import {
   AREAS,
   PAPER_SHADES,
-  PROJECTS,
-  STICKERS,
-  TEASERS,
   type Area,
   type Fastener as FastenerKind,
-  type Project,
+  type BoardSticker,
+  type ProjectItem as Project,
+  type TeaserItem,
 } from "@/lib/projects";
 
 const JOIN_MAIL = "airclub@udesa.edu.ar";
@@ -80,12 +79,18 @@ function trapTab(e: React.KeyboardEvent, root: HTMLElement | null) {
   }
 }
 
-export function ProjectBoard() {
+interface ProjectsBoardProps {
+  projects: Project[];
+  teasers: TeaserItem[];
+  stickers: BoardSticker[];
+}
+
+export function ProjectsBoard({ projects, teasers, stickers }: ProjectsBoardProps) {
   const [filter, setFilter] = useState<Area | null>(null);
   const [modal, setModal] = useState<{ id: string; fromNote: boolean } | null>(null);
   const [panelId, setPanelId] = useState<string | null>(null);
   const [stickerPos, setStickerPos] = useState<Record<string, { x: number; y: number }>>(() =>
-    Object.fromEntries(STICKERS.map((s) => [s.id, { x: s.x, y: s.y }])),
+    Object.fromEntries(stickers.map((s) => [s.id, { x: s.x, y: s.y }])),
   );
 
   const boardRef = useRef<HTMLElement>(null);
@@ -147,8 +152,8 @@ export function ProjectBoard() {
     else setModal({ id: p.id, fromNote: true });
   };
 
-  const modalProject = modal ? (PROJECTS.find((p) => p.id === modal.id) ?? null) : null;
-  const panelProject = panelId ? (PROJECTS.find((p) => p.id === panelId) ?? null) : null;
+  const modalProject = modal ? (projects.find((p) => p.id === modal.id) ?? null) : null;
+  const panelProject = panelId ? (projects.find((p) => p.id === panelId) ?? null) : null;
 
   return (
     <>
@@ -175,7 +180,7 @@ export function ProjectBoard() {
         </header>
 
         <div ref={stageRef} className="pboard-stage">
-          {STICKERS.map((s) => (
+          {stickers.map((s) => (
             <Sticker
               key={s.id}
               sticker={s}
@@ -185,7 +190,7 @@ export function ProjectBoard() {
             />
           ))}
 
-          {PROJECTS.map((p, i) => {
+          {projects.map((p, i) => {
             const muted = (filter !== null && !p.areas.includes(filter)) || (panelId !== null && panelId !== p.id);
             return (
               <div
@@ -234,19 +239,19 @@ export function ProjectBoard() {
             );
           })}
 
-          {TEASERS.map((t, i) => {
+          {teasers.map((t, i) => {
             const style = {
               "--x": `${t.x}%`,
               "--y": `${t.y}%`,
               "--r": `${t.rot}deg`,
-              "--i": PROJECTS.length + i,
+              "--i": projects.length + i,
             } as CSSProperties;
-            const cls = `pnote pteaser is-${t.kind} ${(PROJECTS.length + i) % 2 ? "side-r" : "side-l"}${
+            const cls = `pnote pteaser is-${t.kind} ${(projects.length + i) % 2 ? "side-r" : "side-l"}${
               filter !== null || panelId !== null ? " is-muted" : ""
             }`;
             const inner = (
               <>
-                <Fastener kind={t.fastener} tape={PROJECTS.length + i} />
+                <Fastener kind={t.fastener} tape={projects.length + i} />
                 <span className="pnote-paper">
                   {t.kind === "wip" && <span className="pteaser-stamp">En proceso</span>}
                   <span className="pnote-title">{t.title}</span>
@@ -283,11 +288,11 @@ export function ProjectBoard() {
           <span className="pboard-bar-label">Filtrar por área</span>
           <div className="pfilters" role="group" aria-label="Filtrar por área">
             {[
-              { label: "Todos", key: null as Area | null, count: PROJECTS.length },
+              { label: "Todos", key: null as Area | null, count: projects.length },
               ...AREAS.map((a) => ({
                 label: a,
                 key: a as Area | null,
-                count: PROJECTS.filter((p) => p.areas.includes(a)).length,
+                count: projects.filter((p) => p.areas.includes(a)).length,
               })),
             ].map((f) => (
               <button
@@ -410,7 +415,7 @@ function Sticker({
   stageRef,
   onMove,
 }: {
-  sticker: (typeof STICKERS)[number];
+  sticker: BoardSticker;
   pos: { x: number; y: number };
   stageRef: React.RefObject<HTMLDivElement | null>;
   onMove: (x: number, y: number) => void;
@@ -783,7 +788,7 @@ function Cover({ project }: { project: Project }) {
         </span>
       )}
       <span className="pcover-tag" aria-hidden>
-        fig. {PROJECTS.indexOf(project) + 1} · {project.id}
+        fig. · {project.id}
       </span>
     </div>
   );

@@ -43,3 +43,10 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+
+# Capturas de auditoría / UI
+/public/eventos/capturas/
+
+# Python compilado (scripts de skills)
+__pycache__/
+*.pyc

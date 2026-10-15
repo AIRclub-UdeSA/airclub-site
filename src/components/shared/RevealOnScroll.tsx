@@ -17,13 +17,25 @@ export function RevealOnScroll({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    if (typeof window !== "undefined") {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        el.classList.add("visible");
+        return;
+      }
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add("visible");
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
         });
       },
-      { threshold: 0.08 }
+      { threshold: 0.02, rootMargin: "0px 0px -20px 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
