@@ -10,7 +10,7 @@ Cualquier persona o agente de IA que diseñe o modifique páginas y componentes 
 
 * **Propósito**: "Necesitamos que la gente entre al sitio y quiera sumarse". El sitio es la vitrina del club de robótica e inteligencia artificial más ambicioso de San Andrés, organizador del Challenge JAR 2026.
 * **Estética declarada**: **Póster de Marca / Afiche de Ingeniería**. El sitio debe sentirse diseñado con rigor editorial y arquitectónico (a la altura de referentes como *Caldera*, *Flying Papers* o *Slush*), no como una plantilla SaaS común.
-* **El Activo Intocable**: **El brazo robótico del hero (`ArmHero.tsx`) es el activo más fuerte del sitio**. Es una animación SVG articulada que arma el logo "AIR" en vivo al scrollear. Cualquier rediseño se construye alrededor de él, **nunca en lugar de él**.
+* **El Activo Intocable**: **El brazo robótico del hero (`ArmHero.tsx`) es el activo más fuerte del sitio**. Es un componente 3D (React Three Fiber, `RobotArm3D`) que arma el logo "AIR" en vivo al scrollear. Cualquier rediseño se construye alrededor de él, **nunca en lugar de él**.
 
 ---
 
@@ -21,7 +21,7 @@ Para todo desarrollo visual nuevo en el sitio, fijamos estas tres perillas (esca
 | Perilla | Valor | Significado en AIR Club |
 | :--- | :---: | :--- |
 | **`DESIGN_VARIANCE`** | **8 / 10** | **Asimetría editorial y afiche gráfico**. Se evitan las grillas uniformes o predecibles; se combinan escalas monumentales con módulos de densidad variada. |
-| **`MOTION_INTENSITY`** | **6 / 10** | **Cinemática física enfocada**. Movimiento rápido, seco y con masa tangible. Se reserva la mayor expresividad para el brazo SVG y el CAD. |
+| **`MOTION_INTENSITY`** | **6 / 10** | **Cinemática física enfocada**. Movimiento rápido, seco y con masa tangible. Se reserva la mayor expresividad para el brazo 3D y el CAD. |
 | **`VISUAL_DENSITY`** | **4 / 10** | **Espacio amplio y respiración ("Art Gallery")**. Fondo limpio, márgenes generosos, cortes precisos y cero ruido ornamental. |
 
 ---
@@ -131,7 +131,7 @@ Para no regresar a los patrones mediocres de IA, queda **estrictamente prohibido
 
 ## 7. Checklist Pre-Commit para Colaboradores y Agentes
 
-Antes de proponer cualquier PR contra `v2`:
+Antes de proponer cualquier PR contra `main`:
 
 - [ ] **Idiomas**: Código, commits, documentación y comentarios en **español**.
 - [ ] **Sin AI Co-Author**: No incluir trailers `Co-authored-by: ... [bot]` (el CI lo rechaza).
@@ -378,7 +378,7 @@ Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a ma
 * El dwell no funciona en táctil: en el teléfono el slalom pasa a la velocidad del dedo. Evaluar `syncTouch` de Lenis (cambia el tacto del scroll en toda la página).
 * El brazo robótico del hero sigue pendiente de su pasada propia.
 * La sección 8 todavía dice que "la landing conserva `rounded-card`" (línea de "Forma"): quedó vieja desde la decisión de la sección 11.
-* Abrir el PR contra `v2` cuando el dueño lo apruebe.
+* Abrir el PR contra `main` cuando el dueño lo apruebe.
 
 ---
 

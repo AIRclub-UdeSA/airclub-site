@@ -1,10 +1,10 @@
 # Chequeo de CI para la reescritura en Next.js: instala, tipa, lintea y compila.
-# Corre en PRs contra v2 (donde vive el desarrollo de la 2.0) y contra main.
+# Corre en cada PR contra main.
 name: CI
 
 on:
   pull_request:
-    branches: [main, v2]
+    branches: [main]
 
 jobs:
   ci:

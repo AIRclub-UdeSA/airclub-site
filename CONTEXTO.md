@@ -1,6 +1,8 @@
 # Contexto para retomar este proyecto
 
 > **Histórico (escrito el 2026-09-10).** Donde difiera de `DESIGN.md` (§3 y §8-11) o del `README.md`, valen esos.
+>
+> El corte a `main` se hizo el 2026-10-15 (PR #67): `main` tiene el sitio nuevo y Vercel publica producción desde ahí. Las menciones de abajo a `v2`, a Netlify y a "no tocar `main`" quedaron viejas: hoy los PRs van directo a `main`.
 
 Este documento es para quien (persona o agente) se sume a trabajar en esta rama sin
 haber estado en la conversación donde se tomaron estas decisiones. Léelo antes de tocar
