@@ -275,7 +275,8 @@ model WorkshopSession {
   track        WorkshopTrack          @relation(fields: [trackId], references: [id], onDelete: Cascade)
   slug         String                 @unique // igual que en WorkshopGuide: no cambiarlo
   title        String
-  summary      String                 @db.Text
+  summary      String                 @db.Text // corto: va en su tarjeta, adentro del workshop
+  description  String?                @db.Text // lo que se vio, en la pestaña Resumen de su página; sin ella, va `summary`
   startsAt     DateTime?
   endsAt       DateTime?
   dateLabel    String?

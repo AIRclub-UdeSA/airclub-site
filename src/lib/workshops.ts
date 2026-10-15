@@ -56,7 +56,10 @@ export type PastWorkshop = {
   slug: string;
   track: TrackKey;
   title: string;
+  /** Corto: va en su tarjeta. */
   summary: string;
+  /** Lo que se vio, en la pestaña Resumen de su página. Sin ella, la página muestra `summary`. */
+  description?: string;
   /** ISO; sin fecha, la tarjeta dice "Taller presencial". */
   startsAt?: string;
   endsAt?: string;
@@ -202,6 +205,7 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
           track: t.key,
           title: s.title,
           summary: s.summary,
+          description: s.description ?? undefined,
           startsAt: s.startsAt?.toISOString(),
           endsAt: s.endsAt?.toISOString(),
           dateLabel: s.dateLabel ?? undefined,

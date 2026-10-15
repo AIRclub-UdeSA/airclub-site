@@ -41,6 +41,7 @@ export default async function AdminWorkshopsPage() {
       slug: s.slug,
       title: s.title,
       summary: s.summary,
+      description: s.description,
       startsAt: s.startsAt,
       endsAt: s.endsAt,
       dateLabel: s.dateLabel,

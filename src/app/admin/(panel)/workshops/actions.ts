@@ -130,6 +130,7 @@ function sessionData(formData: FormData) {
     slug: str(formData, "slug"),
     title: str(formData, "title"),
     summary: str(formData, "summary"),
+    description: optStr(formData, "description"),
     ...parseDates(formData),
     dateLabel: optStr(formData, "dateLabel"),
     location: optStr(formData, "location"),

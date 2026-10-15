@@ -33,6 +33,7 @@ export type AdminWorkshopSession = {
   slug: string;
   title: string;
   summary: string;
+  description: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
   dateLabel: string | null;

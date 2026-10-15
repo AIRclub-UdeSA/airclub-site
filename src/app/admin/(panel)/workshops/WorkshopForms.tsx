@@ -394,8 +394,12 @@ export function SessionForm({
           <input ref={slugRef} type="text" name="slug" required readOnly={!!item} defaultValue={item?.slug ?? ""} className={`${inputClass} read-only:opacity-60`} />
         </label>
         <label className={wideLabel}>
-          Resumen
-          <textarea name="summary" required rows={4} defaultValue={item?.summary ?? ""} className={inputClass} />
+          Resumen corto (va en su tarjeta, adentro del workshop)
+          <textarea name="summary" required rows={2} defaultValue={item?.summary ?? ""} className={inputClass} />
+        </label>
+        <label className={wideLabel}>
+          Qué se vio (va en la pestaña Resumen de su página; opcional)
+          <textarea name="description" rows={6} defaultValue={item?.description ?? ""} className={inputClass} />
         </label>
         <div className="flex flex-wrap gap-3">
           <label className={labelClass}>
@@ -408,8 +412,8 @@ export function SessionForm({
           </label>
         </div>
         <p className={hintClass}>
-          El slug va en la URL y es con lo que se guarda quién vino: no se puede cambiar después de crearlo. Un párrafo en blanco
-          en el resumen lo separa en dos.
+          El slug va en la URL y es con lo que se guarda quién vino: no se puede cambiar después de crearlo. Si no hay
+          &ldquo;qué se vio&rdquo;, la página muestra el resumen corto. Un renglón en blanco separa párrafos.
         </p>
       </fieldset>
 

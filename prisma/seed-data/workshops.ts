@@ -54,7 +54,10 @@ export type SeedPastWorkshop = {
   slug: string;
   track: string;
   title: string;
+  /** Corto: va en su tarjeta, adentro del workshop. */
   summary: string;
+  /** Lo que se vio, en la pestaña Resumen de su página. Sin ella, la página muestra `summary`. */
+  description?: string;
   startsAt?: Date;
   endsAt?: Date;
   dateLabel?: string;
@@ -73,9 +76,13 @@ export const pastWorkshops: SeedPastWorkshop[] = [
     slug: "instalacion-linux",
     track: "linux",
     title: "Instalación de Linux",
+    // Sigue el orden de las diapositivas del taller (las de `slides`), sin agregar nada que no esté en ellas.
     summary:
-      "Instalamos Ubuntu en las laptops de quienes vinieron, junto a Windows (dual boot), para dejarlas listas para trabajar con ROS 2 y con los robots del club. Arrancamos por qué es Linux, qué es una distribución y por qué elegimos Ubuntu LTS; después preparamos Windows (BitLocker, inicio rápido y espacio en el disco), entramos a la BIOS/UEFI e hicimos la instalación paso a paso.\n\n" +
-      "En la segunda parte, con Ubuntu ya andando, revisamos que funcionaran Wi-Fi, Bluetooth, pantalla, audio y cámara, y que se pudiera abrir el disco de Windows. Después aprendimos a movernos por la terminal y a entender los permisos, a instalar programas con APT y Snap y a mirar recursos y drivers; escribimos un primer script en Bash, compilamos un programa en C y dejamos VS Code configurado.",
+      "Qué es Linux y por qué Ubuntu, la instalación paso a paso y los primeros pasos con el sistema ya instalado.",
+    description:
+      "Conceptos básicos: qué es Linux (el núcleo del sistema, código abierto y software libre), qué es una distribución (Linux, herramientas e interfaz) y por qué elegimos Ubuntu: amigable para empezar, mucha documentación, comunidad grande, buena compatibilidad y versión LTS (Long Term Support), con actualizaciones durante varios años.\n\n" +
+      "La instalación, del pendrive a una versión booteable de Ubuntu: preparar Windows (desactivar BitLocker y el inicio rápido), hacer espacio para Ubuntu reduciendo la unidad C: desde Administración de discos, entrar a la BIOS/UEFI al reiniciar (con F12, Esc, F2 o F10) y elegir el tipo de instalación: junto a Windows (dual boot), solo Ubuntu o manual.\n\n" +
+      "Postinstalación: probar Wi-Fi, Bluetooth, pantalla, audio y webcam, y abrir el disco de Windows desde Ubuntu; moverse por la consola y entender los permisos; instalar software con APT y Snap; monitorear recursos y controladores; escribir un primer script en Bash; compilar y ejecutar un programa en C, y configurar VS Code.",
     // Sin hora: es el día del taller (17/09), como una charla cargada sin horario.
     startsAt: new Date("2026-09-17T00:00:00-03:00"),
     endsAt: new Date("2026-09-17T23:59:00-03:00"),

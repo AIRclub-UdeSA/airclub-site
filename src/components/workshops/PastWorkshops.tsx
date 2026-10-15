@@ -78,7 +78,8 @@ function PastTile({ workshop: w, lead = false, wide = false }: { workshop: PastW
             {w.title}
           </Link>
         </h3>
-        <p className="max-w-[60ch] text-[.98rem] leading-[1.65] text-text2">{w.summary}</p>
+        {/* El resumen corto: lo que se vio entero va en la página del taller. El corte a tres líneas es por si se carga largo. */}
+        <p className="line-clamp-3 max-w-[60ch] text-[.98rem] leading-[1.65] text-text2">{w.summary}</p>
         <span
           className="mt-auto inline-flex items-center gap-2 pt-2 font-mono text-[.74rem] font-semibold uppercase tracking-[.14em] transition-colors group-hover:text-crimson-text"
           aria-hidden="true"

@@ -44,7 +44,7 @@ export function SessionMaterial({ workshop: w }: { workshop: PastWorkshop }) {
       {active === "overview" && (
         <div className="mt-8 space-y-8">
           <div className="space-y-4 text-[1.1rem] leading-[1.7] text-text2">
-            {w.summary.split("\n\n").map((paragraph, i) => (
+            {(w.description ?? w.summary).split("\n\n").map((paragraph, i) => (
               <p key={i} className="max-w-[62ch]">
                 {paragraph}
               </p>
