@@ -3,6 +3,10 @@ export const CONTACT_EMAIL = "airclub@udesa.edu.ar";
 export const COMMUNITY_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSeJj7cS6SaCPaBr4a6dfJzeFF9W6BRWYxfLe0BEcGepSIvJBw/viewform";
 
+/** Formulario para proponer un proyecto o una idea ("Tengo una idea" de la landing). No es el de inscripción al JAR. */
+export const PROJECT_PROPOSAL_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe-lew786UN7sTBu1ZOLYjrVAzwFXKTMiSTKS7wUhQFpNhHqQ/viewform";
+
 export type SeedContactChannel = {
   key: "email" | "instagram" | "whatsapp" | "linkedin";
   label: string;
