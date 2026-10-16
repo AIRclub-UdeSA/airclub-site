@@ -22,7 +22,7 @@ export function BarList({ title, buckets, total }: { title: string; buckets: Buc
               className="grid grid-cols-[minmax(0,10rem)_1fr_2rem] items-center gap-2 text-sm sm:grid-cols-[minmax(0,14rem)_1fr_2rem]"
             >
               <span className="break-words leading-tight text-text2">{b.label}</span>
-              <span className="h-2.5 rounded-r-[4px] bg-crimson" style={{ width: `${(b.count / max) * 100}%`, minWidth: 4 }} aria-hidden="true" />
+              <span className="h-2.5 rounded-r-[4px] bg-crimson" style={{ width: `${(b.count / max) * 100}%`, minWidth: b.count > 0 ? 4 : 0 }} aria-hidden="true" />
               <span className="text-right font-mono text-xs text-text">{b.count}</span>
             </li>
           ))}

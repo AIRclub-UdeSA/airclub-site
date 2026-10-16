@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { careerText, distributions, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
-import { BarList } from "./BarList";
+import { BarList } from "@/components/admin/BarList";
 import { RemoveRegistrationButton } from "./RemoveRegistrationButton";
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
@@ -65,30 +65,9 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       <div>
         <h2 className="font-display text-xl font-bold text-text">Comunidad</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Personas con perfil público creado en el sitio, y quién se inscribió a cada AIR Talk. Las inscripciones se pueden dar de baja desde acá; cada baja queda en los logs.
+          Quién se inscribió a cada AIR Talk. Las cuentas con perfil están en Cuentas. Las inscripciones se pueden dar de baja desde acá; cada baja queda en los logs.
         </p>
       </div>
-
-      <section className="flex flex-col gap-4">
-        <h3 className="font-display text-lg font-bold text-text">{profiles.length} perfiles</h3>
-        {profiles.length === 0 ? (
-          <p className="text-sm text-text3">Todavía no se creó ningún perfil.</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
-            {profiles.map((p) => (
-              <li key={p.id} className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                <div className="min-w-0 break-words">
-                  <p className="text-sm text-text">
-                    {p.email} · <span className="text-text2">{ROLE_LABELS[p.role]}</span>
-                  </p>
-                  <p className="font-mono text-xs text-text3">{profileDetail(p)}</p>
-                </div>
-                <span className="shrink-0 font-mono text-xs text-text3">{formatDate(p.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       <section className="flex flex-col gap-4">
         <h3 className="font-display text-lg font-bold text-text">Inscriptos por charla</h3>

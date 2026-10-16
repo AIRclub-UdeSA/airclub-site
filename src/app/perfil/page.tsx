@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { requireUserProfile } from "@/lib/perfil/require-profile";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
+import { DeleteMyAccount } from "@/components/perfil/DeleteMyAccount";
 
 export const metadata: Metadata = {
   title: "Mi perfil, AIR Club UdeSA",
@@ -30,6 +31,7 @@ export default async function PerfilPage({ searchParams }: PageProps<"/perfil">)
         </p>
       )}
       <PerfilForm existing={profile} submitLabel="Guardar cambios" next="/perfil?guardado=1" />
+      <DeleteMyAccount />
     </div>
   );
 }
