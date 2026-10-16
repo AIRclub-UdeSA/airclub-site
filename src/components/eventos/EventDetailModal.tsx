@@ -39,6 +39,7 @@ export function EventDetailModal({
       // Los eventos no tienen inscripcion propia (eso es RSVP, #50 solo es para /talks):
       // registrationOpen siempre da false/undefined acá, así que nunca se llega a usar esto.
       onRegister={() => {}}
+      registrationOf={() => "open"}
     />
   );
 }

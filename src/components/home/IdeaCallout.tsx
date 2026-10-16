@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
+import { PROJECT_PROPOSAL_FORM_URL } from "@/lib/contact";
 
 /**
  * "Tengo una idea, pero no sé por dónde empezar": banda a todo el ancho (alterna con el lienzo, como en /equipo y
@@ -22,7 +23,7 @@ export function IdeaCallout() {
                 quieran sumarse. La propuesta es simple: conectar personas, intereses y proyectos reales.
               </p>
               <a
-                href="https://forms.gle/2zkW6gwJQptUzbXn6"
+                href={PROJECT_PROPOSAL_FORM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group mt-8 inline-flex max-w-full items-center gap-3 rounded-full bg-crimson px-8 py-4 font-mono text-[.82rem] font-bold uppercase leading-tight tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"

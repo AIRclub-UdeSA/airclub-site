@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import { RegisterButton, type RegistrationState } from "./RegisterButton";
 import type { TimelineTalk } from "./TalksTimeline";
 import type { TalkSection } from "./TalkModal";
-import { shortDayLabel, talkCover, talkDateParts } from "@/lib/talk-format";
+import { moreSpeakersLabel, shortDayLabel, talkCover, talkDateParts } from "@/lib/talk-format";
 
 interface TalksHeroProps {
   latest?: TimelineTalk;
@@ -13,13 +14,14 @@ interface TalksHeroProps {
   daysUntilNext: string | null;
   onOpenTalk: (slug: string, section?: TalkSection) => void;
   onRegister: (talk: TimelineTalk) => void;
+  registrationOf: (slug: string) => RegistrationState;
 }
 
 const PANEL_PAD = "p-6 sm:p-8 lg:p-10";
 // Un único elemento por panel cubre todo el panel (enlace estirado); los demás enlaces se elevan por encima.
 const STRETCH = "after:absolute after:inset-0 after:content-['']";
 
-export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk, onRegister }: TalksHeroProps) {
+export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk, onRegister, registrationOf }: TalksHeroProps) {
   const both = Boolean(latest && next);
   return (
     <section className="pb-10 pt-24 md:pb-14">
@@ -38,7 +40,7 @@ export function TalksHero({ latest, next, todayIso, daysUntilNext, onOpenTalk, o
         {both && <TodayBadge todayIso={todayIso} />}
 
         {next ? (
-          <NextPanel talk={next} daysUntil={daysUntilNext} onOpenTalk={onOpenTalk} onRegister={onRegister} />
+          <NextPanel talk={next} daysUntil={daysUntilNext} onOpenTalk={onOpenTalk} onRegister={onRegister} registrationOf={registrationOf} />
         ) : (
           <NoDatePanel />
         )}
@@ -121,7 +123,11 @@ function LatestPanel({
               )}
               <p className="text-[.95rem] leading-snug">
                 <span className="font-semibold">{talk.speaker.name}</span>
-                <span className="block text-white/70">{talk.speaker.role}</span>
+                {moreSpeakersLabel(talk.speakers) ? (
+                  <span className="text-white/70"> {moreSpeakersLabel(talk.speakers)}</span>
+                ) : (
+                  <span className="block text-white/70">{talk.speaker.role}</span>
+                )}
               </p>
             </div>
           )}
@@ -164,11 +170,13 @@ function NextPanel({
   daysUntil,
   onOpenTalk,
   onRegister,
+  registrationOf,
 }: {
   talk: TimelineTalk;
   daysUntil: string | null;
   onOpenTalk: TalksHeroProps["onOpenTalk"];
   onRegister: TalksHeroProps["onRegister"];
+  registrationOf: TalksHeroProps["registrationOf"];
 }) {
   const date = talkDateParts(talk.startsAt, talk.endsAt);
 
@@ -221,14 +229,7 @@ function NextPanel({
               misma fila en notebooks de ~1300px. En anchos menores igual baja a la línea siguiente, sin cortarse. */}
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 2xl:gap-x-6">
             {talk.registrationOpen ? (
-              <button
-                type="button"
-                onClick={() => onRegister(talk)}
-                className="relative z-10 inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-white px-5 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-crimson 2xl:px-6 2xl:tracking-[.14em] transition-colors hover:bg-[#f5e8ec]"
-              >
-                <span>{talk.registrationLabel ?? "Inscribirme"}</span>
-                <ArrowUpRight size={15} aria-hidden="true" />
-              </button>
+              <RegisterButton talk={talk} state={registrationOf(talk.slug)} variant="hero" onRegister={onRegister} />
             ) : (
               talk.cta && (
                 <a

@@ -200,7 +200,25 @@ model Talk {
   media              TalkMedia[]
   slides             TalkSlide[]
   links              TalkLink[]
+  speakers           TalkSpeaker[]
   registrations      TalkRegistration[]
+}
+
+// Oradores de una charla, en orden. Reemplaza a las columnas speaker* de Talk, que quedan sin leerse y
+// se retiran en un PR aparte. Por ahora el panel sigue copiando al primero ahí, por si hay que volver atrás.
+model TalkSpeaker {
+  id          String  @id @default(cuid())
+  talkId      String
+  talk        Talk    @relation(fields: [talkId], references: [id], onDelete: Cascade)
+  name        String
+  role        String
+  affiliation String?
+  avatar      String?
+  linkedin    String?
+  bio         String? @db.Text
+  order       Int     @default(0)
+
+  @@index([talkId])
 }
 
 // Inscripcion propia de una charla (talk.registrationOpen = true), gemelo de EventRegistration.
