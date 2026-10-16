@@ -1,164 +1,181 @@
-export type ProjectPin = {
-  who: string;
-  text: string;
-};
+export const AREAS = ["Robótica", "Software", "Inteligencia Artificial"];
+export type Area = (typeof AREAS)[number];
 
-export type ProjectLink = {
-  label: string;
-  kind: string;
-  href: string;
-};
+/** Gama monocromática de bordós para los papeles de proyectos (de oscuro a claro). */
+export const PAPER_SHADES = ["#5d072b", "#740936", "#8c0a41", "#a40c4c", "#bc0e57", "#d40f62"];
+
+/** Cómo está pegado el papel al corcho. */
+export type Fastener = "tape" | "pin-white" | "pin-pink";
+
+export type ProjectStatus = "EN DESARROLLO" | "BUSCANDO EQUIPO" | "FASE DE PRUEBAS";
+export type MilestoneState = "done" | "wip" | "todo";
 
 export type SeedProject = {
   id: string;
   title: string;
-  areas: string[];
-  status: "EN DESARROLLO" | "BUSCANDO EQUIPO" | "FASE DE PRUEBAS";
+  line: string;
+  desc: string;
+  areas: Area[];
+  status: ProjectStatus;
+  /** Tono del papel: índice en PAPER_SHADES, o "paper" para un papel blanco. */
+  shade: number | "paper";
+  fastener: Fastener;
+  /** Posición en el corcho (% del área útil) y rotación en grados. */
+  x: number;
+  y: number;
+  rot: number;
+  /** Portada del detalle: una imagen o una ilustración hecha en CSS, con un efecto opcional encima. */
+  cover: { src?: string; kind: "photo" | "sticker" | "art"; fx?: "lidar" | "detect" | "grid" | "chat" | "hockey" };
+  roles: string[];
+  tech: string[];
+  reqs: string[];
+  links: { label: string; kind: string; href: string }[];
+  // Lo que sigue es opcional: las secciones vacías no se muestran.
+  members?: { name: string; lead?: boolean }[];
+  milestones?: { label: string; state: MilestoneState }[];
+  notes?: { who: string; text: string }[];
+};
+
+/** Papeles de relleno: proyectos que todavía se están armando y la invitación a proponer uno. */
+export type SeedTeaser = {
+  id: string;
+  kind: "wip" | "idea";
+  title: string;
   line: string;
   x: number;
   y: number;
   rot: number;
-  tone: number;
-  desc: string;
-  roles: string[];
-  links: ProjectLink[];
-  reqs: string[];
-  leads: string;
-  pins: ProjectPin[];
-};
-
-export type BoardSticker = {
-  src: string;
-  x: number;
-  y: number;
-  width: string;
-  rot: number;
+  fastener?: Fastener;
 };
 
 export const projects: SeedProject[] = [
   {
-    id: "nav",
-    title: "Navegación autónoma X3",
-    areas: ["Robótica", "Inteligencia Artificial"],
+    id: "llm",
+    title: "LLM + ROSMaster",
+    line: "Conectar un modelo de lenguaje al robot para darle órdenes en lenguaje natural.",
+    desc: "Queremos poder hablarle al ROSMaster X3 como a una persona: que un modelo de lenguaje interprete el pedido, lo traduzca a acciones de ROS 2 y el robot las ejecute.",
+    areas: ["Inteligencia Artificial", "Robótica", "Software"],
     status: "EN DESARROLLO",
-    line: "SLAM y planificación de trayectorias sobre el ROSMaster X3.",
-    x: 7,
+    shade: 3,
+    fastener: "tape",
+    x: 9,
     y: 10,
     rot: -2.6,
-    tone: 0,
-    desc: "El corazón del challenge: que el X3 arme su mapa, se ubique y llegue a un objetivo esquivando obstáculos, todo a bordo de la Raspberry Pi 5.",
-    roles: ["ROS 2", "Nav2 / SLAM", "C++ o Python"],
-    links: [
-      { label: "yahboom_rosmaster", kind: "GitHub", href: "https://github.com/AIRclub-UdeSA/yahboom_rosmaster" },
-      { label: "Notas de navegación", kind: "Wiki", href: "#" },
-    ],
-    reqs: ["Manejo básico de Linux y terminal", "Ganas de romper y arreglar cosas", "2 a 4 horas por semana"],
-    leads: "Juan Kaplan · Lucio Luque Materazzi",
-    pins: [
-      { who: "Lucio", text: "Ya corre el mapeo en el lab, falta afinar el costmap." },
-      { who: "Juan", text: "Necesitamos a alguien que se meta con Nav2 en serio." },
-      { who: "Camila", text: "Dejé los rosbags de la última prueba en el Drive." },
-    ],
+    cover: { src: "/stickers/sticker3.png", kind: "sticker", fx: "chat" },
+    roles: ["Python", "ROS 2", "LLMs / prompting"],
+    tech: ["ROS 2", "Python", "LLMs", "ROSMaster X3"],
+    reqs: ["Python básico", "Curiosidad por los modelos de lenguaje", "Ganas de probar cosas en el robot real"],
+    links: [{ label: "yahboom_rosmaster", kind: "GitHub", href: "https://github.com/AIRclub-UdeSA/yahboom_rosmaster" }],
   },
   {
-    id: "pinza",
-    title: "Pinza adaptativa",
+    id: "hockey",
+    title: "Air Hockey",
+    line: "Mesa de tejo de aire robótica para control óptimo y aprendizaje por refuerzo.",
+    desc: "Una plataforma open source, educativa y de investigación, para control óptimo, reinforcement learning e imitation learning. Los algoritmos se desarrollan en un simulador con un motor físico custom de alta fidelidad y se prueban en una mesa robótica real, una versión mejorada de un proyecto open source de JJRobots.",
+    areas: ["Robótica", "Inteligencia Artificial"],
+    status: "EN DESARROLLO",
+    shade: 5,
+    fastener: "pin-white",
+    x: 44,
+    y: 1,
+    rot: 1.8,
+    cover: { kind: "art", fx: "hockey" },
+    roles: ["Control", "Reinforcement learning", "Simulación"],
+    tech: ["Control óptimo", "Reinforcement learning", "Imitation learning", "Simulador custom", "JJRobots"],
+    reqs: ["Algo de programación", "Interés en control o aprendizaje automático", "Venir al lab a probar en la mesa"],
+    links: [],
+  },
+  {
+    id: "robotis",
+    title: "Robotis",
+    line: "Aprender robótica de forma autodidacta con plataformas open source.",
+    desc: "Un espacio para aprender robótica por cuenta propia, en grupo, usando las plataformas y el material open source de ROBOTIS. Ideal para arrancar desde cero.",
     areas: ["Robótica"],
     status: "BUSCANDO EQUIPO",
-    line: "Manipulador impreso en 3D para montar sobre el X3.",
-    x: 26,
-    y: 33,
+    shade: "paper",
+    fastener: "tape",
+    x: 27,
+    y: 35,
     rot: 2.2,
-    tone: 1,
-    desc: "Un brazo simple de 3 grados de libertad con pinza de dos dedos, para que el robot pueda levantar objetos durante las pruebas del challenge.",
-    roles: ["CAD / impresión 3D", "Servos y electrónica", "Cinemática"],
-    links: [
-      { label: "Piezas y STL", kind: "Drive", href: "#" },
-      { label: "Bitácora de diseño", kind: "Wiki", href: "#" },
+    cover: { src: "/stickers/sticker2.png", kind: "sticker" },
+    roles: ["Ganas de aprender", "Electrónica", "Programación"],
+    tech: ["ROBOTIS", "Open source", "ROS 2"],
+    reqs: [
+      "No hace falta experiencia previa",
+      "Constancia para avanzar por tu cuenta",
+      "Compartir lo que aprendés con el grupo",
     ],
-    reqs: ["Fusion 360, Onshape o similar", "No hace falta experiencia previa en robótica", "Venir al lab una vez por semana"],
-    leads: "Teo Kaucher",
-    pins: [
-      { who: "Teo", text: "Subí el primer boceto del chasis de la pinza al Drive." },
-      { who: "Francesca", text: "La impresora del lab quedó calibrada, se puede usar." },
-    ],
+    links: [],
   },
   {
-    id: "vision",
-    title: "Visión RGB‑D",
-    areas: ["Inteligencia Artificial"],
-    status: "BUSCANDO EQUIPO",
-    line: "Detección de objetos con la cámara de profundidad.",
-    x: 4,
-    y: 52,
-    rot: 1.6,
-    tone: 2,
-    desc: "Detectar y ubicar en 3D los objetos de la pista usando la cámara RGB-D. Modelo liviano, corriendo en tiempo real sobre la Pi.",
-    roles: ["Python", "Visión por computadora", "PyTorch / ONNX"],
-    links: [
-      { label: "vision_pipeline", kind: "GitHub", href: "#" },
-      { label: "Dataset etiquetado", kind: "Drive", href: "#" },
-    ],
-    reqs: ["Python intermedio", "Algo de redes neuronales (o ganas de aprender)", "Notebook propia"],
-    leads: "Zoe Velazquez",
-    pins: [
-      { who: "Zoe", text: "Necesitamos a alguien que sepa Python para la parte de inferencia." },
-      { who: "Juan", text: "Ojo con la latencia: tiene que correr a 10 fps mínimo." },
-    ],
-  },
-  {
-    id: "sim",
-    title: "Gemelo digital",
-    areas: ["Software", "Robótica"],
-    status: "FASE DE PRUEBAS",
-    line: "Simulador en Gazebo del X3 para los equipos de la JAR.",
-    x: 42,
-    y: 8,
-    rot: -1.8,
-    tone: 1,
-    desc: "El entorno público donde los equipos del challenge desarrollan y prueban su código sin tener el robot físico delante. Es nuestra carta de presentación técnica.",
-    roles: ["Gazebo / URDF", "Docker", "Documentación"],
-    links: [
-      { label: "jar_simulator", kind: "GitHub", href: "https://github.com/AIRclub-UdeSA/yahboom_rosmaster" },
-      { label: "Guía de instalación", kind: "Docs", href: "https://airclub-udesa.github.io/jar_site/" },
-    ],
-    reqs: ["Linux y Docker", "ROS 2 Humble", "Paciencia con los archivos de configuración"],
-    leads: "Lucio Luque Materazzi",
-    pins: [
-      { who: "Lucio", text: "La física de las ruedas mecanum ya quedó estable." },
-      { who: "Tomas", text: "Falta escribir el README para los equipos externos." },
-    ],
-  },
-  {
-    id: "web",
-    title: "Web del club",
+    id: "juego",
+    title: "Un jueguito para la web",
+    line: "Software extra: un minijuego para la página del club.",
+    desc: "Un proyecto de software más liviano y divertido: diseñar y programar un minijuego que viva en la página del club. Buen lugar para meterse con desarrollo web e interacción.",
     areas: ["Software"],
-    status: "EN DESARROLLO",
-    line: "Sitio público y este tablero interactivo.",
-    x: 55,
-    y: 31,
-    rot: 2.8,
-    tone: 0,
-    desc: "La cara pública del AIR: el sitio, el tablero de proyectos y las páginas de cada evento. Front puro, sin framework pesado.",
-    roles: ["HTML / CSS", "JavaScript", "Diseño de interacción"],
-    links: [
-      { label: "airclub-udesa.github.io", kind: "GitHub", href: "https://github.com/AIRclub-UdeSA" },
-      { label: "Sitio del JAR 2026", kind: "Live", href: "https://airclub-udesa.github.io/jar_site/" },
-    ],
-    reqs: ["CSS con soltura", "Gusto por el detalle y la animación", "Trabajo mayormente remoto"],
-    leads: "Tomas Diaz",
-    pins: [
-      { who: "Tomas", text: "El tablero ya tiene el modo foco andando." },
-      { who: "Camila", text: "Faltan las fotos nuevas del equipo." },
-    ],
+    status: "BUSCANDO EQUIPO",
+    shade: 4,
+    fastener: "pin-pink",
+    x: 61,
+    y: 30,
+    rot: -2.4,
+    cover: { src: "/stickers/sticker4.png", kind: "sticker" },
+    roles: ["JavaScript / TypeScript", "Diseño de juegos", "Pixel art"],
+    tech: ["Next.js", "React", "TypeScript", "Canvas"],
+    reqs: ["Algo de JavaScript", "Ideas para el juego", "Trabajo mayormente remoto"],
+    links: [{ label: "AIRclub-UdeSA", kind: "GitHub", href: "https://github.com/AIRclub-UdeSA" }],
   },
 ];
 
-export const boardStickers: BoardSticker[] = [
-  { src: "/stickers/sticker1.png", x: 78, y: 4, width: "11cqw", rot: -6 },
-  { src: "/stickers/sticker2.png", x: 2, y: 32, width: "7cqw", rot: 10 },
-  { src: "/stickers/sticker3.png", x: 22, y: 68, width: "10cqw", rot: -3 },
-  { src: "/stickers/sticker4.png", x: 55, y: 56, width: "9cqw", rot: 5 },
-  { src: "/stickers/sticker5.png", x: 32, y: 12, width: "8cqw", rot: -10 },
-  { src: "/stickers/sticker6.png", x: 74, y: 44, width: "7cqw", rot: 14 },
+export const teasers: SeedTeaser[] = [
+  {
+    id: "wip-1",
+    kind: "wip",
+    title: "Algo se está cocinando",
+    line: "Proyecto en proceso. Pronto más info.",
+    x: 6,
+    y: 62,
+    rot: -3.2,
+    fastener: "pin-pink",
+  },
+  {
+    id: "wip-2",
+    kind: "wip",
+    title: "Top secret",
+    line: "Proyecto en proceso. Pronto más info.",
+    x: 46,
+    y: 63,
+    rot: 2.6,
+    fastener: "tape",
+  },
+  {
+    id: "idea",
+    kind: "idea",
+    title: "¿Tu proyecto acá?",
+    line: "Traé tu idea al club y la armamos juntos.",
+    x: 78,
+    y: 57,
+    rot: 3.4,
+  },
 ];
+
+/** Stickers decorativos del corcho; se pueden arrastrar. Posición en %, tamaño relativo a un papel. */
+export type BoardSticker = {
+  id: string;
+  src: string;
+  alt: string;
+  x: number;
+  y: number;
+  /** Ancho relativo a un papel. */
+  size: number;
+  rot: number;
+};
+
+export const boardStickers: BoardSticker[] = [
+  { id: "logo", src: "/stickers/sticker1.png", alt: "Logo AIR", x: 80, y: 3, size: 0.62, rot: -6 },
+  { id: "tools", src: "/stickers/sticker5.png", alt: "Herramientas", x: 33, y: 6, size: 0.5, rot: -8 },
+  { id: "arm", src: "/stickers/sticker2.png", alt: "Brazo robótico", x: 3, y: 38, size: 0.42, rot: 12 },
+  { id: "atom", src: "/stickers/sticker6.png", alt: "Átomo", x: 85, y: 33, size: 0.44, rot: 14 },
+  { id: "pc", src: "/stickers/sticker4.png", alt: "Computadora", x: 66, y: 72, size: 0.5, rot: 4 },
+  { id: "robot", src: "/stickers/sticker3.png", alt: "ROSMaster X3", x: 28, y: 72, size: 0.5, rot: -3 },
+] as const;
