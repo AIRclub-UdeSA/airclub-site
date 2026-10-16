@@ -26,7 +26,8 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *  - Durante la primera vuelta la rueda rinde menos (DWELL_SPEED) para que alcance a verse; después vuelve a la normal.
  *  - Con movimiento reducido el robot queda quieto sobre la pista mientras la banda está a la vista.
  *
- * Todo pasa sobre la banda, así que el robot no tapa texto. No recibe clics (`pointer-events-none`).
+ * Todo pasa sobre la banda, así que el robot no tapa texto. No recibe clics (`pointer-events: none` en la capa y en
+ * el `<Canvas>`).
  */
 
 type Run = {
@@ -678,6 +679,10 @@ export function SeamRobot() {
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-40" style={{ visibility: active ? "visible" : "hidden" }}>
       <Canvas
         orthographic
+        // react-three-fiber le pone `pointer-events: auto` al div que envuelve el canvas, que pisa el
+        // `pointer-events-none` de la capa: sin esto el canvas se queda con los clics de toda la pantalla
+        // mientras la pista está a la vista (#80). El robot no usa eventos.
+        style={{ pointerEvents: "none" }}
         // 1 unidad = 1 px de pantalla, con el origen al centro y el eje Y hacia arriba
         camera={{ zoom: 1, position: [0, 0, 1000], near: 0.1, far: 4000 }}
         frameloop={active ? "always" : "never"}
