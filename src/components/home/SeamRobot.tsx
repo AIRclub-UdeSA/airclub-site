@@ -308,8 +308,11 @@ function lidarScanTexture() {
  */
 function attachLidarScan(turret: THREE.Mesh, model: THREE.Object3D) {
   if (turret.userData.scan) return turret.userData.scan as THREE.Mesh;
-  // la torreta está en unidades del CAD; el modelo entero se escaló para medir ROSMASTER_UNITS de largo
-  const length = ROSMASTER_UNITS / model.scale.x;
+  // El modelo entero se escaló para medir ROSMASTER_UNITS de largo. La torreta cuelga de la malla del LiDAR, que con
+  // el GLB cuantizado (KHR_mesh_quantization) trae su propia escala: hay que descontarla para medir en unidades del CAD.
+  let nodeScale = 1;
+  for (let o = turret.parent; o && o !== model; o = o.parent) nodeScale *= o.scale.x;
+  const length = ROSMASTER_UNITS / model.scale.x / nodeScale;
   turret.geometry.computeBoundingBox();
   const box = turret.geometry.boundingBox!;
   const scan = new THREE.Mesh(
