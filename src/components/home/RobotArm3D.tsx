@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { sweptXYHit } from "./arm-catch";
@@ -651,9 +651,22 @@ export default function RobotArm3D({
   // Ventana de render calculada por useArmView en ArmHero.tsx (ver CameraView).
   view: ArmView;
 }) {
+  // El hero es lo único que dibuja este canvas: fuera de pantalla se detiene el render (en iOS tres canvas
+  // WebGL a 60 fps traban el scroll). Arranca visible para que el primer frame no espere al observador.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div className="w-full h-full relative">
+    <div ref={wrapRef} className="w-full h-full relative">
       <Canvas
+        frameloop={visible ? "always" : "never"}
         // rotation explicita: sin ella R3F le aplica lookAt(0,0,0) y la camara queda inclinada.
         camera={{ position: CAMERA_POSITION, rotation: [0, 0, 0], fov: CAMERA_FOV_DEG }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
