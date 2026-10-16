@@ -3,7 +3,7 @@
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
 > [!NOTE]
-> Esta rama (`v2`) es la reescritura del sitio en Next.js + Supabase. La version en producción (Netlify, rama `main`) todavía es el `index.html` estático original — no se toca hasta el cutover final. **Antes de tocar nada, leer [CONTEXTO.md](CONTEXTO.md)** — tiene el estado real del rediseño de diseño/frontend (qué no se toca, qué ya se probó y se rechazó) y de qué lado del proyecto está cada quien.
+> El sitio es Next.js + Supabase y se publica en Vercel: producción sale de la rama `main` en https://airclub.com.ar y cada PR tiene su preview. **Antes de tocar diseño o frontend, leer [DESIGN.md](DESIGN.md)** (qué no se toca, qué ya se probó y se rechazó). [CONTEXTO.md](CONTEXTO.md) es el contexto histórico del rediseño.
 
 ## Stack
 
@@ -19,7 +19,6 @@ Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Pr
 | `prisma/schema.prisma` | Modelo de datos (Event, EventRegistration, Robot, TeamMember) |
 | `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo y charlas se siembran a Postgres desde acá con `npm run db:seed` |
 | `public/` | Imágenes estáticas (logo, favicon, fotos) |
-| `netlify.toml` | Deploy de la versión **actual en producción** (rama `main`), sin tocar |
 
 ## Ver el sitio localmente
 
@@ -41,18 +40,19 @@ Copiar `.env.example` a `.env`. Con valores dummy alcanza para `npm run build` y
 
 ## Cómo proponer un cambio
 
-Mientras dure la reescritura, los PRs entran **a `v2`**, no a `main`:
+Los PRs entran directo a `main` (protegida: 1 aprobación y CI verde). Al abrir el PR, Vercel genera su preview; al mergearlo, se publica producción:
 
 ```bash
-git switch v2
+git switch main
+git pull
 git switch -c mi-cambio
 # editar
 git commit -am "descripcion del cambio"
 git push -u origin mi-cambio
-gh pr create --base v2
+gh pr create --base main
 ```
 
-CI (`typecheck`, `lint`, `build`) corre en cada PR contra `v2` o `main`.
+CI (`typecheck`, `lint`, `build`) corre en cada PR contra `main`.
 
 ### Contenido (eventos, robots, equipo)
 
@@ -78,7 +78,7 @@ npx prisma migrate diff --config prisma7.config.ts \
 
 La carpeta se commitea en el mismo PR. **No usar `prisma migrate dev`**: mientras la base local sea la de producción, ante cualquier diferencia ofrece resetearla, y eso borra todo.
 
-No hay que aplicarla a mano: cuando el PR se mergea, el deploy de producción en Vercel corre `prisma migrate deploy` antes de `next build` (script `vercel-build` de `package.json`). Lo que hace cada entorno:
+No hay que aplicarla a mano: cuando el PR se mergea a `main`, el deploy de producción en Vercel corre `prisma migrate deploy` antes de `next build` (script `vercel-build` de `package.json`). Lo que hace cada entorno:
 
 | Entorno | ¿Migra? | Base |
 | --- | --- | --- |
