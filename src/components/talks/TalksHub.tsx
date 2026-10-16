@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { TalksEdit, TimelineTalk } from "./TalksTimeline";
 import { TalksHero } from "./TalksHero";
@@ -9,7 +9,7 @@ import { TalksTimeline } from "./TalksTimeline";
 import { CallForSpeakers } from "./CallForSpeakers";
 import { TalkModal, type TalkSection } from "./TalkModal";
 import { TalkRegisterDialog } from "./TalkRegisterDialog";
-import type { RegistrationState } from "./RegisterButton";
+import { useMyRegistrations } from "./use-my-registrations";
 import { getMyTalkRegistrationsAction } from "@/app/talks/register-actions";
 
 interface TalksHubProps {
@@ -31,51 +31,7 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
   // Pedido de inscripción (botón o "?inscribir=") que espera a que termine de cargar la sesión.
   const [requestedSlug, setRequestedSlug] = useState<string | null>(null);
   const [loginSlug, setLoginSlug] = useState<string | null>(null);
-  const { data: session, status } = useSession();
-  // /talks es estática (ISR): qué charlas tiene la cuenta se pide acá, con sesión. null = todavía no se sabe.
-  const [mine, setMine] = useState<{ email: string; registered: Set<string>; full: Set<string> } | null>(null);
-  const sessionEmail = session?.user?.email?.toLowerCase() ?? null;
-
-  useEffect(() => {
-    if (!sessionEmail) return;
-    let cancelled = false;
-    getMyTalkRegistrationsAction()
-      .then((res) => {
-        if (cancelled) return;
-        // El servidor puede no ver la sesión que ve el cliente (venció o falló al validarla): sin
-        // esto los botones quedarían en "loading" para siempre. Se trata igual que un error.
-        const own = res.signedIn ? res : { registered: [], full: [] };
-        setMine({ email: sessionEmail, registered: new Set(own.registered), full: new Set(own.full) });
-      })
-      // Sin la consulta no se puede saber: el botón vuelve a "Inscribirme" y el servidor decide al confirmar.
-      .catch(() => {
-        if (!cancelled) setMine({ email: sessionEmail, registered: new Set(), full: new Set() });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionEmail]);
-
-  // Sin sesión no hay nada que consultar. Con sesión, "loading" hasta que llegue la respuesta de esta cuenta.
-  const registrationOf = (slug: string): RegistrationState => {
-    if (status === "loading") return "loading";
-    if (!sessionEmail) return "open";
-    if (!mine || mine.email !== sessionEmail) return "loading";
-    if (mine.registered.has(slug)) return "registered";
-    return mine.full.has(slug) ? "full" : "open";
-  };
-
-  const handleRegistrationResult = (slug: string, result: string) => {
-    setMine((prev) => {
-      if (!prev) return prev;
-      const registered = new Set(prev.registered);
-      const full = new Set(prev.full);
-      if (result === "registered" || result === "already") registered.add(slug);
-      else if (result === "cancelled") registered.delete(slug);
-      else if (result === "full") full.add(slug);
-      return { ...prev, registered, full };
-    });
-  };
+  const { session, registrationOf, onResult } = useMyRegistrations(getMyTalkRegistrationsAction);
 
   const latest = talks.find((t) => t.slug === latestPastSlug);
   const next = talks.find((t) => t.slug === nextSlug);
@@ -163,7 +119,7 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
         isOpen={registeringSlug !== null}
         alreadyRegistered={registeringTalk ? registrationOf(registeringTalk.slug) === "registered" : false}
         onClose={() => setRegisteringSlug(null)}
-        onResult={handleRegistrationResult}
+        onResult={onResult}
       />
     </>
   );

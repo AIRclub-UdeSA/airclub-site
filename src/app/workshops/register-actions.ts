@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma, prisma } from "@/lib/prisma";
 import { isUpcoming } from "@/lib/dates";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
-import type { CancelResult, RegisterResult } from "@/app/talks/register-actions";
+import type { CancelResult, MyRegistrationsResult, RegisterResult } from "@/app/talks/register-actions";
 
 // Inscripción a talleres presenciales (#70). Mismo comportamiento que la de charlas (#50, src/app/talks/register-actions.ts):
 // mismo diálogo, mismos resultados, cupo atómico y vuelta al taller después de loguearse o completar el perfil.
@@ -87,4 +87,33 @@ export async function cancelWorkshopRegistrationAction(slug: string): Promise<Ca
   await prisma.workshopRegistration.deleteMany({ where: { sessionId: session.id, email } });
   revalidatePath("/admin/comunidad");
   return { status: "cancelled" };
+}
+
+/**
+ * Estado de la cuenta logueada frente a los talleres con inscripción propia, como getMyTalkRegistrationsAction: en cuáles
+ * ya está inscripta y cuáles llegaron al cupo sin ella adentro. /workshops es estática (ISR), así que lo pide el cliente.
+ */
+export async function getMyWorkshopRegistrationsAction(): Promise<MyRegistrationsResult> {
+  const email = await getSessionEmail();
+  if (!email) return { signedIn: false };
+
+  const sessions = await prisma.workshopSession.findMany({
+    where: { status: "PUBLISHED", track: { status: "PUBLISHED" }, registrationOpen: true, startsAt: { not: null } },
+    select: { id: true, slug: true, startsAt: true, endsAt: true, capacity: true, _count: { select: { registrations: true } } },
+  });
+
+  const mine = await prisma.workshopRegistration.findMany({
+    where: { email, sessionId: { in: sessions.map((s) => s.id) } },
+    select: { sessionId: true },
+  });
+  const mineIds = new Set(mine.map((r) => r.sessionId));
+
+  const registered: string[] = [];
+  const full: string[] = [];
+  for (const s of sessions) {
+    if (!s.startsAt || !isUpcoming(s.startsAt, s.endsAt)) continue;
+    if (mineIds.has(s.id)) registered.push(s.slug);
+    else if (s.capacity !== null && s._count.registrations >= s.capacity) full.push(s.slug);
+  }
+  return { signedIn: true, registered, full };
 }

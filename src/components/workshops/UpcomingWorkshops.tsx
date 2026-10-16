@@ -102,12 +102,7 @@ function WorkshopPanel({ workshop, next }: { workshop: InPersonWorkshop; next: b
 
         <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
           {workshop.registration?.open && (
-            <RegisterButton
-              slug={workshop.slug}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] transition-colors ${
-                next ? "bg-white text-crimson hover:bg-[#f5e8ec]" : "bg-crimson text-white hover:bg-crimson-hover"
-              }`}
-            />
+            <RegisterButton slug={workshop.slug} onCrimson={next} />
           )}
           {workshop.source === "event" && workshop.externalUrl && (
             <a
