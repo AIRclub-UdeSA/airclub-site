@@ -10,6 +10,7 @@ const ACTION_LABELS: Record<string, string> = {
   delete: "Borró",
   deactivate: "Desactivó",
   reactivate: "Reactivó",
+  export: "Exportó",
 };
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
@@ -89,7 +90,7 @@ export default async function AdminLogsPage({ searchParams }: PageProps<"/admin/
       <div>
         <h2 className="font-display text-xl font-bold text-text">Logs de auditoría</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Últimas {logs.length} acciones{hasFilters ? " que matchean el filtro" : ""}. Cada alta, edición o borrado en el panel queda acá,
+          Últimas {logs.length} acciones{hasFilters ? " que matchean el filtro" : ""}. Cada alta, edición, borrado o exportación en el panel queda acá,
           con quién lo hizo y qué cambió.
         </p>
       </div>

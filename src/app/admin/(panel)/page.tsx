@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { canAccessSection, requireAdminSession } from "@/lib/admin/permissions";
+import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
 
 // Una tarjeta por lugar al que la persona puede entrar, para que quien no conoce el panel sepa
 // adónde ir. `section: null` = herramienta solo para ADMIN (no es una sección asignable).
@@ -31,8 +31,8 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
   {
     href: "/admin/comunidad",
     title: "Comunidad",
-    description: "Perfiles públicos creados en el sitio y quién se inscribió a cada charla.",
-    section: null,
+    description: "Quién se inscribió a cada charla, con gráficos y exportación a CSV.",
+    section: "comunidad",
   },
 ];
 
@@ -40,7 +40,7 @@ const ROLE_LABELS = { ADMIN: "Admin (acceso a todo)", EDITOR: "Editor" } as cons
 
 export default async function AdminHomePage() {
   const admin = await requireAdminSession();
-  const visible = DESTINATIONS.filter((d) => (d.section ? canAccessSection(admin, d.section) : admin.role === "ADMIN"));
+  const visible = DESTINATIONS.filter((d) => (d.section ? canViewSection(admin, d.section) : admin.role === "ADMIN"));
 
   return (
     <div className="flex flex-col gap-6">
