@@ -87,15 +87,17 @@ async function main() {
   // crea las que faltan (update vacío) y nunca pisa una charla existente. Contra: una charla de
   // seed-data que se borró desde el panel vuelve a aparecer si se corre el seed.
   for (const [i, talk] of talks.entries()) {
-    const { speaker, media, slides, links, cta, ...talkData } = talk;
+    const { speaker, speakers, media, slides, links, cta, ...talkData } = talk;
+    const allSpeakers = speakers?.length ? speakers : speaker ? [speaker] : [];
+    const first = allSpeakers[0];
     const data = {
       ...talkData,
-      speakerName: speaker?.name,
-      speakerRole: speaker?.role,
-      speakerAffiliation: speaker?.affiliation,
-      speakerAvatar: speaker?.avatar,
-      speakerLinkedin: speaker?.linkedin,
-      speakerBio: speaker?.bio,
+      speakerName: first?.name,
+      speakerRole: first?.role,
+      speakerAffiliation: first?.affiliation,
+      speakerAvatar: first?.avatar,
+      speakerLinkedin: first?.linkedin,
+      speakerBio: first?.bio,
       ctaLabel: cta?.label,
       ctaUrl: cta?.url,
       order: i,
@@ -107,6 +109,7 @@ async function main() {
         media: { create: media.map((m, j) => toTalkMediaRow(m, j)) },
         slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
         links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+        speakers: { create: allSpeakers.map((s, j) => ({ ...s, order: j })) },
       },
       update: {},
     });

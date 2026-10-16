@@ -14,7 +14,11 @@ import {
 interface TalkRegisterDialogProps {
   talk: TimelineTalk | null;
   isOpen: boolean;
+  /** Ya inscripta: abre directo en la vista con "Cancelar mi inscripción", sin volver a inscribir. */
+  alreadyRegistered: boolean;
   onClose: () => void;
+  /** Avisa el resultado para que el botón de la charla se actualice sin recargar. */
+  onResult: (slug: string, status: RegisterResult["status"] | CancelResult["status"]) => void;
 }
 
 // Mismo timing que TalkModal.tsx (.talk-modal[data-closing] en globals.css): reusa esas
@@ -23,8 +27,8 @@ const CLOSE_MS = 200;
 
 type Status = "confirm" | "pending" | "error" | RegisterResult["status"] | CancelResult["status"];
 
-export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialogProps) {
-  const [status, setStatus] = useState<Status>("confirm");
+export function TalkRegisterDialog({ talk, isOpen, alreadyRegistered, onClose, onResult }: TalkRegisterDialogProps) {
+  const [status, setStatus] = useState<Status>(alreadyRegistered ? "already" : "confirm");
   // Qué reintenta "Reintentar" si falla la red o el servidor: inscribirse o cancelar.
   const [failedAction, setFailedAction] = useState<"register" | "cancel">("register");
   const [cancelling, setCancelling] = useState(false);
@@ -40,7 +44,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
   // de "ajustar estado durante el render" que usa TalkModal.tsx para su propia charla activa).
   if (talk?.slug !== prevSlug) {
     setPrevSlug(talk?.slug);
-    setStatus("confirm");
+    setStatus(alreadyRegistered ? "already" : "confirm");
   }
 
   const requestClose = () => {
@@ -74,6 +78,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
     try {
       const result = await registerForTalkAction(talk!.slug);
       setStatus(result.status);
+      onResult(talk!.slug, result.status);
     } catch {
       setFailedAction("register");
       setStatus("error");
@@ -85,6 +90,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
     try {
       const result = await cancelTalkRegistrationAction(talk!.slug);
       setStatus(result.status);
+      onResult(talk!.slug, result.status);
     } catch {
       setFailedAction("cancel");
       setStatus("error");
@@ -181,7 +187,7 @@ export function TalkRegisterDialog({ talk, isOpen, onClose }: TalkRegisterDialog
             <div className="flex items-center gap-2.5">
               <Check className="size-5 shrink-0 text-crimson" aria-hidden="true" />
               <h2 id={titleId} className="font-display text-[1.15rem] font-bold text-text">
-                {status === "already" ? "Ya estabas inscripto/a" : "Quedaste inscripto/a"}
+                {status === "already" ? "Ya estás inscripto/a" : "Quedaste inscripto/a"}
               </h2>
             </div>
             <p className="font-body text-[.92rem] text-text2">&ldquo;{talk.title}&rdquo;</p>

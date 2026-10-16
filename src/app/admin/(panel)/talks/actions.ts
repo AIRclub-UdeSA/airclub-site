@@ -5,7 +5,7 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionAccess } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
-import type { MediaItem, SlideItem, LinkItem } from "./types";
+import type { MediaItem, SlideItem, LinkItem, SpeakerItem } from "./types";
 
 const SECTION = "talks";
 // Argentina no tiene horario de verano: offset fijo, a diferencia de zonas con DST.
@@ -81,10 +81,59 @@ function validateMedia(media: ReturnType<typeof parseMediaItems>): string | null
 
 // Los archivos elegidos en el form se suben antes de guardar y el marcador se reemplaza por la URL:
 // si llega uno sin reemplazar, algo falló en el cliente y no hay que guardarlo en la base.
-function validateNoPendingUploads(data: { speakerAvatar: string | null }, media: ReturnType<typeof parseMediaItems>): string | null {
-  const values = [data.speakerAvatar ?? "", ...media.flatMap((m) => [m.src, m.poster ?? ""])];
+function validateNoPendingUploads(speakers: ReturnType<typeof parseSpeakerItems>, media: ReturnType<typeof parseMediaItems>): string | null {
+  const values = [...speakers.map((s) => s.avatar ?? ""), ...media.flatMap((m) => [m.src, m.poster ?? ""])];
   if (values.some(isPendingUpload)) return "Hay archivos que no se terminaron de subir. Probá guardar de nuevo.";
   return null;
+}
+
+const trimmed = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
+
+// Una fila sin nada escrito (la que queda al tocar "Agregar orador" y no completarla) se descarta;
+// una a medio llenar la rechaza validateSpeakers.
+function parseSpeakerItems(raw: string) {
+  return parseJsonArray(raw)
+    .map((it) => it as Partial<SpeakerItem>)
+    .map((item) => ({
+      name: trimmed(item.name),
+      role: trimmed(item.role),
+      affiliation: trimmed(item.affiliation) || null,
+      avatar: trimmed(item.avatar) || null,
+      linkedin: trimmed(item.linkedin) || null,
+      bio: trimmed(item.bio) || null,
+    }))
+    .filter((s) => s.name || s.role || s.affiliation || s.avatar || s.linkedin || s.bio)
+    .map((s, order) => ({ ...s, order }));
+}
+
+function isHttpUrl(value: string): boolean {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function validateSpeakers(speakers: ReturnType<typeof parseSpeakerItems>): string | null {
+  for (const [i, s] of speakers.entries()) {
+    if (!s.name) return `El orador ${i + 1} necesita un nombre.`;
+    if (s.linkedin && !isHttpUrl(s.linkedin)) return `El LinkedIn de ${s.name} tiene que ser una URL (https://…).`;
+  }
+  return null;
+}
+
+// Las columnas speaker* de Talk ya no se leen, pero hasta retirarlas siguen guardando al primer orador:
+// si hay que volver a la versión anterior del sitio, las charlas conservan su orador.
+function legacySpeakerColumns(speakers: ReturnType<typeof parseSpeakerItems>) {
+  const first = speakers[0];
+  return {
+    speakerName: first?.name ?? null,
+    speakerRole: first?.role || null,
+    speakerAffiliation: first?.affiliation ?? null,
+    speakerAvatar: first?.avatar ?? null,
+    speakerLinkedin: first?.linkedin ?? null,
+    speakerBio: first?.bio ?? null,
+  };
 }
 
 function parseSlideItems(raw: string) {
@@ -114,12 +163,6 @@ function talkScalarData(formData: FormData) {
     abstract: str(formData, "abstract"),
     topic: optStr(formData, "topic"),
     location: optStr(formData, "location"),
-    speakerName: optStr(formData, "speakerName"),
-    speakerRole: optStr(formData, "speakerRole"),
-    speakerAffiliation: optStr(formData, "speakerAffiliation"),
-    speakerAvatar: optStr(formData, "speakerAvatar"),
-    speakerLinkedin: optStr(formData, "speakerLinkedin"),
-    speakerBio: optStr(formData, "speakerBio"),
     startsAt,
     endsAt,
     dateLabel: optStr(formData, "dateLabel"),
@@ -164,6 +207,7 @@ function talkAuditSnapshot(talk: {
   speakerAvatar: string | null;
   speakerLinkedin: string | null;
   speakerBio?: string | null;
+  speakers: { name: string; role: string; affiliation: string | null; avatar: string | null; linkedin: string | null; bio: string | null; order: number }[];
   startsAt: Date | null;
   endsAt: Date | null;
   dateLabel: string | null;
@@ -186,7 +230,7 @@ function talkAuditSnapshot(talk: {
   };
 }
 
-const TALK_RELATIONS = { media: true, slides: true, links: true } as const;
+const TALK_RELATIONS = { media: true, slides: true, links: true, speakers: { orderBy: { order: "asc" } } } as const;
 
 export async function createTalk(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireSectionAccess(SECTION);
@@ -194,8 +238,9 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
   const error = validateTalkData(data);
   if (error) return { error };
 
+  const speakers = parseSpeakerItems(str(formData, "speakers") || "[]");
   const media = parseMediaItems(str(formData, "media") || "[]");
-  const mediaError = validateMedia(media) ?? validateNoPendingUploads(data, media);
+  const mediaError = validateSpeakers(speakers) ?? validateMedia(media) ?? validateNoPendingUploads(speakers, media);
   if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
@@ -206,7 +251,9 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
       const created = await tx.talk.create({
         data: {
           ...data,
+          ...legacySpeakerColumns(speakers),
           order: (last?.order ?? -1) + 1,
+          speakers: { createMany: { data: speakers } },
           media: { createMany: { data: media } },
           slides: { createMany: { data: slides } },
           links: { createMany: { data: links } },
@@ -241,8 +288,9 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   const error = validateTalkData(data);
   if (error) return { error };
 
+  const speakers = parseSpeakerItems(str(formData, "speakers") || "[]");
   const media = parseMediaItems(str(formData, "media") || "[]");
-  const mediaError = validateMedia(media) ?? validateNoPendingUploads(data, media);
+  const mediaError = validateSpeakers(speakers) ?? validateMedia(media) ?? validateNoPendingUploads(speakers, media);
   if (mediaError) return { error: mediaError };
   const slides = parseSlideItems(str(formData, "slides") || "[]");
   const links = parseLinkItems(str(formData, "links") || "[]");
@@ -256,6 +304,8 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
         where: { id },
         data: {
           ...data,
+          ...legacySpeakerColumns(speakers),
+          speakers: { deleteMany: {}, createMany: { data: speakers } },
           media: { deleteMany: {}, createMany: { data: media } },
           slides: { deleteMany: {}, createMany: { data: slides } },
           links: { deleteMany: {}, createMany: { data: links } },
@@ -327,19 +377,24 @@ export async function deleteTalk(_prevState: ActionState, formData: FormData): P
 const STORAGE_FOLDER = "talks";
 const MAX_UPLOADS_PER_SAVE = 30;
 
-// Todos los campos de Talk/TalkMedia que pueden apuntar a un archivo del bucket. Si se agrega
+// Todos los campos de Talk/TalkSpeaker/TalkMedia que pueden apuntar a un archivo del bucket. Si se agrega
 // otro, sumarlo acá y en referencedTalkFileUrls, o su archivo se borraría estando en uso.
-function talkFileUrls(talk: { speakerAvatar: string | null; media: { src: string; poster: string | null }[] }): string[] {
-  const urls = [talk.speakerAvatar, ...talk.media.flatMap((m) => [m.src, m.poster])];
+function talkFileUrls(talk: {
+  speakerAvatar: string | null;
+  speakers: { avatar: string | null }[];
+  media: { src: string; poster: string | null }[];
+}): string[] {
+  const urls = [talk.speakerAvatar, ...talk.speakers.map((s) => s.avatar), ...talk.media.flatMap((m) => [m.src, m.poster])];
   return urls.filter((url): url is string => !!url);
 }
 
 async function referencedTalkFileUrls(urls: string[]): Promise<Set<string>> {
-  const [talks, media] = await Promise.all([
+  const [talks, speakers, media] = await Promise.all([
     prisma.talk.findMany({ where: { speakerAvatar: { in: urls } }, select: { speakerAvatar: true } }),
+    prisma.talkSpeaker.findMany({ where: { avatar: { in: urls } }, select: { avatar: true } }),
     prisma.talkMedia.findMany({ where: { OR: [{ src: { in: urls } }, { poster: { in: urls } }] }, select: { src: true, poster: true } }),
   ]);
-  return new Set([...talks.map((t) => t.speakerAvatar), ...media.flatMap((m) => [m.src, m.poster])].filter((url): url is string => !!url));
+  return new Set([...talks.map((t) => t.speakerAvatar), ...speakers.map((s) => s.avatar), ...media.flatMap((m) => [m.src, m.poster])].filter((url): url is string => !!url));
 }
 
 /** Borra del bucket los archivos que ya no usa ninguna charla (la misma foto puede estar en dos). */
@@ -358,7 +413,10 @@ async function removeUnusedTalkFiles(urls: string[]): Promise<void> {
 export async function validateTalkForm(formData: FormData): Promise<ActionState> {
   await requireSectionAccess(SECTION);
   const data = talkScalarData(formData);
-  const error = validateTalkData(data) ?? validateMedia(parseMediaItems(str(formData, "media") || "[]"));
+  const error =
+    validateTalkData(data) ??
+    validateSpeakers(parseSpeakerItems(str(formData, "speakers") || "[]")) ??
+    validateMedia(parseMediaItems(str(formData, "media") || "[]"));
   if (error) return { error };
 
   const id = str(formData, "id");
