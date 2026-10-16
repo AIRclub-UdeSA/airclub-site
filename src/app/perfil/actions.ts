@@ -5,6 +5,8 @@ import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { ALL_CAREER_SLUGS, MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
 import { safeNext } from "@/lib/safe-next";
+import { signOut } from "@/auth";
+import { revalidatePath } from "next/cache";
 
 const VALID_CAREER_SLUGS = new Set<string>(ALL_CAREER_SLUGS);
 
@@ -80,4 +82,24 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
     update: { role, otherRole: null, careers, otherCareer, startYear, studentStatus },
   });
   redirect(next);
+}
+
+/**
+ * La persona borra su propia cuenta del sitio: el perfil y todas sus inscripciones a charlas.
+ * No hay AuditLog (el registro apunta a un AdminUser). Después cierra la sesión: la cuenta de
+ * Google no se toca, así que si vuelve a entrar puede crear el perfil de nuevo.
+ */
+export async function deleteMyAccountAction(): Promise<void> {
+  const email = await getSessionEmail();
+  if (!email) redirect("/");
+
+  await prisma.$transaction([
+    prisma.talkRegistration.deleteMany({ where: { email } }),
+    prisma.userProfile.deleteMany({ where: { email } }),
+  ]);
+
+  revalidatePath("/talks");
+  revalidatePath("/admin/comunidad");
+  revalidatePath("/admin/cuentas");
+  await signOut({ redirectTo: "/" });
 }

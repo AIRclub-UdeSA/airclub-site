@@ -2,10 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
-import { careerLabel } from "@/lib/perfil/careers";
-
-const ROLE_LABELS = { STUDENT: "Estudiante", PROFESSOR: "Profesor/a", OTHER: "Otro" } as const;
-const STATUS_LABELS = { STUDYING: "Cursando", GRADUATED: "Recibido/a" } as const;
+import { careerText, distributions, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
+import { BarList } from "@/components/admin/BarList";
+import { RemoveRegistrationButton } from "./RemoveRegistrationButton";
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 function formatDate(date: Date): string {
@@ -22,7 +21,7 @@ function formatDate(date: Date): string {
 function profileDetail(profile: { role: "STUDENT" | "PROFESSOR" | "OTHER"; otherRole: string | null; careers: string[]; otherCareer: string | null; startYear: number | null; studentStatus: "STUDYING" | "GRADUATED" | null }): string {
   if (profile.role === "OTHER") return profile.otherRole ?? "—";
   if (profile.role === "PROFESSOR") return "—";
-  const careers = profile.careers.map((slug) => (profile.otherCareer && careerLabel(slug) === "Otra" ? profile.otherCareer : careerLabel(slug)));
+  const careers = profile.careers.map((slug) => careerText(slug, profile.otherCareer));
   const status = profile.studentStatus ? STATUS_LABELS[profile.studentStatus] : null;
   return [careers.join(", "), profile.startYear ? `desde ${profile.startYear}` : null, status].filter(Boolean).join(" · ");
 }
@@ -62,36 +61,20 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
   // Inscripción y perfil se unen por email (no hay relación en el schema). Los perfiles ya están cargados arriba.
   const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
 
+  const allRegistrations = talksWithRegistrations.flatMap((t) => t.registrations);
+  const totalRegistrations = allRegistrations.length;
+  const uniquePeople = new Set(allRegistrations.map((r) => r.email)).size;
+  const withoutProfile = new Set(allRegistrations.filter((r) => !profileByEmail.has(r.email)).map((r) => r.email)).size;
+
   return (
     <div className="flex flex-col gap-10">
       <div>
         <h2 className="font-display text-xl font-bold text-text">Comunidad</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Personas con perfil público creado en el sitio, y quién se inscribió a cada AIR Talk y a cada taller presencial. Solo lectura:
-          nada acá se edita ni se borra.
+          Quién se inscribió a cada AIR Talk y a cada taller presencial. Las cuentas con perfil están en Cuentas. Las inscripciones a
+          charlas se pueden dar de baja desde acá; cada baja queda en los logs.
         </p>
       </div>
-
-      <section className="flex flex-col gap-4">
-        <h3 className="font-display text-lg font-bold text-text">{profiles.length} perfiles</h3>
-        {profiles.length === 0 ? (
-          <p className="text-sm text-text3">Todavía no se creó ningún perfil.</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
-            {profiles.map((p) => (
-              <li key={p.id} className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                <div className="min-w-0 break-words">
-                  <p className="text-sm text-text">
-                    {p.email} · <span className="text-text2">{ROLE_LABELS[p.role]}</span>
-                  </p>
-                  <p className="font-mono text-xs text-text3">{profileDetail(p)}</p>
-                </div>
-                <span className="shrink-0 font-mono text-xs text-text3">{formatDate(p.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       <section className="flex flex-col gap-4">
         <h3 className="font-display text-lg font-bold text-text">Inscriptos por charla</h3>
@@ -124,43 +107,95 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
               Limpiar filtro
             </Link>
           )}
+          <a href="/admin/comunidad/inscriptos.csv" className="text-sm font-medium text-text2 hover:text-crimson-text">
+            Exportar todo (CSV)
+          </a>
         </form>
+
+        {talksWithRegistrations.length > 0 && (
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-border/60 py-4 sm:grid-cols-4">
+            {[
+              ["Inscripciones", totalRegistrations],
+              ["Personas distintas", uniquePeople],
+              ["Charlas con inscriptos", talksWithRegistrations.length],
+              ["Sin perfil", withoutProfile],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="font-mono text-xs uppercase tracking-[.12em] text-text3">{label}</dt>
+                <dd className="font-display text-3xl font-bold text-text">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
 
         {talksWithRegistrations.length === 0 ? (
           <p className="text-sm text-text3">
             {charlaSlug ? "Esa charla todavía no tiene inscriptos." : "Todavía no hay inscriptos en ninguna charla."}
           </p>
         ) : (
-          <div className="flex flex-col gap-6">
-            {talksWithRegistrations.map((talk) => (
-              <div key={talk.id} className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-text">
-                  {talk.title}{" "}
-                  <span className="font-mono text-xs font-normal text-text3">
-                    — {talk.registrations.length}
-                    {talk.capacity === null ? "" : ` de ${talk.capacity}`} inscripto
-                    {talk.registrations.length === 1 && talk.capacity === null ? "" : "s"}
-                  </span>
-                </p>
-                <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
-                  {talk.registrations.map((r) => {
-                    const profile = profileByEmail.get(r.email);
-                    return (
-                      <li key={r.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                        <div className="min-w-0 break-words">
-                          <p className="text-sm text-text2">
-                            {r.email}
-                            {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
-                          </p>
-                          {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
-                        </div>
-                        <span className="shrink-0 font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+          <div className="flex flex-col gap-12">
+            {talksWithRegistrations.map((talk) => {
+              const count = talk.registrations.length;
+              const dist = distributions(talk.registrations.map((r) => profileByEmail.get(r.email) ?? null));
+              return (
+                <article key={talk.id} className="flex flex-col gap-5">
+                  <header className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <h4 className="font-display text-base font-bold text-text">{talk.title}</h4>
+                      <a
+                        href={`/admin/comunidad/inscriptos.csv?charla=${encodeURIComponent(talk.slug)}`}
+                        className="text-sm font-medium text-crimson-text hover:underline"
+                      >
+                        Exportar CSV
+                      </a>
+                    </div>
+                    <p className="font-mono text-xs text-text3">
+                      {count}
+                      {talk.capacity === null ? " inscripto" : ` de ${talk.capacity} lugares`}
+                      {talk.capacity === null && count !== 1 ? "s" : ""}
+                    </p>
+                    {talk.capacity !== null && (
+                      <div
+                        role="progressbar"
+                        aria-label="Cupo ocupado"
+                        aria-valuemin={0}
+                        aria-valuemax={talk.capacity}
+                        aria-valuenow={count}
+                        className="h-2.5 w-full max-w-md rounded-[4px] bg-border/40"
+                      >
+                        <div className="h-full rounded-[4px] bg-crimson" style={{ width: `${Math.min(100, (count / talk.capacity) * 100)}%` }} />
+                      </div>
+                    )}
+                  </header>
+
+                  <div className="grid gap-8 md:grid-cols-2">
+                    <BarList title="Por rol" buckets={dist.role} total={count} />
+                    <BarList title="Por estado" buckets={dist.status} total={dist.status.reduce((n, b) => n + b.count, 0)} />
+                    <BarList title="Por carrera" buckets={dist.career} total={dist.role.find((b) => b.label === "Estudiante")?.count ?? 0} />
+                    <BarList title="Por año de inicio" buckets={dist.startYear} total={dist.startYear.reduce((n, b) => n + b.count, 0)} />
+                  </div>
+
+                  <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
+                    {talk.registrations.map((r) => {
+                      const profile = profileByEmail.get(r.email);
+                      return (
+                        <li key={r.id} className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                          <div className="min-w-0 break-words">
+                            <p className="text-sm text-text2">
+                              {r.email}
+                              {profile ? <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span> : <span className="text-text3"> · sin perfil</span>}
+                            </p>
+                            {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
+                            <p className="font-mono text-xs text-text3">{formatDate(r.createdAt)}</p>
+                          </div>
+                          <RemoveRegistrationButton id={r.id} email={r.email} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
