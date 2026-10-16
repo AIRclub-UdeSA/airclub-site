@@ -17,11 +17,6 @@ function RunwayGrid() {
         <planeGeometry args={[60, 0.08]} />
         <meshBasicMaterial color="#ff2a6d" transparent opacity={0.75} />
       </mesh>
-      {/* Sombra sutil de contacto para apoyar el robot en el suelo */}
-      <mesh receiveShadow position={[0, -0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[60, 24]} />
-        <shadowMaterial opacity={0.12} />
-      </mesh>
     </group>
   );
 }
@@ -45,19 +40,13 @@ export function RosmasterTrack() {
         {mounted ? (
           <Canvas
             camera={{ position: [0, 1.8, 6.2], fov: 42 }}
-            shadows
             // Fija: se dibuja al cargar y al cambiar de tamaño, no en cada cuadro
             frameloop="demand"
             gl={{ antialias: true, alpha: true }}
           >
             <ambientLight intensity={1.4} />
             <hemisphereLight args={["#ffffff", "#f5ccd8", 1.2]} />
-            <directionalLight
-              position={[8, 14, 6]}
-              intensity={2.2}
-              castShadow
-              shadow-mapSize={[1024, 1024]}
-            />
+            <directionalLight position={[8, 14, 6]} intensity={2.2} />
             <pointLight position={[-4, 3, 2]} intensity={2.0} color="#ff2a6d" />
             <pointLight position={[4, 2, -2]} intensity={1.5} color="#a40c4c" />
 
