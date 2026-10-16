@@ -2,6 +2,19 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { careerText, csvCell, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
 
+const TIME_ZONE = "America/Argentina/Buenos_Aires";
+
+// Hora de Argentina, como en la página, y no UTC. "sv-SE" da "2026-10-16 09:19", que Excel y
+// Sheets reconocen como fecha y hora (se puede ordenar y filtrar).
+const registeredAt = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /**
  * Inscriptos en CSV (lo que antes daba el Google Form). Solo ADMIN. El layout del panel no
  * envuelve a los route handlers, así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla.
@@ -19,13 +32,13 @@ export async function GET(request: Request) {
   const profiles = await prisma.userProfile.findMany({ where: { email: { in: registrations.map((r) => r.email) } } });
   const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
 
-  const header = ["Charla", "Email", "Inscripto el", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
+  const header = ["Charla", "Email", "Inscripto el (hora de Argentina)", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
   const rows = registrations.map((r) => {
     const p = profileByEmail.get(r.email);
     return [
       r.talk.title,
       r.email,
-      r.createdAt.toISOString(),
+      registeredAt.format(r.createdAt),
       p ? ROLE_LABELS[p.role] : "Sin perfil",
       p?.otherRole,
       p?.careers.map((c) => careerText(c, p.otherCareer)).join("; "),
