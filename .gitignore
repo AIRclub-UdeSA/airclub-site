@@ -32,9 +32,6 @@
 *.tsbuildinfo
 next-env.d.ts
 
-# Artefactos de Netlify (hasta el cutover a Vercel)
-.netlify/
-
 # Sistema operativo
 .DS_Store
 Thumbs.db

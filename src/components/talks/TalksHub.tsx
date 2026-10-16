@@ -9,6 +9,8 @@ import { TalksTimeline } from "./TalksTimeline";
 import { CallForSpeakers } from "./CallForSpeakers";
 import { TalkModal, type TalkSection } from "./TalkModal";
 import { TalkRegisterDialog } from "./TalkRegisterDialog";
+import type { RegistrationState } from "./RegisterButton";
+import { getMyTalkRegistrationsAction } from "@/app/talks/register-actions";
 
 interface TalksHubProps {
   talks: TimelineTalk[];
@@ -30,6 +32,50 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
   const [requestedSlug, setRequestedSlug] = useState<string | null>(null);
   const [loginSlug, setLoginSlug] = useState<string | null>(null);
   const { data: session, status } = useSession();
+  // /talks es estática (ISR): qué charlas tiene la cuenta se pide acá, con sesión. null = todavía no se sabe.
+  const [mine, setMine] = useState<{ email: string; registered: Set<string>; full: Set<string> } | null>(null);
+  const sessionEmail = session?.user?.email?.toLowerCase() ?? null;
+
+  useEffect(() => {
+    if (!sessionEmail) return;
+    let cancelled = false;
+    getMyTalkRegistrationsAction()
+      .then((res) => {
+        if (cancelled) return;
+        // El servidor puede no ver la sesión que ve el cliente (venció o falló al validarla): sin
+        // esto los botones quedarían en "loading" para siempre. Se trata igual que un error.
+        const own = res.signedIn ? res : { registered: [], full: [] };
+        setMine({ email: sessionEmail, registered: new Set(own.registered), full: new Set(own.full) });
+      })
+      // Sin la consulta no se puede saber: el botón vuelve a "Inscribirme" y el servidor decide al confirmar.
+      .catch(() => {
+        if (!cancelled) setMine({ email: sessionEmail, registered: new Set(), full: new Set() });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionEmail]);
+
+  // Sin sesión no hay nada que consultar. Con sesión, "loading" hasta que llegue la respuesta de esta cuenta.
+  const registrationOf = (slug: string): RegistrationState => {
+    if (status === "loading") return "loading";
+    if (!sessionEmail) return "open";
+    if (!mine || mine.email !== sessionEmail) return "loading";
+    if (mine.registered.has(slug)) return "registered";
+    return mine.full.has(slug) ? "full" : "open";
+  };
+
+  const handleRegistrationResult = (slug: string, result: string) => {
+    setMine((prev) => {
+      if (!prev) return prev;
+      const registered = new Set(prev.registered);
+      const full = new Set(prev.full);
+      if (result === "registered" || result === "already") registered.add(slug);
+      else if (result === "cancelled") registered.delete(slug);
+      else if (result === "full") full.add(slug);
+      return { ...prev, registered, full };
+    });
+  };
 
   const latest = talks.find((t) => t.slug === latestPastSlug);
   const next = talks.find((t) => t.slug === nextSlug);
@@ -50,11 +96,12 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
   const handleRegister = (talk: TimelineTalk) => setRequestedSlug(talk.slug);
 
   // "Inscribirme" y "?inscribir=<slug>" pasan por acá. Se espera a que cargue la sesión (si no,
-  // un clic temprano se perdía) y solo se sigue si la charla acepta inscripciones (mismo criterio
-  // que muestra el botón; el servidor lo vuelve a chequear). Con sesión, abre el diálogo; sin
+  // un clic temprano se perdía) y, con sesión, a saber si ya está inscripta (si no, el diálogo
+  // abría en "confirm" aunque lo estuviera). Solo se sigue si la charla acepta inscripciones (mismo
+  // criterio que muestra el botón; el servidor lo vuelve a chequear). Con sesión, abre el diálogo; sin
   // sesión, pasa a loginSlug para disparar el login (ver el efecto de abajo). Se ajusta el estado
   // durante el render, igual que TalkRegisterDialog con su charla activa.
-  if (requestedSlug && status !== "loading") {
+  if (requestedSlug && registrationOf(requestedSlug) !== "loading") {
     const talk = talks.find((t) => t.slug === requestedSlug);
     setRequestedSlug(null);
     if (talk?.registrationOpen && talk.isUpcoming) {
@@ -86,6 +133,7 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
         daysUntilNext={daysUntilNext}
         onOpenTalk={handleOpenTalk}
         onRegister={handleRegister}
+        registrationOf={registrationOf}
       />
 
       <TalksTimeline
@@ -93,6 +141,7 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
         nextSlug={nextSlug}
         onOpenTalk={handleOpenTalk}
         onRegister={handleRegister}
+        registrationOf={registrationOf}
         edit={edit}
       />
 
@@ -106,9 +155,16 @@ export function TalksHub({ talks, nextSlug, latestPastSlug, todayIso, daysUntilN
         onClose={() => setIsModalOpen(false)}
         onSelectTalk={handleSelectTalk}
         onRegister={handleRegister}
+        registrationOf={registrationOf}
       />
 
-      <TalkRegisterDialog talk={registeringTalk} isOpen={registeringSlug !== null} onClose={() => setRegisteringSlug(null)} />
+      <TalkRegisterDialog
+        talk={registeringTalk}
+        isOpen={registeringSlug !== null}
+        alreadyRegistered={registeringTalk ? registrationOf(registeringTalk.slug) === "registered" : false}
+        onClose={() => setRegisteringSlug(null)}
+        onResult={handleRegistrationResult}
+      />
     </>
   );
 }

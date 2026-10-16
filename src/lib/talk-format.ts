@@ -90,3 +90,8 @@ export function talkCover(media: TalkMedia[]): string | null {
   const video = media.find((m) => m.type === "video" && m.poster);
   return video && video.type === "video" ? video.poster : null;
 }
+
+/** "y 4 más" cuando la charla tiene varios oradores; null con uno o ninguno. El primero ya se muestra aparte. */
+export function moreSpeakersLabel(speakers?: unknown[]): string | null {
+  return speakers && speakers.length > 1 ? `y ${speakers.length - 1} más` : null;
+}

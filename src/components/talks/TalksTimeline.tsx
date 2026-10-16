@@ -5,7 +5,8 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff, Presentation } from "lucide-react";
 import type { TalkMedia, TalkSlide, TalkSpeaker } from "@/lib/talks";
 import type { TalkSection } from "./TalkModal";
-import { talkCover, talkDateParts } from "@/lib/talk-format";
+import { RegisterButton, type RegistrationState } from "./RegisterButton";
+import { moreSpeakersLabel, talkCover, talkDateParts } from "@/lib/talk-format";
 import { cn } from "@/lib/utils";
 
 export type TimelineTalk = {
@@ -52,6 +53,7 @@ interface TalksTimelineProps {
   nextSlug: string | null;
   onOpenTalk: (slug: string, section?: TalkSection) => void;
   onRegister: (talk: TimelineTalk) => void;
+  registrationOf: (slug: string) => RegistrationState;
   edit?: TalksEdit;
 }
 
@@ -59,7 +61,7 @@ type Item = { kind: "talk"; talk: TimelineTalk } | { kind: "today" };
 
 const GUTTER = "px-4 sm:px-8 md:px-12";
 
-export function TalksTimeline({ talks, nextSlug, onOpenTalk, onRegister, edit }: TalksTimelineProps) {
+export function TalksTimeline({ talks, nextSlug, onOpenTalk, onRegister, registrationOf, edit }: TalksTimelineProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -161,6 +163,7 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk, onRegister, edit }:
                 edge={edge}
                 onOpenTalk={onOpenTalk}
                 onRegister={onRegister}
+                registrationOf={registrationOf}
                 controls={edit?.controls(item.talk)}
               />
             );
@@ -231,6 +234,7 @@ function TalkColumn({
   edge,
   onOpenTalk,
   onRegister,
+  registrationOf,
   controls,
 }: {
   talk: TimelineTalk;
@@ -238,6 +242,7 @@ function TalkColumn({
   edge?: "first" | "last";
   onOpenTalk: TalksTimelineProps["onOpenTalk"];
   onRegister: TalksTimelineProps["onRegister"];
+  registrationOf: TalksTimelineProps["registrationOf"];
   controls?: ReactNode;
 }) {
   const upcoming = Boolean(talk.isUpcoming);
@@ -358,7 +363,11 @@ function TalkColumn({
           {talk.speaker ? (
             <p className="mt-2 text-[.92rem] leading-snug text-text2">
               <span className="font-semibold text-text">{talk.speaker.name}</span>
-              <span className="block">{talk.speaker.role}</span>
+              {moreSpeakersLabel(talk.speakers) ? (
+                <span> {moreSpeakersLabel(talk.speakers)}</span>
+              ) : (
+                <span className="block">{talk.speaker.role}</span>
+              )}
             </p>
           ) : (
             <p className="mt-2 text-[.92rem] italic text-text3">Orador a confirmar</p>
@@ -374,14 +383,7 @@ function TalkColumn({
                 </ActionLink>
               )}
               {upcoming && talk.registrationOpen ? (
-                <button
-                  type="button"
-                  onClick={() => onRegister(talk)}
-                  className="relative z-10 inline-flex cursor-pointer items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-crimson-text underline decoration-crimson-text/40 underline-offset-[6px] transition-colors hover:decoration-crimson-text"
-                >
-                  {talk.registrationLabel ?? "Inscribirme"}
-                  <ArrowUpRight size={14} aria-hidden="true" />
-                </button>
+                <RegisterButton talk={talk} state={registrationOf(talk.slug)} variant="card" onRegister={onRegister} />
               ) : (
                 upcoming &&
                 talk.cta && (

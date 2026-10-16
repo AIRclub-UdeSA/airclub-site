@@ -2,6 +2,7 @@ import {
   channels as seedChannels,
   reasons as seedReasons,
   CONTACT_EMAIL,
+  PROJECT_PROPOSAL_FORM_URL,
   type SeedContactChannel,
   type SeedContactReason,
 } from "../../prisma/seed-data/contact";
@@ -17,7 +18,7 @@ export type ContactReason = Omit<SeedContactReason, "url" | "body"> & {
   destination: string;
 };
 
-export { CONTACT_EMAIL };
+export { CONTACT_EMAIL, PROJECT_PROPOSAL_FORM_URL };
 
 /** Arma un mailto al correo del club con asunto y, si hay, plantilla de cuerpo. */
 export function buildMailto(subject: string, body?: string[]): string {

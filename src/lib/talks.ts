@@ -32,7 +32,9 @@ export type TalkItem = {
   title: string;
   subtitle: string;
   abstract: string;
+  /** El primer orador (`speakers[0]`): lo que muestran el hero y las tarjetas. */
   speaker?: TalkSpeaker;
+  /** Todos los oradores, en orden. Sin definir = orador a confirmar. */
   speakers?: TalkSpeaker[];
   startsAt?: Date;
   endsAt?: Date;
@@ -67,38 +69,46 @@ export function fetchTalkRows({ includeDrafts = false } = {}) {
       media: { orderBy: { order: "asc" } },
       slides: { orderBy: { order: "asc" } },
       links: { orderBy: { order: "asc" } },
+      speakers: { orderBy: { order: "asc" } },
     },
   });
 }
 
+// Los oradores salen de TalkSpeaker. Mientras las columnas speaker* de Talk sigan existiendo, una charla
+// que todavía no tiene filas ahí (ej.: editada por la versión anterior del panel) cae a su orador único.
+function speakersOf(row: TalkRow): TalkSpeaker[] {
+  if (row.speakers.length) {
+    return row.speakers.map((s) => ({
+      name: s.name,
+      role: s.role,
+      affiliation: s.affiliation ?? undefined,
+      avatar: s.avatar ?? undefined,
+      linkedin: s.linkedin ?? undefined,
+      bio: s.bio ?? undefined,
+    }));
+  }
+  if (!row.speakerName) return [];
+  return [
+    {
+      name: row.speakerName,
+      role: row.speakerRole ?? "",
+      affiliation: row.speakerAffiliation ?? undefined,
+      avatar: row.speakerAvatar ?? undefined,
+      linkedin: row.speakerLinkedin ?? undefined,
+      bio: row.speakerBio ?? undefined,
+    },
+  ];
+}
+
 export function toTalkItem(row: TalkRow): TalkItem {
+  const speakers = speakersOf(row);
   return {
     slug: row.slug,
     title: row.title,
     subtitle: row.subtitle,
     abstract: row.abstract,
-    speaker: row.speakerName
-      ? {
-          name: row.speakerName,
-          role: row.speakerRole ?? "",
-          affiliation: row.speakerAffiliation ?? undefined,
-          avatar: row.speakerAvatar ?? undefined,
-          linkedin: row.speakerLinkedin ?? undefined,
-          bio: row.speakerBio ?? undefined,
-        }
-      : undefined,
-    speakers: row.speakerName
-      ? [
-          {
-            name: row.speakerName,
-            role: row.speakerRole ?? "",
-            affiliation: row.speakerAffiliation ?? undefined,
-            avatar: row.speakerAvatar ?? undefined,
-            linkedin: row.speakerLinkedin ?? undefined,
-            bio: row.speakerBio ?? undefined,
-          },
-        ]
-      : undefined,
+    speaker: speakers[0],
+    speakers: speakers.length ? speakers : undefined,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
     dateLabel: row.dateLabel ?? undefined,
@@ -133,7 +143,7 @@ function fromSeed(t: SeedTalk): TalkItem {
     title: t.title,
     subtitle: t.subtitle,
     abstract: t.abstract,
-    speaker: t.speaker,
+    speaker: speakers?.[0],
     speakers,
     startsAt: t.startsAt,
     endsAt: t.endsAt,
