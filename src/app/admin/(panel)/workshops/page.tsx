@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { fetchWorkshopRows } from "@/lib/workshops";
-import { requireSectionAccess } from "@/lib/admin/permissions";
+import { requireSectionEdit } from "@/lib/admin/permissions";
 import { storagePublicPrefix } from "@/lib/storage-url";
 import { WorkshopsManager, type AdminTrack } from "./WorkshopsManager";
 
 export default async function AdminWorkshopsPage() {
-  const admin = await requireSectionAccess("workshops");
+  const admin = await requireSectionEdit("workshops");
 
   // Incluye los borradores: el panel los muestra marcados, /workshops no.
   const rows = await fetchWorkshopRows({ includeDrafts: true });

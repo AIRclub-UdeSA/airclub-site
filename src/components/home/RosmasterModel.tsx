@@ -20,9 +20,8 @@ export function useRosmasterModel() {
   const cloned = useMemo(() => {
     const root = scene.clone(true);
 
-    // Ajuste específico de la cámara Orbbec Astra heredado de jar_site
-    const rgbd = root.getObjectByName("rgbd_camera");
-    if (rgbd) rgbd.position.z = -10;
+    // La cámara Orbbec Astra ya viene corrida en el GLB (antes, z = -10 en su nodo; con la cuantización,
+    // incluido en la traslación del nodo). No pisar su posición: con el modelo cuantizado la mueve de lugar.
 
     // Repintado con la paleta de identidad AIR Club
     const crimsonMaterial = new THREE.MeshStandardMaterial({

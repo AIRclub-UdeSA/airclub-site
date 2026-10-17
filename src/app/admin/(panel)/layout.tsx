@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SignOutButton } from "@/components/layout/SignOutButton";
-import { requireAdminSession } from "@/lib/admin/permissions";
+import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
 
 const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
   { href: "/admin", label: "Inicio", section: null },
@@ -11,7 +11,7 @@ const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const admin = await requireAdminSession();
-  const visibleItems = NAV_ITEMS.filter((item) => !item.section || admin.role === "ADMIN" || admin.sections.includes(item.section));
+  const visibleItems = NAV_ITEMS.filter((item) => !item.section || canViewSection(admin, item.section));
 
   return (
     <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-6 pb-20 pt-32 sm:px-8 md:px-12 md:pt-36">
@@ -37,10 +37,13 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               <Link href="/admin/cuentas" className="text-sm font-medium text-text2 hover:text-crimson">
                 Cuentas
               </Link>
-              <Link href="/admin/comunidad" className="text-sm font-medium text-text2 hover:text-crimson">
-                Comunidad
-              </Link>
             </>
+          )}
+          {/* Fuera de NAV_ITEMS para que quede al final, como antes: también la ve un Editor con "comunidad". */}
+          {canViewSection(admin, "comunidad") && (
+            <Link href="/admin/comunidad" className="text-sm font-medium text-text2 hover:text-crimson">
+              Comunidad
+            </Link>
           )}
           <span className="text-sm text-text3">{admin.email}</span>
           <SignOutButton className="text-sm font-medium text-text2 hover:text-crimson">Salir</SignOutButton>

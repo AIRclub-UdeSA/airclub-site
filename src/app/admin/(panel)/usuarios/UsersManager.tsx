@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { sectionLabel } from "@/lib/admin/sections";
+import { sectionAssignLabel } from "@/lib/admin/sections";
 import { AdminUserForm, type EditingUser } from "./AdminUserForm";
 import { RemoveAdminUserButton } from "./RemoveAdminUserButton";
 
@@ -32,7 +32,7 @@ export function UsersManager({ users }: { users: AdminUserRow[] }) {
               <p className="font-medium text-text">{u.email}</p>
               <p className="font-mono text-xs text-text3">
                 {u.role}
-                {u.role === "EDITOR" && u.sections.length > 0 ? ` · ${u.sections.map(sectionLabel).join(", ")}` : ""}
+                {u.role === "EDITOR" && u.sections.length > 0 ? ` · ${u.sections.map(sectionAssignLabel).join(", ")}` : ""}
               </p>
             </div>
             <div className="flex items-center gap-4">

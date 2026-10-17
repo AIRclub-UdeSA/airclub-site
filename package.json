@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test src/lib/safe-next.test.ts",
+    "test": "tsx --test src/lib/safe-next.test.ts src/lib/admin/sections.test.ts",
     "postinstall": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
-import { requireSectionAccess, type AdminSession } from "@/lib/admin/permissions";
+import { requireSectionEdit, type AdminSession } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
@@ -233,7 +233,7 @@ function failure(err: unknown, fallback: string): ActionState {
 /* ---------- Workshops ---------- */
 
 export async function saveTrack(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
   const data = trackData(formData);
   const error = validateTrack(data);
@@ -263,7 +263,7 @@ export async function saveTrack(_prev: ActionState, formData: FormData): Promise
 /* ---------- Guías ---------- */
 
 export async function saveGuide(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
   const data = guideData(formData);
   const error = validateGuide(data);
@@ -296,7 +296,7 @@ export async function saveGuide(_prev: ActionState, formData: FormData): Promise
 const SESSION_RELATIONS = { media: true, slides: true, links: true } as const;
 
 export async function saveSession(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
   const data = sessionData(formData);
   const media = parseMedia(str(formData, "media") || "[]");
@@ -352,7 +352,7 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
 /* ---------- Borrar y ordenar (los tres) ---------- */
 
 export async function deleteWorkshopEntity(entity: WorkshopEntity, id: string): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
 
   let deletedFiles: string[] = [];
   try {
@@ -388,7 +388,7 @@ export async function deleteWorkshopEntity(entity: WorkshopEntity, id: string): 
 
 /** Sube o baja un workshop (el orden de las cajas), o una guía o un taller dentro de su workshop. */
 export async function moveWorkshopEntity(entity: WorkshopEntity, id: string, direction: -1 | 1): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -456,7 +456,7 @@ async function removeUnusedSessionFiles(urls: string[]): Promise<void> {
 
 /** Chequea los datos del taller antes de subir archivos, para no subir fotos y recién ahí enterarse de un error. */
 export async function validateSessionForm(formData: FormData): Promise<ActionState> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   const data = sessionData(formData);
   const media = parseMedia(str(formData, "media") || "[]").map((m) => ({ ...m, src: isPendingUpload(m.src) ? "x" : m.src, poster: m.poster && isPendingUpload(m.poster) ? "x" : m.poster }));
   const error = validateSession(data, media);
@@ -468,7 +468,7 @@ export async function validateSessionForm(formData: FormData): Promise<ActionSta
 
 /** Firma una URL de subida directa a Storage por cada archivo. */
 export async function prepareWorkshopUploads(files: { type: string; size: number }[]): Promise<{ uploads: SignedUpload[] } | { error: string }> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   if (files.length > MAX_UPLOADS_PER_SAVE) return { error: `Máximo ${MAX_UPLOADS_PER_SAVE} archivos por guardado.` };
 
   const uploads: SignedUpload[] = [];
@@ -482,6 +482,6 @@ export async function prepareWorkshopUploads(files: { type: string; size: number
 
 /** Borra lo recién subido cuando el guardado falla (solo archivos de la carpeta de talleres que nadie use). */
 export async function discardWorkshopUploads(urls: string[]): Promise<void> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   await removeUnusedSessionFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
 }

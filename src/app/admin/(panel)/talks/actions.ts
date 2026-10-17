@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
-import { requireSectionAccess } from "@/lib/admin/permissions";
+import { requireSectionEdit } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
 import type { MediaItem, SlideItem, LinkItem, SpeakerItem } from "./types";
@@ -233,7 +233,7 @@ function talkAuditSnapshot(talk: {
 const TALK_RELATIONS = { media: true, slides: true, links: true, speakers: { orderBy: { order: "asc" } } } as const;
 
 export async function createTalk(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const data = talkScalarData(formData);
   const error = validateTalkData(data);
   if (error) return { error };
@@ -280,7 +280,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
 }
 
 export async function updateTalk(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
   if (!id) return { error: "Falta el id de la charla." };
 
@@ -343,7 +343,7 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
 }
 
 export async function deleteTalk(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const id = str(formData, "id");
 
   let deletedFiles: string[] = [];
@@ -411,7 +411,7 @@ async function removeUnusedTalkFiles(urls: string[]): Promise<void> {
 /** Chequea los datos del form antes de subir archivos, para no subir 50MB y recién ahí enterarse
  * de que faltaba el título o el slug ya existe. */
 export async function validateTalkForm(formData: FormData): Promise<ActionState> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   const data = talkScalarData(formData);
   const error =
     validateTalkData(data) ??
@@ -427,7 +427,7 @@ export async function validateTalkForm(formData: FormData): Promise<ActionState>
 
 /** Firma una URL de subida directa a Storage por cada archivo (el navegador sube sin pasar por Vercel). */
 export async function prepareTalkUploads(files: { type: string; size: number }[]): Promise<{ uploads: SignedUpload[] } | { error: string }> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   if (files.length > MAX_UPLOADS_PER_SAVE) return { error: `Máximo ${MAX_UPLOADS_PER_SAVE} archivos por guardado.` };
 
   const uploads: SignedUpload[] = [];
@@ -442,6 +442,6 @@ export async function prepareTalkUploads(files: { type: string; size: number }[]
 /** Borra lo recién subido cuando el guardado falla. Solo toca archivos de la carpeta de charlas que
  * ninguna charla use, así que no sirve para borrar nada en uso aunque se la llame con otras URLs. */
 export async function discardTalkUploads(urls: string[]): Promise<void> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   await removeUnusedTalkFiles(urls.filter((url) => url.includes(`/${STORAGE_FOLDER}/`)));
 }
