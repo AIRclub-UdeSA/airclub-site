@@ -234,6 +234,135 @@ model TalkRegistration {
   @@index([talkId])
 }
 
+enum WorkshopLevel {
+  INICIAL
+  INTERMEDIO
+  AVANZADO
+}
+
+// Un workshop (Linux, ROS 2 y robótica…): una caja en /workshops y su página /workshops/<key>, con
+// sus talleres adentro. Se edita desde /admin/workshops; el orden de las cajas es `order`.
+model WorkshopTrack {
+  id        String            @id @default(cuid())
+  key       String            @unique // va en la URL (/workshops/<key>): no cambiarlo una vez publicado
+  title     String
+  label     String? // nota mono en la caja ("Challenge JAR 2026")
+  summary   String            @db.Text
+  setupUrl  String? // guía de instalación que piden sus guías (el setup del simulador del JAR)
+  repoUrl   String? // repositorio que se clona antes de la primera guía (jar_workshops)
+  status    TalkStatus        @default(PUBLISHED) // borrador no aparece en /workshops
+  order     Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  guides    WorkshopGuide[]
+  sessions  WorkshopSession[]
+}
+
+// Guía asincrónica de un workshop (una semana del recorrido del JAR). La guía completa vive en otro
+// sitio (`guideUrl`) y el código en su repositorio (`codeUrl`): acá solo va lo que hace falta para
+// presentarla. El `slug` es con lo que se guarda quién la hizo (WorkshopCompletion): no cambiarlo.
+model WorkshopGuide {
+  id          String        @id @default(cuid())
+  trackId     String
+  track       WorkshopTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  slug        String        @unique
+  week        String // dos cifras ("01", "02"…): el numeral grande de la página
+  title       String
+  summary     String        @db.Text
+  outcome     String        @db.Text // qué te llevás al terminar
+  minutesMin  Int
+  minutesMax  Int
+  level       WorkshopLevel
+  ros2Package String? // paquete que se compila esa semana; sin él no se muestran los comandos
+  requires    String[] // semanas (`week`) del mismo workshop que hay que tener hechas antes
+  guideUrl    String
+  codeUrl     String?
+  status      TalkStatus    @default(PUBLISHED)
+  order       Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([trackId])
+}
+
+// Taller presencial que ya se hizo, con el mismo material que una charla de /talks: fotos y videos,
+// diapositivas, grabación y links. Los que vienen siguen siendo eventos de categoría "workshop".
+model WorkshopSession {
+  id           String                 @id @default(cuid())
+  trackId      String
+  track        WorkshopTrack          @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  slug         String                 @unique // igual que en WorkshopGuide: no cambiarlo
+  title        String
+  summary      String                 @db.Text // corto: va en su tarjeta, adentro del workshop
+  description  String?                @db.Text // lo que se vio, en la pestaña Resumen de su página; sin ella, va `summary`
+  startsAt     DateTime?
+  endsAt       DateTime?
+  dateLabel    String?
+  location     String?
+  instructor   String?
+  recordingUrl String? // siempre link externo (YouTube), como en Talk
+  status       TalkStatus             @default(PUBLISHED)
+  order        Int                    @default(0)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  media        WorkshopSessionMedia[]
+  slides       WorkshopSessionSlide[]
+  links        WorkshopSessionLink[]
+
+  @@index([trackId])
+}
+
+model WorkshopSessionMedia {
+  id        String          @id @default(cuid())
+  sessionId String
+  session   WorkshopSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type      TalkMediaType
+  src       String
+  poster    String? // solo para videos
+  lightBg   Boolean         @default(false)
+  objectFit String? // "contain" | "cover"
+  order     Int             @default(0)
+
+  @@index([sessionId])
+}
+
+model WorkshopSessionSlide {
+  id        String          @id @default(cuid())
+  sessionId String
+  session   WorkshopSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title     String
+  embedUrl  String
+  openUrl   String
+  order     Int             @default(0)
+
+  @@index([sessionId])
+}
+
+model WorkshopSessionLink {
+  id        String          @id @default(cuid())
+  sessionId String
+  session   WorkshopSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  label     String
+  url       String
+  order     Int             @default(0)
+
+  @@index([sessionId])
+}
+
+// Workshop que una cuenta marcó como hecho (#2): arma su recorrido en /workshops y su pestaña
+// Aprendizaje en /perfil. Se guarda el slug del taller (WorkshopGuide, WorkshopSession o un evento de
+// categoría "workshop"), sin clave foránea, porque puede venir de cualquiera de los tres. Como en
+// TalkRegistration, se identifica por el email de la sesión y los datos de la persona salen de UserProfile.
+model WorkshopCompletion {
+  id           String   @id @default(cuid())
+  email        String
+  workshopSlug String
+  completedAt  DateTime @default(now())
+
+  @@unique([email, workshopSlug])
+  @@index([email])
+}
+
 model TalkMedia {
   id        String        @id @default(cuid())
   talkId    String
