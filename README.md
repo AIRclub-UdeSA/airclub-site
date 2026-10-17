@@ -3,7 +3,7 @@
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
 > [!NOTE]
-> El sitio es Next.js + Supabase y se publica en Vercel: producción sale de la rama `main` en https://airclub.com.ar y cada PR tiene su preview. **Antes de tocar diseño o frontend, leer [DESIGN.md](DESIGN.md)** (qué no se toca, qué ya se probó y se rechazó). [CONTEXTO.md](CONTEXTO.md) es el contexto histórico del rediseño.
+> El sitio es Next.js + Supabase y se publica en Vercel: producción sale de la rama `main` en https://airclub.com.ar y cada PR tiene su preview. **Antes de tocar diseño o frontend, leer [DESIGN.md](DESIGN.md)** (qué no se toca, qué ya se probó y se rechazó). [CONTEXTO-historico.md](docs/CONTEXTO-historico.md) es el contexto histórico del rediseño.
 
 ## Stack
 
