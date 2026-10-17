@@ -7,6 +7,12 @@ export const COMMUNITY_FORM_URL =
 export const PROJECT_PROPOSAL_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSe-lew786UN7sTBu1ZOLYjrVAzwFXKTMiSTKS7wUhQFpNhHqQ/viewform";
 
+/** Organización del club en GitHub. La usan el carrusel de la landing y los datos estructurados (`sameAs`). */
+export const GITHUB_ORG_URL = "https://github.com/airclub-udesa";
+
+/** Canal de YouTube del club (grabaciones de las charlas). Va en los datos estructurados (`sameAs`). */
+export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@AIRClubSanAndr%C3%A9s";
+
 export type SeedContactChannel = {
   key: "email" | "instagram" | "whatsapp" | "linkedin";
   label: string;
