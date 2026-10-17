@@ -9,7 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollTopButton } from "@/components/layout/ScrollTopButton";
 import { ParticlesBackground } from "@/components/shared/ParticlesBackground";
 import { SmoothScrollProvider } from "@/components/shared/SmoothScrollProvider";
-import { buildMetadata, SITE_URL } from "@/lib/seo";
+import { buildMetadata, HOME_DESCRIPTION, HOME_TITLE, SITE_URL } from "@/lib/seo";
 
 const anton = Anton({ variable: "--font-anton", weight: "400", subsets: ["latin"] });
 const syne = Syne({ variable: "--font-syne", weight: ["400", "500", "600", "700", "800"], subsets: ["latin"] });
@@ -18,11 +18,7 @@ const jbMono = JetBrains_Mono({ variable: "--font-jbmono", weight: ["300", "400"
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  ...buildMetadata({
-    title: "AIR Club UdeSA, Artificial Intelligence & Robotics Club",
-    description:
-      "AIR Club UdeSA: comunidad de estudiantes de la Universidad de San Andrés que aprende y crea con inteligencia artificial y robótica. Organizamos el Challenge JAR 2026 en Rosario.",
-  }),
+  ...buildMetadata({ title: HOME_TITLE, description: HOME_DESCRIPTION }),
   icons: { icon: "/favicon.png" },
 };
 
