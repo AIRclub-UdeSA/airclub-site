@@ -1,6 +1,7 @@
 import { getAllTalks, type TalkItem } from "./talks";
 import { getUpcomingEvents, getPastEvents, type EventItem } from "./events";
 import { isUpcoming } from "./dates";
+import { getWorkshopTracks, workshopHref, type InPersonWorkshop, type PastWorkshop } from "./workshops";
 import type { CalendarActivity, CalendarActivityStatus } from "./calendar-types";
 
 export * from "./calendar-types";
@@ -160,24 +161,83 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
   };
 }
 
+/**
+ * Un taller presencial del panel (#70). Los que vienen llevan a inscribirse en /workshops (o a su lista de próximos, si
+ * no tienen inscripción abierta); los que ya pasaron, a su página. Los eventos de categoría "workshop" ya entran por
+ * fromEvent: acá van solo los del panel.
+ */
+function fromWorkshop(w: { upcoming: InPersonWorkshop } | { past: PastWorkshop }, now: Date): CalendarActivity {
+  const up = "upcoming" in w;
+  const startsAt = up ? w.upcoming.startsAt : new Date(w.past.startsAt!);
+  const endsAt = up ? w.upcoming.endsAt : w.past.endsAt ? new Date(w.past.endsAt) : undefined;
+  const base = up ? w.upcoming : w.past;
+  const description = up ? w.upcoming.description : (w.past.description ?? w.past.summary);
+
+  const url = up
+    ? w.upcoming.registration?.open
+      ? `/workshops?inscribir=${encodeURIComponent(base.slug)}`
+      : "/workshops#proximos"
+    : workshopHref(w.past);
+  const label = up && w.upcoming.registration?.open ? "Inscribirme" : "Ver taller";
+
+  return {
+    id: `workshop-${base.slug}`,
+    slug: base.slug,
+    title: base.title,
+    subtitle: "Taller presencial",
+    category: "workshop",
+    status: calculateStatus(startsAt, endsAt, now),
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt?.toISOString(),
+    dateLabel: base.dateLabel || formatDateLabel(startsAt, endsAt),
+    // Cargado solo con el día (el panel lo guarda de 00:00 a 23:59): sin horario, no "00:00 - 23:59 hs".
+    timeLabel:
+      formatTime(startsAt) === "00:00" && (!endsAt || formatTime(endsAt) === "23:59")
+        ? undefined
+        : endsAt
+          ? `${formatTime(startsAt)} - ${formatTime(endsAt)} hs`
+          : `${formatTime(startsAt)} hs`,
+    location: base.location || "Campus Victoria, UdeSA",
+    description,
+    abstract: description,
+    externalUrl: url,
+    ctaLabel: label,
+    cta: { label, url },
+    instructorOrSpeaker: base.instructor,
+    confirmed: true,
+    media: up ? [] : w.past.media,
+    slides: up ? undefined : w.past.slides,
+    links: up ? undefined : w.past.links,
+    recordingUrl: up ? undefined : w.past.recordingUrl,
+    capacity: base.capacity,
+    isUpcoming: up,
+  };
+}
+
 export async function getUnifiedCalendarActivities(): Promise<{
   activities: CalendarActivity[];
   nextActivity: CalendarActivity | null;
 }> {
   const now = new Date();
-  const [talks, upcomingEvents, pastEvents] = await Promise.all([
+  const [talks, upcomingEvents, pastEvents, tracks] = await Promise.all([
     getAllTalks(),
     getUpcomingEvents(),
     getPastEvents(),
+    getWorkshopTracks(),
   ]);
 
   const allEvents = [...upcomingEvents, ...pastEvents];
 
   const mappedTalks = talks.map((t) => fromTalk(t, now));
   const mappedEvents = allEvents.map((e) => fromEvent(e, now));
+  // Talleres del panel con fecha (#70): los que vienen y los que ya pasaron. Los eventos-taller ya están en mappedEvents.
+  const mappedWorkshops = tracks.flatMap((t) => [
+    ...t.upcoming.filter((w) => w.source === "panel").map((w) => fromWorkshop({ upcoming: w }, now)),
+    ...t.past.filter((w) => w.source === "panel" && w.startsAt).map((w) => fromWorkshop({ past: w }, now)),
+  ]);
 
   // Orden cronológico: eventos con fecha por startsAt asc; eventos sin fecha al final
-  const all = [...mappedTalks, ...mappedEvents].sort((a, b) => {
+  const all = [...mappedTalks, ...mappedEvents, ...mappedWorkshops].sort((a, b) => {
     const timeA = a.startsAt ? new Date(a.startsAt).getTime() : Number.MAX_SAFE_INTEGER;
     const timeB = b.startsAt ? new Date(b.startsAt).getTime() : Number.MAX_SAFE_INTEGER;
     return timeA - timeB;

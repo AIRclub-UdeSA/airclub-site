@@ -7,7 +7,6 @@ import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
 import { TrackBody } from "@/components/workshops/TrackBody";
-import { UpcomingWorkshops } from "@/components/workshops/UpcomingWorkshops";
 import { ProposeWorkshop } from "@/components/workshops/ProposeWorkshop";
 
 const CONTAINER = "mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12";
@@ -69,12 +68,6 @@ export default async function TrackPage({ params }: PageProps<"/workshops/[track
             <TrackBody track={track} />
           </div>
         </section>
-
-        {track.upcoming.length > 0 && (
-          <div className="pt-16 md:pt-24">
-            <UpcomingWorkshops workshops={track.upcoming} />
-          </div>
-        )}
       </article>
 
       <ProposeWorkshop reason={propose} />

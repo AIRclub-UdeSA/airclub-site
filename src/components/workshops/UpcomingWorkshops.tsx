@@ -3,7 +3,8 @@ import type { InPersonWorkshop } from "@/lib/workshops";
 import { buildGoogleCalendarUrl } from "@/lib/calendar-types";
 import { talkDateParts } from "@/lib/talk-format";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
-import { CountHeading, SECTION_TITLE } from "@/components/shared/CountHeading";
+import { SECTION_TITLE } from "@/components/shared/CountHeading";
+import { RegisterButton } from "./WorkshopRegistration";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -11,24 +12,23 @@ const TIME_ZONE = "America/Argentina/Buenos_Aires";
 function timeRange(startsAt: Date, endsAt?: Date) {
   const fmt = (d: Date) =>
     new Intl.DateTimeFormat("es-AR", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
+  // Un taller del panel cargado solo con el día se guarda de 00:00 a 23:59: todavía no tiene horario.
+  if (fmt(startsAt) === "00:00" && (!endsAt || fmt(endsAt) === "23:59")) return "A confirmar";
   return endsAt ? `${fmt(startsAt)} a ${fmt(endsAt)} hs` : `${fmt(startsAt)} hs`;
 }
 
 /**
- * Talleres presenciales que vienen. Salen de los eventos de categoría "workshop" (prisma/seed-data/events.ts): el
- * primero va en carmesí macizo, como la próxima charla de /talks; los demás, con contorno. Sin ninguno, un panel con la
- * trama de "lugar reservado" que lleva a los workshops y a proponer uno.
+ * Talleres presenciales que vienen: los del panel con fecha futura (con inscripción propia, #70) y los eventos de
+ * categoría "workshop" (con su link externo). El primero va en carmesí macizo, como la próxima charla de /talks; los
+ * demás, con contorno. Sin ninguno, un panel con la trama de "lugar reservado" que lleva a los workshops y a proponer uno.
  */
 export function UpcomingWorkshops({ workshops }: { workshops: InPersonWorkshop[] }) {
   return (
     <section id="proximos" className="scroll-mt-24 pb-16 md:pb-24">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
         <RevealOnScroll>
-          {workshops.length > 0 ? (
-            <CountHeading n={workshops.length} title="Próximos talleres" />
-          ) : (
-            <h2 className={SECTION_TITLE}>Próximos talleres</h2>
-          )}
+          {/* Sin el conteo en Anton al lado (pedido del dueño): el título solo, haya o no fechas. */}
+          <h2 className={SECTION_TITLE}>Próximos talleres</h2>
 
           <div className="mt-8 grid grid-cols-1 gap-3">
             {workshops.length > 0 ? (
@@ -56,7 +56,8 @@ function WorkshopPanel({ workshop, next }: { workshop: InPersonWorkshop; next: b
 
   const facts = [
     { label: "Horario", value: timeRange(workshop.startsAt, workshop.endsAt) },
-    { label: "Lugar", value: workshop.location ?? "Campus Victoria, UdeSA" },
+    // "Aula" y no "Lugar" (pedido del dueño). Sin aula cargada no se muestra: el campus no es un aula.
+    workshop.location ? { label: "Aula", value: workshop.location } : null,
     workshop.capacity ? { label: "Cupos", value: String(workshop.capacity) } : null,
     workshop.instructor ? { label: "A cargo de", value: workshop.instructor } : null,
     workshop.prerequisites ? { label: "Requisitos", value: workshop.prerequisites } : null,
@@ -100,7 +101,10 @@ function WorkshopPanel({ workshop, next }: { workshop: InPersonWorkshop; next: b
         </p>
 
         <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-          {workshop.externalUrl && (
+          {workshop.registration?.open && (
+            <RegisterButton slug={workshop.slug} onCrimson={next} />
+          )}
+          {workshop.source === "event" && workshop.externalUrl && (
             <a
               href={workshop.externalUrl}
               target="_blank"

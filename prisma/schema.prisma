@@ -285,31 +285,50 @@ model WorkshopGuide {
   @@index([trackId])
 }
 
-// Taller presencial que ya se hizo, con el mismo material que una charla de /talks: fotos y videos,
-// diapositivas, grabación y links. Los que vienen siguen siendo eventos de categoría "workshop".
+// Taller presencial, de punta a punta (#70): con fecha futura es un "próximo taller" con inscripción
+// propia; cuando pasa, el mismo registro suma el material de una charla de /talks (fotos y videos,
+// diapositivas, grabación y links). Los eventos de categoría "workshop" siguen funcionando aparte.
 model WorkshopSession {
-  id           String                 @id @default(cuid())
-  trackId      String
-  track        WorkshopTrack          @relation(fields: [trackId], references: [id], onDelete: Cascade)
-  slug         String                 @unique // igual que en WorkshopGuide: no cambiarlo
-  title        String
-  summary      String                 @db.Text // corto: va en su tarjeta, adentro del workshop
-  description  String?                @db.Text // lo que se vio, en la pestaña Resumen de su página; sin ella, va `summary`
-  startsAt     DateTime?
-  endsAt       DateTime?
-  dateLabel    String?
-  location     String?
-  instructor   String?
-  recordingUrl String? // siempre link externo (YouTube), como en Talk
-  status       TalkStatus             @default(PUBLISHED)
-  order        Int                    @default(0)
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
-  media        WorkshopSessionMedia[]
-  slides       WorkshopSessionSlide[]
-  links        WorkshopSessionLink[]
+  id               String                 @id @default(cuid())
+  trackId          String
+  track            WorkshopTrack          @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  slug             String                 @unique // igual que en WorkshopGuide: no cambiarlo
+  title            String
+  summary          String                 @db.Text // corto: va en su tarjeta, adentro del workshop
+  description      String?                @db.Text // lo que se vio, en la pestaña Resumen de su página; sin ella, va `summary`
+  startsAt         DateTime?
+  endsAt           DateTime?
+  dateLabel        String?
+  location         String?
+  instructor       String?
+  recordingUrl     String? // siempre link externo (YouTube), como en Talk
+  registrationOpen Boolean                @default(false) // inscripción propia del sitio mientras no pasó
+  capacity         Int? // cupo de la inscripción; null = sin límite
+  status           TalkStatus             @default(PUBLISHED)
+  order            Int                    @default(0)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  media            WorkshopSessionMedia[]
+  slides           WorkshopSessionSlide[]
+  links            WorkshopSessionLink[]
+  registrations    WorkshopRegistration[]
 
   @@index([trackId])
+}
+
+// Inscripción a un taller presencial (#70), gemela de TalkRegistration. Cuando el taller termina,
+// quien estaba inscripto lo tiene hecho sin tocar nada (se calcula al leer, ver
+// src/lib/workshop-completions.ts). Si no fue, lo desmarca y queda `markedAbsent`.
+model WorkshopRegistration {
+  id           String          @id @default(cuid())
+  sessionId    String
+  session      WorkshopSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  email        String
+  markedAbsent Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+
+  @@unique([sessionId, email])
+  @@index([email])
 }
 
 model WorkshopSessionMedia {
