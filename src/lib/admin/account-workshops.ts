@@ -1,12 +1,11 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { completionsOf } from "@/lib/workshop-completions";
 
-/** Talleres que una cuenta marcó como hechos (WorkshopCompletion), el más reciente primero, para el detalle de /admin/cuentas/[id]. */
+/**
+ * Talleres hechos de una cuenta, el más reciente primero, para el detalle de /admin/cuentas/[id]. Mismo criterio que
+ * /perfil/aprendizaje (completionsOf): lo marcado a mano más los presenciales terminados a los que se inscribió.
+ */
 export async function completedWorkshopsOf(email: string): Promise<string[]> {
-  const rows = await prisma.workshopCompletion.findMany({
-    where: { email },
-    select: { workshopSlug: true },
-    orderBy: { completedAt: "desc" },
-  });
-  return rows.map((r) => r.workshopSlug);
+  const done = await completionsOf(email);
+  return [...done].sort(([, a], [, b]) => b.getTime() - a.getTime()).map(([slug]) => slug);
 }
