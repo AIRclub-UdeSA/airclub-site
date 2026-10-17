@@ -85,7 +85,8 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
 }
 
 /**
- * La persona borra su propia cuenta del sitio: el perfil y todas sus inscripciones a charlas.
+ * La persona borra su propia cuenta del sitio: el perfil, todas sus inscripciones a charlas y los talleres que marcó
+ * como hechos.
  * No hay AuditLog (el registro apunta a un AdminUser). Después cierra la sesión: la cuenta de
  * Google no se toca, así que si vuelve a entrar puede crear el perfil de nuevo.
  */
@@ -95,6 +96,7 @@ export async function deleteMyAccountAction(): Promise<void> {
 
   await prisma.$transaction([
     prisma.talkRegistration.deleteMany({ where: { email } }),
+    prisma.workshopCompletion.deleteMany({ where: { email } }),
     prisma.userProfile.deleteMany({ where: { email } }),
   ]);
 

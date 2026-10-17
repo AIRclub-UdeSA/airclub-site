@@ -8,10 +8,11 @@ import { requireAdminSession } from "@/lib/admin/permissions";
 export type DeleteAccountState = { error: string | null };
 
 /**
- * Borra una cuenta del sitio: el perfil (UserProfile) y todas sus inscripciones a charlas.
+ * Borra una cuenta del sitio: el perfil (UserProfile), todas sus inscripciones a charlas y los talleres que marcó como
+ * hechos (WorkshopCompletion, que se guarda por email).
  * Solo ADMIN. No toca a AdminUser (quién entra al panel; eso es /admin/usuarios) ni la cuenta
  * de Google: si la persona vuelve a entrar, puede crear el perfil de nuevo. Deja en AuditLog
- * (section "cuentas") el perfil y las inscripciones que tenía.
+ * (section "cuentas") el perfil, las inscripciones y los talleres hechos que tenía.
  */
 export async function deleteAccountAction(_prev: DeleteAccountState, formData: FormData): Promise<DeleteAccountState> {
   const admin = await requireAdminSession();
@@ -29,7 +30,12 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
         where: { email: profile.email },
         include: { talk: { select: { slug: true } } },
       });
+      const completions = await tx.workshopCompletion.findMany({
+        where: { email: profile.email },
+        select: { workshopSlug: true },
+      });
       await tx.talkRegistration.deleteMany({ where: { email: profile.email } });
+      await tx.workshopCompletion.deleteMany({ where: { email: profile.email } });
       await tx.userProfile.delete({ where: { id } });
       await tx.auditLog.create({
         data: {
@@ -47,6 +53,7 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
             studentStatus: profile.studentStatus,
             createdAt: profile.createdAt.toISOString(),
             inscripciones: registrations.map((r) => r.talk.slug),
+            talleresHechos: completions.map((c) => c.workshopSlug),
           },
         },
       });
