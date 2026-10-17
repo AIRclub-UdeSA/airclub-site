@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/admin/permissions";
+import { canEditSection, requireAdminSession } from "@/lib/admin/permissions";
 
 export type RemoveRegistrationState = { error: string | null };
 
 /**
- * Da de baja una inscripción a una charla. Solo ADMIN (son datos personales). Deja el "antes"
+ * Da de baja una inscripción a una charla. Solo ADMIN: un Editor con "comunidad" solo ve (#97). Deja el "antes"
  * en AuditLog (section "comunidad") y revalida /talks para que se libere el cupo en el sitio.
  * Idempotente: si ya no existe, no es un error.
  */
@@ -16,7 +16,7 @@ export async function removeRegistrationAction(
   formData: FormData,
 ): Promise<RemoveRegistrationState> {
   const admin = await requireAdminSession();
-  if (admin.role !== "ADMIN") return { error: "No tenés permiso para dar de baja inscriptos." };
+  if (!canEditSection(admin, "comunidad")) return { error: "No tenés permiso para dar de baja inscriptos." };
 
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Falta la inscripción." };

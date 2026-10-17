@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ADMIN_SECTIONS, sectionLabel } from "@/lib/admin/sections";
+import { ADMIN_SECTIONS, sectionAssignLabel } from "@/lib/admin/sections";
 
 export function SectionsPicker({ initialSelected = [] }: { initialSelected?: string[] }) {
   const [selected, setSelected] = useState<string[]>(initialSelected);
@@ -15,11 +15,11 @@ export function SectionsPicker({ initialSelected = [] }: { initialSelected?: str
             key={id}
             className="inline-flex items-center gap-1.5 rounded-full bg-crimson/10 py-1 pl-3 pr-1.5 font-body text-xs font-medium text-crimson-text"
           >
-            {sectionLabel(id)}
+            {sectionAssignLabel(id)}
             <button
               type="button"
               onClick={() => setSelected((prev) => prev.filter((s) => s !== id))}
-              aria-label={`Sacar ${sectionLabel(id)}`}
+              aria-label={`Sacar ${sectionAssignLabel(id)}`}
               className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-crimson/20"
             >
               ×
@@ -42,7 +42,7 @@ export function SectionsPicker({ initialSelected = [] }: { initialSelected?: str
           <option value="">+ Agregar sección…</option>
           {available.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.label}
+              {sectionAssignLabel(s.id)}
             </option>
           ))}
         </select>
