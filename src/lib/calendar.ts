@@ -61,6 +61,9 @@ function fromTalk(talk: TalkItem, now: Date): CalendarActivity {
   const endsAt = talk.endsAt;
   const status = calculateStatus(startsAt, endsAt, now);
   const isUp = startsAt ? isUpcoming(startsAt, endsAt) : true;
+  // Sin fecha, una charla cuenta como próxima, pero no se puede inscribir (mismo criterio que /talks y el servidor,
+  // src/app/talks/register-actions.ts): no mostrar un botón que no hace nada.
+  const registrationOpen = talk.registrationOpen && Boolean(startsAt);
 
   let timeLabel: string | undefined;
   if (startsAt) {
@@ -84,16 +87,19 @@ function fromTalk(talk: TalkItem, now: Date): CalendarActivity {
     abstract: talk.abstract,
     // Con inscripción propia, el link abre directo el diálogo de esa charla en /talks.
     externalUrl:
-      talk.cta?.url || (isUp && talk.registrationOpen ? `/talks?inscribir=${encodeURIComponent(talk.slug)}` : `/talks`),
+      talk.cta?.url || (isUp && registrationOpen ? `/talks?inscribir=${encodeURIComponent(talk.slug)}` : `/talks`),
     ctaLabel: isUp
-      ? talk.cta?.label || (talk.registrationOpen ? talk.registrationLabel || "Inscribirme" : "Confirmar asistencia")
+      ? talk.cta?.label || (registrationOpen ? talk.registrationLabel || "Inscribirme" : "Confirmar asistencia")
       : "Ver detalles",
     cta: talk.cta,
+    registrationOpen,
+    registrationLabel: talk.registrationLabel,
     talkSlug: talk.slug,
     instructorOrSpeaker: talk.speakers?.length ? speakersLabel(talk.speakers) : undefined,
     speaker: talk.speaker,
     speakers: talk.speakers || (talk.speaker ? [talk.speaker] : undefined),
     topic: talk.topic,
+    capacity: talk.capacity,
     confirmed: talk.confirmed,
     media: talk.media,
     slides: talk.slides,

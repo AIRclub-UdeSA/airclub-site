@@ -1,12 +1,10 @@
 "use client";
 
-import { createContext, Suspense, useContext, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { createContext, Suspense, useContext } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
 import type { RegistrationState } from "@/components/talks/RegisterButton";
-import { useMyRegistrations } from "@/components/talks/use-my-registrations";
+import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
 import {
   cancelWorkshopRegistrationAction,
   getMyWorkshopRegistrationsAction,
@@ -29,49 +27,30 @@ const RegistrationContext = createContext<{
 } | null>(null);
 
 /**
- * La inscripción a los talleres presenciales, con el mismo diálogo y el mismo recorrido que la de charlas (TalksHub): el
- * botón (o "?inscribir=<slug>", al volver del login o de completar el perfil) espera a que cargue la sesión; con sesión
- * abre el diálogo y sin sesión lleva al login de Google, que vuelve a /workshops?inscribir=<slug>. Con sesión, el botón
+ * La inscripción a los talleres presenciales, con el mismo diálogo y el mismo recorrido que la de charlas
+ * (registration-flow.tsx): el botón (o "?inscribir=<slug>", al volver del login o de completar el perfil) espera a que
+ * cargue la sesión; con sesión abre el diálogo y sin sesión lleva al login de Google, que vuelve a
+ * /workshops?inscribir=<slug>. Con sesión, el botón
  * sabe si ya está inscripta o si el cupo está lleno (#72), y el diálogo abre directo en "Ya estás inscripto/a".
  */
 export function WorkshopRegistration({ workshops, children }: { workshops: RegistrableWorkshop[]; children: React.ReactNode }) {
-  const { session, registrationOf, onResult } = useMyRegistrations(getMyWorkshopRegistrationsAction);
-  const [requestedSlug, setRequestedSlug] = useState<string | null>(null);
-  const [registeringSlug, setRegisteringSlug] = useState<string | null>(null);
-  const [loginSlug, setLoginSlug] = useState<string | null>(null);
-  const registering = workshops.find((w) => w.slug === registeringSlug) ?? null;
-
-  // Se ajusta el estado durante el render, como TalksHub: espera a la sesión y, con sesión, a saber si ya está inscripta.
-  // Solo se sigue si el taller acepta inscripciones (el servidor lo vuelve a chequear).
-  if (requestedSlug && registrationOf(requestedSlug) !== "loading") {
-    const workshop = workshops.find((w) => w.slug === requestedSlug);
-    setRequestedSlug(null);
-    if (workshop) {
-      if (session?.user?.email) setRegisteringSlug(workshop.slug);
-      else setLoginSlug(workshop.slug);
-    }
-  }
-
-  useEffect(() => {
-    if (!loginSlug) return;
-    const back = encodeURIComponent(`/workshops?inscribir=${encodeURIComponent(loginSlug)}`);
-    signIn("google", { redirectTo: `/bienvenida?next=${back}` });
-  }, [loginSlug]);
+  const { registrationOf, request, dialog } = useRegistrationFlow({
+    items: workshops,
+    // La lista ya trae solo los que tienen la inscripción abierta (el servidor lo vuelve a chequear).
+    canRegister: () => true,
+    fetchMine: getMyWorkshopRegistrationsAction,
+    returnTo: (slug) => `/workshops?inscribir=${encodeURIComponent(slug)}`,
+  });
 
   return (
-    <RegistrationContext.Provider value={{ request: setRequestedSlug, registrationOf }}>
-      {/* useSearchParams() pide su propio límite de Suspense (si no, next build falla). */}
+    <RegistrationContext.Provider value={{ request, registrationOf }}>
       <Suspense fallback={null}>
-        <RegisterDeepLink onRequest={setRequestedSlug} />
+        <RegisterDeepLink onRequest={request} />
       </Suspense>
       {children}
       <TalkRegisterDialog
+        {...dialog}
         kind="taller"
-        talk={registering}
-        isOpen={registeringSlug !== null}
-        alreadyRegistered={registering ? registrationOf(registering.slug) === "registered" : false}
-        onClose={() => setRegisteringSlug(null)}
-        onResult={onResult}
         register={registerForWorkshopAction}
         cancel={cancelWorkshopRegistrationAction}
       />
@@ -145,22 +124,4 @@ export function RegisterButton({ slug, onCrimson }: { slug: string; onCrimson: b
       )}
     </button>
   );
-}
-
-// Lee "?inscribir=<slug>", pide la inscripción a ese taller y limpia el parámetro para que un refresh no la repita.
-function RegisterDeepLink({ onRequest }: { onRequest: (slug: string) => void }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const slug = searchParams.get("inscribir");
-    if (!slug) return;
-    onRequest(slug);
-    const params = new URLSearchParams(searchParams);
-    params.delete("inscribir");
-    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
-  }, [searchParams, pathname, router, onRequest]);
-
-  return null;
 }
