@@ -11,7 +11,7 @@ export type TrackBox = {
   title: string;
   label?: string;
   summary: string;
-  /** Lo que tiene adentro, en mono: "09 guías asincrónicas", "15–21 h". */
+  /** Lo que tiene adentro, en mono: "10 guías asincrónicas", "18–25 h de práctica". */
   facts: string[];
   /** Sus talleres, en orden: arman el progreso de la caja. */
   slugs: string[];

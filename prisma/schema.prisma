@@ -266,7 +266,7 @@ model WorkshopGuide {
   trackId     String
   track       WorkshopTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
   slug        String        @unique
-  week        String // "01" a "09": el numeral grande de la página
+  week        String // dos cifras ("01", "02"…): el numeral grande de la página
   title       String
   summary     String        @db.Text
   outcome     String        @db.Text // qué te llevás al terminar

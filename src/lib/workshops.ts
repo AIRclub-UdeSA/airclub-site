@@ -25,7 +25,7 @@ const OTHERS = {
 
 export type AsyncWorkshop = {
   track: TrackKey;
-  /** Número de semana, "01" a "09". Es el numeral grande de la página. */
+  /** Número de semana, con dos cifras ("01", "02"…). Es el numeral grande de la página. */
   week: string;
   slug: string;
   title: string;

@@ -100,7 +100,7 @@ export const pastWorkshops: SeedPastWorkshop[] = [
 
 export type SeedAsyncWorkshop = {
   track: string;
-  /** Número de semana, "01" a "09". Es el numeral grande de la página. */
+  /** Número de semana, con dos cifras ("01", "02"…). Es el numeral grande de la página. */
   week: string;
   /** Carpeta en jar_workshops y ruta de la guía en jar_site ("semana-01-talkers-listeners"). */
   slug: string;
@@ -235,7 +235,8 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = (
     outcome: "Corrés el stack real de Nav2 sobre el mismo laberinto y ves qué gana y qué pierde cada módulo manual.",
     minutes: [90, 120],
     level: "avanzado",
-    ros2Package: "nav2_bringup",
+    // Sin paquete: esta semana no compila nada (el launch se corre por ruta y usa nav2_bringup, que viene con Nav2), así
+    // que la página no muestra comandos de colcon.
     requires: ["06"],
   },
   {
