@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/admin/permissions";
+import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
 import { careerText, csvCell, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -16,12 +16,16 @@ const registeredAt = new Intl.DateTimeFormat("sv-SE", {
 });
 
 /**
- * Inscriptos en CSV (lo que antes daba el Google Form). Solo ADMIN. El layout del panel no
- * envuelve a los route handlers, así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla.
+ * Inscriptos en CSV (lo que antes daba el Google Form). Lo baja quien puede ver "comunidad":
+ * ADMIN o un Editor con esa sección (#97). El layout del panel no envuelve a los route handlers,
+ * así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla.
+ *
+ * Cada descarga queda en AuditLog (action "export"): el archivo se puede reenviar, así que se
+ * registra quién sacó qué datos personales. Si no se puede registrar, no se entrega el archivo.
  */
 export async function GET(request: Request) {
   const admin = await requireAdminSession();
-  if (admin.role !== "ADMIN") return new Response("Sin permiso", { status: 403 });
+  if (!canViewSection(admin, "comunidad")) return new Response("Sin permiso", { status: 403 });
 
   const slug = new URL(request.url).searchParams.get("charla") ?? "";
   const registrations = await prisma.talkRegistration.findMany({
@@ -45,6 +49,16 @@ export async function GET(request: Request) {
       p?.startYear,
       p?.studentStatus ? STATUS_LABELS[p.studentStatus] : "",
     ];
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      adminUserId: admin.adminId,
+      section: "comunidad",
+      entityId: slug || "todas",
+      action: "export",
+      after: { charla: slug || "todas", filas: rows.length },
+    },
   });
 
   // BOM para que Excel lea bien los acentos.

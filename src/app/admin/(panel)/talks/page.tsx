@@ -1,11 +1,11 @@
 import { fetchTalkRows, sortTalks, talksHubProps, toTalkItem } from "@/lib/talks";
-import { requireSectionAccess } from "@/lib/admin/permissions";
+import { requireSectionEdit } from "@/lib/admin/permissions";
 import { storagePublicPrefix } from "@/lib/storage-url";
 import { TalksManager } from "./TalksManager";
 import type { EditingTalk } from "./TalkForm";
 
 export default async function AdminTalksPage() {
-  const admin = await requireSectionAccess("talks");
+  const admin = await requireSectionEdit("talks");
 
   // Incluye los borradores: el panel los muestra apagados en el cronograma.
   const rows = await fetchTalkRows({ includeDrafts: true });
