@@ -104,4 +104,6 @@ convert foto-original.png -strip -interlace Plane -quality 82 foto.jpg
 
 Este repositorio se escribe en **español**: código, commits, PRs, issues y documentación.
 
+Las skills y la configuración personal de los agentes (`.claude/`, `.agents/`) son locales y no se versionan.
+
 Guías generales de la organización: [CONTRIBUTING](https://github.com/AIRclub-UdeSA/.github/blob/main/CONTRIBUTING.md) y [código de conducta](https://github.com/AIRclub-UdeSA/.github/blob/main/CODE_OF_CONDUCT.md).
