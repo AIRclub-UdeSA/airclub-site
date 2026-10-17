@@ -31,10 +31,7 @@ export function GuideRoute({
     <div id="asincronicos" className="scroll-mt-24">
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-4">
         <div className="min-w-0 lg:col-span-5">
-          <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">
-            Cada guía tiene su código en GitHub y deja andando algo que la siguiente da por hecho: hacelas en orden. En
-            total, {totalHours}.
-          </p>
+          <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">{introOf(guides, totalHours)}</p>
 
           {setupUrl && (
             <a
@@ -65,6 +62,13 @@ export function GuideRoute({
       <RouteSteps guides={guides} />
     </div>
   );
+}
+
+/** La intro de la ruta. El texto de las guías del JAR se mantiene; una sola guía no tiene orden que explicar. */
+function introOf(guides: AsyncWorkshop[], totalHours: string): string {
+  if (guides.length === 1) return `Lleva ${totalHours}.`;
+  const code = guides.every((g) => g.codeUrl) ? "Cada guía tiene su código en GitHub y deja" : "Cada guía deja";
+  return `${code} andando algo que la siguiente da por hecho: hacelas en orden. En total, ${totalHours}.`;
 }
 
 /**
