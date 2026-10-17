@@ -8,7 +8,7 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:30
 export const HOME_TITLE = "AIR Club UdeSA, Club de Robótica e Inteligencia Artificial";
 // "Club de Robótica e Inteligencia Artificial de la Universidad de San Andrés" va tal cual: es como nos buscan (#65).
 export const HOME_DESCRIPTION =
-  "AIR Club UdeSA es el Club de Robótica e Inteligencia Artificial de la Universidad de San Andrés: estudiantes que aprenden y crean con IA y robótica. Organizamos el Challenge JAR 2026 en Rosario.";
+  "Club de Robótica e Inteligencia Artificial de la Universidad de San Andrés. Aprendemos y creamos con IA y robótica.";
 
 export function buildMetadata({
   title,

@@ -78,12 +78,19 @@ export async function homeJsonLd(): Promise<JsonLd> {
   };
 }
 
-/** Lugar del evento. En el campus de Victoria usa la dirección completa, que es lo que Google pide en `address`. */
+/** Lugar del evento. En el campus de Victoria usa la dirección completa, que es lo que Google pide en `address`;
+ * con la forma "Ciudad, Provincia" arma un `PostalAddress`; si no, deja el texto como está. */
 function placeOf(location: string | undefined, fallback?: string): JsonLd | undefined {
   const name = location ?? fallback;
   if (!name) return undefined;
   const atUdesa = /udesa|san andr[eé]s|victoria/i.test(name);
-  return { "@type": "Place", name, address: atUdesa ? UDESA_VICTORIA : name };
+  const cityProvince = name.match(/^([^,()]+),\s*([^,()]+)$/);
+  const address = atUdesa
+    ? UDESA_VICTORIA
+    : cityProvince
+      ? { "@type": "PostalAddress", addressLocality: cityProvince[1].trim(), addressRegion: cityProvince[2].trim(), addressCountry: "AR" }
+      : name;
+  return { "@type": "Place", name, address };
 }
 
 function eventBase({
