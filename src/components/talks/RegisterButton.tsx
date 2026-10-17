@@ -1,7 +1,6 @@
 "use client";
 
 import { ArrowUpRight, Check } from "lucide-react";
-import type { TimelineTalk } from "./TalksTimeline";
 
 /**
  * Lo que sabe el cliente de la cuenta frente a una charla (ver getMyTalkRegistrationsAction):
@@ -45,14 +44,15 @@ const LOADING: Record<Variant, string> = {
   card: "bg-text/10",
 };
 
-interface RegisterButtonProps {
-  talk: TimelineTalk;
+interface RegisterButtonProps<T extends { registrationLabel?: string }> {
+  /** Una charla de /talks o una actividad de /eventos: solo se lee su `registrationLabel`. */
+  talk: T;
   state: RegistrationState;
   variant: Variant;
-  onRegister: (talk: TimelineTalk) => void;
+  onRegister: (talk: T) => void;
 }
 
-export function RegisterButton({ talk, state, variant, onRegister }: RegisterButtonProps) {
+export function RegisterButton<T extends { registrationLabel?: string }>({ talk, state, variant, onRegister }: RegisterButtonProps<T>) {
   const label = talk.registrationLabel ?? "Inscribirme";
   // Los botones no son del mismo alto en las tres variantes: el de la tarjeta es solo texto.
   const loadingShape = variant === "card" ? "rounded-sm" : "rounded-full";
