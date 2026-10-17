@@ -1,12 +1,12 @@
 import "server-only";
+import { prisma } from "@/lib/prisma";
 
-/**
- * Talleres que una cuenta marcó como hechos, para el detalle de /admin/cuentas/[id].
- * Devuelve null mientras /workshops (WorkshopCompletion, #64) no esté mergeado: el detalle
- * oculta la sección. Al mergearlo, reemplazar el cuerpo por la consulta a la tabla
- * (`prisma.workshopCompletion.findMany({ where: { email } })`) y devolver los slugs.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function completedWorkshopsOf(email: string): Promise<string[] | null> {
-  return null;
+/** Talleres que una cuenta marcó como hechos (WorkshopCompletion), el más reciente primero, para el detalle de /admin/cuentas/[id]. */
+export async function completedWorkshopsOf(email: string): Promise<string[]> {
+  const rows = await prisma.workshopCompletion.findMany({
+    where: { email },
+    select: { workshopSlug: true },
+    orderBy: { completedAt: "desc" },
+  });
+  return rows.map((r) => r.workshopSlug);
 }

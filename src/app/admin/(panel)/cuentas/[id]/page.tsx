@@ -76,20 +76,18 @@ export default async function AdminCuentaPage({ params }: PageProps<"/admin/cuen
         )}
       </section>
 
-      {workshops && (
-        <section className="flex flex-col gap-3">
-          <h3 className="font-display text-lg font-bold text-text">Talleres hechos</h3>
-          {workshops.length === 0 ? (
-            <p className="text-sm text-text3">Ninguno.</p>
-          ) : (
-            <ul className="list-inside list-disc text-sm text-text2">
-              {workshops.map((slug) => (
-                <li key={slug}>{slug}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+      <section className="flex flex-col gap-3">
+        <h3 className="font-display text-lg font-bold text-text">Talleres hechos</h3>
+        {workshops.length === 0 ? (
+          <p className="text-sm text-text3">Ninguno.</p>
+        ) : (
+          <ul className="list-inside list-disc text-sm text-text2">
+            {workshops.map((slug) => (
+              <li key={slug}>{slug}</li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3 border-t border-border/60 pt-6">
         <DeleteAccountButton id={profile.id} email={profile.email} />
