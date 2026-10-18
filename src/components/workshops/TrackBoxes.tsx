@@ -26,6 +26,22 @@ const CARD: Record<StepState, string> = {
   todo: "border border-text bg-bg text-text hover:border-crimson-text",
 };
 
+const SM_SPAN = { 1: "", 2: "sm:col-span-2" } as const;
+const LG_SPAN = { 1: "lg:col-span-1", 2: "lg:col-span-2", 3: "lg:col-span-3" } as const;
+
+/**
+ * Cuántas columnas ocupa cada caja. La primera, 2 (o todo el ancho si es la única); la última completa su fila; el resto, 1.
+ * Con 2 workshops: 2+1. Con 3: 2+1 y una de ancho completo. Con 4: 2+1 y 1+2. Siempre se llena cada fila.
+ */
+function spanOf(i: number, n: number): string {
+  if (n === 1) return `${SM_SPAN[2]} ${LG_SPAN[3]}`;
+  const first = i === 0;
+  const last = i === n - 1;
+  const lg = first ? 2 : last ? ((3 - ((2 + (n - 2)) % 3)) as 1 | 2 | 3) : 1;
+  const sm = first ? 2 : last ? ((2 - ((2 + (n - 2)) % 2)) as 1 | 2) : 1;
+  return `${SM_SPAN[sm]} ${LG_SPAN[lg]}`;
+}
+
 /**
  * Las cajas de /workshops: una por workshop, en mosaico (cajas casi cuadradas, tres por fila en escritorio) y en orden: el
  * número en Anton dice cuál va primero. Cada caja entera lleva a la página del workshop. El color sigue el progreso,
@@ -39,15 +55,11 @@ export function TrackBoxes({ tracks }: { tracks: TrackBox[] }) {
   const started = tracks.some((t) => t.slugs.some((s) => completed.has(s)));
 
   return (
-    // En escritorio cada fila mide al menos un tercio del ancho (cajas cuadradas) y crece si el contenido no entra. Con dos
-    // workshops van en dos columnas: en tres quedaba un hueco a la derecha que se leía como incompleto. La fila sigue
-    // midiendo un tercio, así las dos cajas no se vuelven cuadrados gigantes.
+    // En escritorio cada fila mide al menos un tercio del ancho (cajas cuadradas) y crece si el contenido no entra. La
+    // primera caja (la 01) es la destacada y ocupa dos columnas; la última se estira lo que le falta a su fila, así nunca
+    // queda un hueco a la derecha, con los workshops que haya (ver spans).
     <div className="@container min-w-0">
-      <ol
-        className={`grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)] ${
-          tracks.length === 2 ? "" : "lg:grid-cols-3"
-        }`}
-      >
+      <ol className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:auto-rows-[minmax(calc((100cqw_-_1.5rem)/3),auto)] lg:grid-cols-3">
         {tracks.map((t, i) => (
           <Box
             key={t.key}
@@ -57,6 +69,8 @@ export function TrackBoxes({ tracks }: { tracks: TrackBox[] }) {
             started={started}
             showProgress={status === "ready"}
             completed={completed}
+            featured={i === 0 && tracks.length > 1}
+            span={spanOf(i, tracks.length)}
           />
         ))}
       </ol>
@@ -71,6 +85,8 @@ function Box({
   started,
   showProgress,
   completed,
+  featured,
+  span,
 }: {
   track: TrackBox;
   order: string;
@@ -78,6 +94,8 @@ function Box({
   started: boolean;
   showProgress: boolean;
   completed: ReadonlySet<string>;
+  featured: boolean;
+  span: string;
 }) {
   const next = state === "next";
   const done = state === "done";
@@ -86,12 +104,12 @@ function Box({
   const muted = next ? "text-white/80" : "text-text3";
 
   return (
-    <li id={`workshop-${t.key}`} className="min-w-0 scroll-mt-28">
+    <li id={`workshop-${t.key}`} className={`min-w-0 scroll-mt-28 ${span}`}>
       <article
         className={`group relative flex h-full min-h-[21rem] flex-col gap-5 p-6 transition-colors sm:p-8 ${CARD[state]}`}
       >
         <div className="flex items-start justify-between gap-4">
-          <span className={`font-logo text-[clamp(3.6rem,6vw,5.5rem)] leading-[0.8] ${done ? "text-text/25" : ""}`} aria-hidden="true">
+          <span className={`font-logo leading-[0.8] ${featured ? "text-[clamp(4.5rem,9vw,8rem)]" : "text-[clamp(3.6rem,6vw,5.5rem)]"} ${done ? "text-text/25" : ""}`} aria-hidden="true">
             {order}
           </span>
           {next && (
@@ -113,7 +131,7 @@ function Box({
             </p>
           )}
           <h3
-            className={`font-display text-[clamp(1.35rem,2.2vw,1.9rem)] font-black uppercase leading-[1] tracking-tight transition-colors [overflow-wrap:anywhere] ${
+            className={`font-display ${featured ? "text-[clamp(1.7rem,3.2vw,2.8rem)]" : "text-[clamp(1.1rem,1.9vw,1.65rem)]"} font-black uppercase leading-[1] tracking-tight transition-colors hyphens-auto [overflow-wrap:anywhere] ${
               state === "todo" ? "group-hover:text-crimson-text" : ""
             }`}
           >
@@ -123,7 +141,7 @@ function Box({
               {done && <span className="sr-only"> (completo)</span>}
             </Link>
           </h3>
-          <p className={`mt-3 line-clamp-3 text-[.95rem] leading-[1.6] ${next ? "text-white/85" : done ? "text-text3" : "text-text2"}`}>
+          <p className={`mt-3 line-clamp-3 ${featured ? "max-w-[52ch] lg:text-[1.05rem]" : ""} text-[.95rem] leading-[1.6] ${next ? "text-white/85" : done ? "text-text3" : "text-text2"}`}>
             {t.summary}
           </p>
         </div>

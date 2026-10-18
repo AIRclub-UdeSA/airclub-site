@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getUpcomingWorkshops, getWorkshopTracks, totalHoursLabel, trackEntryHref, type WorkshopTrack } from "@/lib/workshops";
+import { getUpcomingWorkshops, getWorkshopTracks, trackEntryHref, trackFacts } from "@/lib/workshops";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopsHero } from "@/components/workshops/WorkshopsHero";
@@ -17,18 +17,6 @@ export const metadata: Metadata = buildMetadata({
 
 // ISR: el estado próximo/pasado de cada taller sale de su fecha, así que la página se revalida sola cada hora.
 export const revalidate = 3600;
-
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** Lo que dice cada caja en mono: cuántos talleres tiene, de qué tipo y cuánto lleva el recorrido. */
-function factsOf(t: WorkshopTrack): string[] {
-  return [
-    t.guides.length > 0 && `${pad(t.guides.length)} ${t.guides.length === 1 ? "guía asincrónica" : "guías asincrónicas"}`,
-    t.guides.length > 0 && `${totalHoursLabel(t.guides)} de práctica`,
-    t.past.length > 0 && `${pad(t.past.length)} ${t.past.length === 1 ? "taller presencial" : "talleres presenciales"}`,
-    t.upcoming.length > 0 && `${pad(t.upcoming.length)} ${t.upcoming.length === 1 ? "fecha próxima" : "fechas próximas"}`,
-  ].filter((f): f is string => Boolean(f));
-}
 
 /**
  * Página general de workshops: el hero, los próximos talleres presenciales de todos los workshops (lo que tiene fecha y
@@ -49,10 +37,9 @@ export default async function WorkshopsPage() {
     title: t.title,
     label: t.label,
     summary: t.summary,
-    facts: factsOf(t),
+    facts: trackFacts(t),
     slugs: [...t.guides.map((g) => g.slug), ...t.past.map((w) => w.slug)],
   }));
-  const itemCount = tracks.reduce((n, t) => n + t.guides.length + t.past.length, 0);
   const upcomingBand = (
     <div className="bg-bg2 pt-16 md:pt-24">
       <UpcomingWorkshops workshops={upcoming} />
@@ -61,7 +48,7 @@ export default async function WorkshopsPage() {
 
   return (
     <WorkshopProgressProvider>
-      <WorkshopsHero trackCount={tracks.length} itemCount={itemCount} firstTrackHref={boxes[0]?.href} />
+      <WorkshopsHero />
 
       {/* Primero lo que tiene fecha (y el botón para inscribirse), después el mosaico de workshops. */}
       {upcoming.length > 0 && upcomingBand}

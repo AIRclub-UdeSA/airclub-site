@@ -283,6 +283,18 @@ export function totalHoursLabel(workshops: AsyncWorkshop[]): string {
   return `${Math.floor(min / 60)}–${Math.ceil(max / 60)} h`;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Lo que dice un workshop en mono, igual en su caja de /workshops y en su página: cuántos talleres tiene, de qué tipo y cuánto lleva. */
+export function trackFacts(t: WorkshopTrack): string[] {
+  return [
+    t.guides.length > 0 && `${pad2(t.guides.length)} ${t.guides.length === 1 ? "guía asincrónica" : "guías asincrónicas"}`,
+    t.guides.length > 0 && `${totalHoursLabel(t.guides)} de práctica`,
+    t.past.length > 0 && `${pad2(t.past.length)} ${t.past.length === 1 ? "taller presencial" : "talleres presenciales"}`,
+    t.upcoming.length > 0 && `${pad2(t.upcoming.length)} ${t.upcoming.length === 1 ? "fecha próxima" : "fechas próximas"}`,
+  ].filter((f): f is string => Boolean(f));
+}
+
 export async function getUpcomingWorkshops(): Promise<InPersonWorkshop[]> {
   return (await getUpcomingEvents()).filter((e) => e.category === "workshop");
 }
