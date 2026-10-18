@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { requireUserProfile } from "@/lib/perfil/require-profile";
-import { prisma } from "@/lib/prisma";
+import { completionsOf } from "@/lib/workshop-completions";
 import { getWorkshopTracks, trackHref, workshopHref, type WorkshopTrack } from "@/lib/workshops";
 import { routeStates } from "@/lib/workshop-progress";
 import { PerfilTabs } from "@/components/perfil/PerfilTabs";
@@ -28,11 +28,8 @@ type DoneItem = { slug: string; href: string; code?: string; title: string; comp
  */
 export default async function AprendizajePage() {
   const profile = await requireUserProfile();
-  const [rows, tracks] = await Promise.all([
-    prisma.workshopCompletion.findMany({ where: { email: profile.email }, orderBy: { completedAt: "desc" } }),
-    getWorkshopTracks(),
-  ]);
-  const completedAt = new Map(rows.map((r) => [r.workshopSlug, r.completedAt]));
+  // Lo marcado a mano más los presenciales terminados a los que se inscribió (#70).
+  const [completedAt, tracks] = await Promise.all([completionsOf(profile.email), getWorkshopTracks()]);
   const completed = new Set(completedAt.keys());
 
   // Solo los workshops donde hizo algo, en el orden de las cajas de /workshops.

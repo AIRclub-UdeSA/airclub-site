@@ -50,6 +50,9 @@ export default async function AdminWorkshopsPage() {
       location: s.location,
       instructor: s.instructor,
       recordingUrl: s.recordingUrl,
+      registrationOpen: s.registrationOpen,
+      capacity: s.capacity,
+      registrations: s._count.registrations,
       status: s.status,
       media: s.media.map((m) => ({
         type: m.type,

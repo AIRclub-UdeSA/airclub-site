@@ -42,6 +42,10 @@ export type AdminWorkshopSession = {
   location: string | null;
   instructor: string | null;
   recordingUrl: string | null;
+  registrationOpen: boolean;
+  capacity: number | null;
+  /** Cuántos se inscribieron (#70). La lista está en /admin/comunidad. */
+  registrations: number;
   status: Status;
   media: MediaItem[];
   slides: SlideItem[];
@@ -153,11 +157,19 @@ export function WorkshopsManager({
               </section>
 
               <section>
-                <h3 className="font-mono text-xs uppercase tracking-wide text-text3">Talleres presenciales que ya pasaron</h3>
+                <h3 className="font-mono text-xs uppercase tracking-wide text-text3">Talleres presenciales</h3>
                 <ul className="mt-2">
                   {t.sessions.map((s, j) => (
                     <li key={s.id} className={ROW}>
-                      <span className="min-w-0 flex-1 text-sm text-text">{s.title}</span>
+                      <span className="min-w-0 flex-1 text-sm text-text">
+                        {s.title}
+                        {(s.registrationOpen || s.registrations > 0) && (
+                          <span className="ml-2 font-mono text-xs text-text3">
+                            {s.registrations}
+                            {s.capacity === null ? "" : `/${s.capacity}`} inscripto{s.registrations === 1 && s.capacity === null ? "" : "s"}
+                          </span>
+                        )}
+                      </span>
                       <StatusPill status={s.status} />
                       <span className="flex items-center gap-1">
                         <MoveButtons disabled={busy} first={j === 0} last={j === t.sessions.length - 1} onMove={(d) => move("session", s.id, d)} />

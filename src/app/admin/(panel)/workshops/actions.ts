@@ -149,6 +149,8 @@ function sessionData(formData: FormData) {
     location: optStr(formData, "location"),
     instructor: optStr(formData, "instructor"),
     recordingUrl: optStr(formData, "recordingUrl"),
+    registrationOpen: formData.get("registrationOpen") === "on",
+    capacity: optStr(formData, "capacity") === null ? null : Number(str(formData, "capacity")),
     status: status(formData),
   };
 }
@@ -190,6 +192,10 @@ function validateSession(d: ReturnType<typeof sessionData>, media: ReturnType<ty
   if (!d.title) return "El título es obligatorio.";
   if (!d.summary) return "El resumen es obligatorio.";
   if (d.startsAt && d.endsAt && d.endsAt < d.startsAt) return "La hora de fin no puede ser anterior a la de inicio.";
+  if (d.registrationOpen && !d.startsAt) return "Para abrir la inscripción, el taller necesita fecha.";
+  if (d.capacity !== null && (!Number.isInteger(d.capacity) || d.capacity < 1)) {
+    return "El cupo tiene que ser un número entero mayor a 0, o quedar vacío (sin límite).";
+  }
   if (media.some((m) => m.type === "VIDEO" && !m.poster)) return "Cada video necesita un poster (la miniatura).";
   // Los archivos elegidos se suben antes de guardar: si llega un marcador sin reemplazar, algo falló en el cliente.
   if (media.some((m) => isPendingUpload(m.src) || isPendingUpload(m.poster ?? ""))) {

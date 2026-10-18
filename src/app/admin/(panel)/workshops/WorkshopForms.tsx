@@ -442,8 +442,8 @@ export function SessionForm({
         </label>
         <div className="flex flex-wrap gap-3">
           <label className={labelClass}>
-            Lugar
-            <input type="text" name="location" defaultValue={item?.location ?? ""} className={inputClass} />
+            Aula
+            <input type="text" name="location" placeholder="Aula 203, Campus Victoria" defaultValue={item?.location ?? ""} className={inputClass} />
           </label>
           <label className={labelClass}>
             A cargo de
@@ -476,6 +476,23 @@ export function SessionForm({
           Etiqueta de fecha (opcional: reemplaza a la fecha en el sitio)
           <input type="text" name="dateLabel" defaultValue={item?.dateLabel ?? ""} className={inputClass} />
         </label>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
+        <legend className={legendClass}>Inscripción (antes del taller)</legend>
+        <label className="flex items-center gap-2 text-sm text-text2">
+          <input type="checkbox" name="registrationOpen" defaultChecked={item?.registrationOpen ?? false} />
+          Inscripción propia del sitio
+        </label>
+        <label className={`${labelClass} max-w-[16rem]`}>
+          Cupo
+          <input type="number" name="capacity" min={1} step={1} placeholder="Sin límite" defaultValue={item?.capacity ?? ""} className={inputClass} />
+        </label>
+        <p className={hintClass}>
+          Con fecha futura, el taller aparece en &ldquo;Próximos talleres&rdquo; de /workshops y en /eventos; con la inscripción abierta,
+          con el botón &ldquo;Inscribirme&rdquo;. Cuando termina, a quien se inscribió le aparece hecho solo, y el taller pasa a los ya
+          hechos, donde se le suman fotos y diapositivas. Los inscriptos se ven en /admin/comunidad.
+        </p>
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">

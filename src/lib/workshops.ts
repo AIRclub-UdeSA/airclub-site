@@ -6,6 +6,7 @@ import {
   type WorkshopLevel,
 } from "../../prisma/seed-data/workshops";
 import { getPastEvents, getUpcomingEvents, type EventItem } from "@/lib/events";
+import { isUpcoming } from "@/lib/dates";
 import { talkCover } from "@/lib/talk-format";
 import { trackHref, workshopHref } from "@/lib/workshop-href";
 import type { TalkMedia, TalkSlide } from "@/lib/talks";
@@ -49,8 +50,15 @@ export type AsyncWorkshop = {
   durationLabel: string;
 };
 
-/** Un taller presencial que viene es un evento de categoría "workshop": se carga en prisma/seed-data/events.ts. */
-export type InPersonWorkshop = EventItem;
+/**
+ * Un taller presencial que viene. Puede ser un taller del panel con fecha futura (#70), con inscripción propia del sitio,
+ * o un evento de categoría "workshop" de prisma/seed-data/events.ts, con su link externo.
+ */
+export type InPersonWorkshop = EventItem & {
+  source: "panel" | "event";
+  /** Solo los del panel: inscripción propia (cerrada si no se abrió desde el panel) y cupo. */
+  registration?: { open: boolean; capacity?: number };
+};
 
 /**
  * Taller presencial que ya pasó, con el material de una charla de /talks (fotos, diapositivas, grabación y links). Viene
@@ -78,6 +86,11 @@ export type PastWorkshop = {
   links: { label: string; url: string }[];
   url?: string;
   urlLabel?: string;
+  /** De dónde sale: un taller del panel o un evento de categoría "workshop". */
+  source: "panel" | "event";
+  /** Solo los del panel (#70). */
+  registrationOpen?: boolean;
+  capacity?: number;
 };
 
 /** Un workshop con sus talleres: la caja de /workshops y la página /workshops/<key>. */
@@ -115,11 +128,13 @@ export { trackHref, workshopHref };
 
 /**
  * Adónde lleva la caja de un workshop. Si tiene un solo taller y no tiene ruta de guías, directo a ese taller: una página
- * intermedia con una sola tarjeta obliga a un segundo clic para nada.
+ * intermedia con una sola tarjeta obliga a un segundo clic para nada. Los próximos talleres no cuentan: se muestran solo en
+ * la página general (pedido del dueño), así que un workshop que todavía no tiene más que fechas próximas lleva ahí.
  */
-export function trackEntryHref(t: Pick<WorkshopTrack, "key" | "guides" | "past" | "upcoming">): string {
-  const single = t.guides.length === 0 && t.upcoming.length === 0 && t.past.length === 1;
-  return single ? workshopHref(t.past[0]) : trackHref(t.key);
+export function trackEntryHref(t: Pick<WorkshopTrack, "key" | "guides" | "past">): string {
+  if (t.guides.length === 0 && t.past.length === 0) return "/workshops#proximos";
+  if (t.guides.length === 0 && t.past.length === 1) return workshopHref(t.past[0]);
+  return trackHref(t.key);
 }
 
 function formatMinutes([min, max]: [number, number]): string {
@@ -134,7 +149,8 @@ function formatMinutes([min, max]: [number, number]): string {
 type WorkshopContent = {
   tracks: Omit<WorkshopTrack, "guides" | "past" | "upcoming">[];
   guides: AsyncWorkshop[];
-  past: PastWorkshop[];
+  /** Los talleres presenciales del panel, próximos o ya hechos: se separan por fecha al armar los workshops. */
+  sessions: PastWorkshop[];
 };
 
 const LEVELS = { INICIAL: "inicial", INTERMEDIO: "intermedio", AVANZADO: "avanzado" } as const;
@@ -152,7 +168,12 @@ export function fetchWorkshopRows({ includeDrafts = false } = {}) {
       sessions: {
         where,
         orderBy: byOrder,
-        include: { media: { orderBy: byOrder }, slides: { orderBy: byOrder }, links: { orderBy: byOrder } },
+        include: {
+          media: { orderBy: byOrder },
+          slides: { orderBy: byOrder },
+          links: { orderBy: byOrder },
+          _count: { select: { registrations: true } },
+        },
       },
     },
   });
@@ -202,7 +223,7 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
         durationLabel: formatMinutes([g.minutesMin, g.minutesMax]),
       })),
     ),
-    past: rows.flatMap((t) =>
+    sessions: rows.flatMap((t) =>
       t.sessions.map((s) => {
         const media = toSessionMedia(s.media);
         return {
@@ -221,6 +242,9 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
           slides: s.slides.map(({ title, embedUrl, openUrl }) => ({ title, embedUrl, openUrl })),
           recordingUrl: s.recordingUrl ?? undefined,
           links: s.links.map(({ label, url }) => ({ label, url })),
+          source: "panel" as const,
+          registrationOpen: s.registrationOpen,
+          capacity: s.capacity ?? undefined,
         };
       }),
     ),
@@ -231,7 +255,7 @@ function fromSeed(): WorkshopContent {
   return {
     tracks: seedTracks,
     guides: seedAsyncWorkshops.map((w) => ({ ...w, content: w.content ?? [], durationLabel: formatMinutes(w.minutes) })),
-    past: seedPastWorkshops.map((w) => {
+    sessions: seedPastWorkshops.map((w) => {
       const media = w.media ?? [];
       return {
         ...w,
@@ -241,6 +265,7 @@ function fromSeed(): WorkshopContent {
         media,
         slides: w.slides ?? [],
         links: w.links ?? [],
+        source: "panel" as const,
       };
     }),
   };
@@ -275,8 +300,34 @@ function fromEvent(e: EventItem, track: TrackKey): PastWorkshop {
     links: [],
     url: e.externalUrl,
     urlLabel: e.ctaLabel,
+    source: "event",
   };
 }
+
+/** Un taller del panel con fecha futura, con la forma de un evento para el panel de "Próximos talleres" (#70). */
+function toUpcoming(w: PastWorkshop): InPersonWorkshop {
+  return {
+    slug: w.slug,
+    title: w.title,
+    description: w.summary,
+    category: "workshop",
+    location: w.location,
+    startsAt: new Date(w.startsAt!),
+    endsAt: w.endsAt ? new Date(w.endsAt) : undefined,
+    dateLabel: w.dateLabel,
+    instructor: w.instructor,
+    capacity: w.capacity,
+    rsvpEnabled: false,
+    featuredForCountdown: false,
+    track: w.track,
+    source: "panel",
+    registration: { open: Boolean(w.registrationOpen), capacity: w.capacity },
+  };
+}
+
+/** Un taller del panel todavía no terminó: tiene fecha y no pasó. Sin fecha, cuenta como ya hecho (Linux antes de cargarla). */
+const isUpcomingSession = (w: PastWorkshop) =>
+  Boolean(w.startsAt) && isUpcoming(new Date(w.startsAt!), w.endsAt ? new Date(w.endsAt) : undefined);
 
 // Sin fecha va al final: es lo que todavía falta completar.
 const byDateDesc = (a: PastWorkshop, b: PastWorkshop) =>
@@ -300,24 +351,44 @@ export function trackFacts(t: WorkshopTrack): string[] {
   ].filter((f): f is string => Boolean(f));
 }
 
-export async function getUpcomingWorkshops(): Promise<InPersonWorkshop[]> {
-  return (await getUpcomingEvents()).filter((e) => e.category === "workshop");
+/** Los próximos talleres del panel con la inscripción abierta, para el diálogo de inscripción (#70). */
+export function registrableOf(upcoming: InPersonWorkshop[]) {
+  return upcoming
+    .filter((w) => w.registration?.open)
+    .map((w) => ({
+      slug: w.slug,
+      title: w.title,
+      startsAt: w.startsAt.toISOString(),
+      endsAt: w.endsAt?.toISOString(),
+      description: w.description,
+      location: w.location,
+    }));
+}
+
+/** Los próximos talleres de todos los workshops, el más cercano primero. */
+export function upcomingOf(tracks: WorkshopTrack[]): InPersonWorkshop[] {
+  return tracks.flatMap((t) => t.upcoming).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 
 /**
- * Los workshops con sus talleres, en el orden de las cajas, solo los que tienen algo. Los talleres presenciales que ya
- * pasaron son los cargados en el workshop más los eventos de categoría "workshop" que ya pasaron. "Otros talleres" va al
- * final y solo si hay talleres-evento con un `track` que no es de ningún workshop.
+ * Los workshops con sus talleres, en el orden de las cajas, solo los que tienen algo. Un taller del panel con fecha
+ * futura es un próximo taller; cuando termina, pasa a los que ya se hicieron (#70). A esos se suman los eventos de
+ * categoría "workshop", próximos o pasados. "Otros talleres" va al final y solo si hay talleres-evento con un `track` que
+ * no es de ningún workshop.
  */
 export async function getWorkshopTracks(): Promise<WorkshopTrack[]> {
-  const [content, pastEvents, upcoming] = await Promise.all([getWorkshopContent(), getPastEvents(), getUpcomingWorkshops()]);
+  const [content, pastEvents, upcomingEvents] = await Promise.all([getWorkshopContent(), getPastEvents(), getUpcomingEvents()]);
   const known = new Set(content.tracks.map((t) => t.key));
   const trackOf = (e: EventItem) => (e.track && known.has(e.track) ? e.track : OTHERS.key);
 
   const past = [
     ...pastEvents.filter((e) => e.category === "workshop").map((e) => fromEvent(e, trackOf(e))),
-    ...content.past,
+    ...content.sessions.filter((w) => !isUpcomingSession(w)),
   ].sort(byDateDesc);
+  const upcoming = [
+    ...upcomingEvents.filter((e) => e.category === "workshop").map((e): InPersonWorkshop => ({ ...e, source: "event" })),
+    ...content.sessions.filter(isUpcomingSession).map(toUpcoming),
+  ].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 
   return [...content.tracks, OTHERS]
     .map((t) => ({
