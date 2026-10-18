@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { careerText, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
+import { AFFILIATION_LABELS } from "@/lib/perfil/completeness";
 import { completedWorkshopsOf } from "@/lib/admin/account-workshops";
 import { DeleteAccountButton } from "../DeleteAccountButton";
 
@@ -30,6 +31,9 @@ export default async function AdminCuentaPage({ params }: PageProps<"/admin/cuen
   ]);
 
   const rows: [string, string][] = [
+    ["Nombre", profile.fullName ?? "—"],
+    ["Afiliación", profile.affiliation ? AFFILIATION_LABELS[profile.affiliation] : "—"],
+    ...(profile.affiliation && profile.affiliation !== "UDESA" ? ([["Institución", profile.institution ?? "—"]] as [string, string][]) : []),
     ["Rol", ROLE_LABELS[profile.role]],
     ...(profile.role === "OTHER" ? ([["Detalle del rol", profile.otherRole ?? "—"]] as [string, string][]) : []),
     ...(profile.role === "STUDENT"
@@ -39,6 +43,7 @@ export default async function AdminCuentaPage({ params }: PageProps<"/admin/cuen
           ["Estado", profile.studentStatus ? STATUS_LABELS[profile.studentStatus] : "—"],
         ] as [string, string][])
       : []),
+    ["Aviso de privacidad", profile.consentAcceptedAt ? formatDate(profile.consentAcceptedAt) : "sin aceptar"],
     ["Alta", formatDate(profile.createdAt)],
   ];
 

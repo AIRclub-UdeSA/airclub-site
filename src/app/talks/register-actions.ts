@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Prisma, prisma } from "@/lib/prisma";
 import { isUpcoming } from "@/lib/dates";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
+import { isProfileComplete } from "@/lib/perfil/completeness";
 
 /**
  * `closed`: la charla no existe, es un borrador, no tiene inscripción propia o ya pasó.
@@ -16,7 +17,8 @@ export type CancelResult = { status: "cancelled" | "closed" };
 const MAX_ATTEMPTS = 3;
 
 /**
- * Pide sesión y perfil completo. No usa requireUserProfile() a propósito: esa redirige a
+ * Pide sesión y perfil completo (nombre, afiliación y consentimiento, ver isProfileComplete): las
+ * cuentas anteriores a esos campos los completan al inscribirse. No usa requireUserProfile() a propósito: esa redirige a
  * /perfil/completar sin el parámetro `next`, así que si falta el perfil se perdería la charla
  * puntual al volver. Acá sí se arrastra (ver src/components/talks/TalksHub.tsx, que abre este
  * mismo diálogo al volver con "?inscribir=<slug>").
@@ -25,8 +27,11 @@ async function requireRegistrantEmail(talkSlug: string): Promise<string> {
   const email = await getSessionEmail();
   if (!email) redirect("/");
 
-  const profile = await prisma.userProfile.findUnique({ where: { email }, select: { email: true } });
-  if (!profile) {
+  const profile = await prisma.userProfile.findUnique({
+    where: { email },
+    select: { fullName: true, affiliation: true, institution: true, consentAcceptedAt: true },
+  });
+  if (!profile || !isProfileComplete(profile)) {
     const nextTarget = `/talks?inscribir=${encodeURIComponent(talkSlug)}`;
     redirect(`/perfil/completar?next=${encodeURIComponent(nextTarget)}`);
   }

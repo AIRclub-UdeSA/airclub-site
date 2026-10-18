@@ -73,16 +73,27 @@ enum StudentStatus {
 // vez al loguearse por primera vez (ver requireUserProfile en src/lib/perfil/require-profile.ts)
 // y despues sirve para autocompletar la inscripcion a charlas (ver #50).
 model UserProfile {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  role          ProfileRole
-  otherRole     String? // detalle libre, solo si role = OTHER
-  careers       String[] // slugs de src/lib/perfil/careers.ts, solo si role = STUDENT
-  otherCareer   String? // detalle libre, solo si careers incluye el slug "otra"
-  startYear     Int? // ano de inicio de la carrera, solo si role = STUDENT
-  studentStatus StudentStatus? // solo si role = STUDENT
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                String              @id @default(cuid())
+  email             String              @unique
+  role              ProfileRole
+  otherRole         String? // detalle libre, solo si role = OTHER
+  careers           String[] // slugs de src/lib/perfil/careers.ts, solo si role = STUDENT
+  otherCareer       String? // detalle libre, solo si careers incluye el slug "otra"
+  startYear         Int? // ano de inicio de la carrera, solo si role = STUDENT
+  studentStatus     StudentStatus? // solo si role = STUDENT
+  fullName          String? // nombre y apellido; NULL en cuentas anteriores a #P2
+  affiliation       ProfileAffiliation? // de donde es la persona; NULL en cuentas anteriores
+  institution       String? // nombre de la institucion, solo si affiliation != UDESA
+  consentAcceptedAt DateTime? // cuando aceptó el aviso de /privacidad
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum ProfileAffiliation {
+  UDESA
+  OTHER_UNIVERSITY
+  WORK
+  INDEPENDENT
 }
 
 enum TalkMediaType {

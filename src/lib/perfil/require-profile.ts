@@ -9,6 +9,12 @@ export async function getSessionEmail(): Promise<string | null> {
   return session?.user?.email?.toLowerCase() ?? null;
 }
 
+/** Nombre de la cuenta de Google de la sesion, para prellenar el perfil. */
+export async function getSessionName(): Promise<string> {
+  const session = await auth();
+  return session?.user?.name?.trim() ?? "";
+}
+
 /**
  * Confirma que hay sesion (@udesa.edu.ar, ver src/auth.ts) y que esa cuenta ya completo su
  * perfil publico. Si no hay sesion, manda a "/" (ahi se loguea desde el Nav). Si hay sesion
