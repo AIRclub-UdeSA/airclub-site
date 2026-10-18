@@ -8,7 +8,7 @@ export type RemoveRegistrationState = { error: string | null };
 
 /**
  * Da de baja una inscripción a una charla. Solo ADMIN: un Editor con "comunidad" solo ve (#97). Deja el "antes"
- * en AuditLog (section "comunidad") y revalida /talks para que se libere el cupo en el sitio.
+ * en AuditLog (section "comunidad"), sin el email de la persona, y revalida /talks para que se libere el cupo en el sitio.
  * Idempotente: si ya no existe, no es un error.
  */
 export async function removeRegistrationAction(
@@ -40,7 +40,6 @@ export async function removeRegistrationAction(
             talkId: registration.talkId,
             talkSlug: registration.talk.slug,
             talkTitle: registration.talk.title,
-            email: registration.email,
             createdAt: registration.createdAt.toISOString(),
           },
         },
