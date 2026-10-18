@@ -5,6 +5,7 @@ import { events } from "./seed-data/events";
 import { robots } from "./seed-data/robots";
 import { collaborators, founders } from "./seed-data/team";
 import { talks } from "./seed-data/talks";
+import { asyncWorkshops, pastWorkshops, tracks } from "./seed-data/workshops";
 
 const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -114,8 +115,56 @@ async function main() {
     });
   }
 
+  // Los workshops se editan desde /admin/workshops: igual que las charlas, el seed solo crea lo que falta (por `key` o
+  // `slug`) y nunca pisa lo editado.
+  const trackIds = new Map<string, string>();
+  for (const [i, { key, title, label, summary, setupUrl, repoUrl }] of tracks.entries()) {
+    const row = await prisma.workshopTrack.upsert({
+      where: { key },
+      create: { key, title, label, summary, setupUrl, repoUrl, order: i },
+      update: {},
+    });
+    trackIds.set(key, row.id);
+  }
+  const trackId = (key: string) => {
+    const id = trackIds.get(key);
+    if (!id) throw new Error(`El workshop "${key}" no está en tracks (prisma/seed-data/workshops.ts).`);
+    return id;
+  };
+
+  for (const [i, { track, minutes, level, ...guide }] of asyncWorkshops.entries()) {
+    await prisma.workshopGuide.upsert({
+      where: { slug: guide.slug },
+      create: {
+        ...guide,
+        trackId: trackId(track),
+        minutesMin: minutes[0],
+        minutesMax: minutes[1],
+        level: level.toUpperCase() as "INICIAL" | "INTERMEDIO" | "AVANZADO",
+        order: i,
+      },
+      update: {},
+    });
+  }
+
+  for (const [i, { track, media, slides, links, ...session }] of pastWorkshops.entries()) {
+    await prisma.workshopSession.upsert({
+      where: { slug: session.slug },
+      create: {
+        ...session,
+        trackId: trackId(track),
+        order: i,
+        media: { create: (media ?? []).map((m, j) => toTalkMediaRow(m, j)) },
+        slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
+        links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
+      },
+      update: {},
+    });
+  }
+
   console.log(
-    `Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas, ${talks.length} charlas.`,
+    `Seed OK: ${events.length} eventos, ${robots.length} robots, ${people.length} personas, ${talks.length} charlas, ` +
+      `${tracks.length} workshops (${asyncWorkshops.length} guías, ${pastWorkshops.length} talleres presenciales).`,
   );
 }
 

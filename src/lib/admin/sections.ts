@@ -10,6 +10,7 @@
 export const ADMIN_SECTIONS = [
   { id: "talks", label: "Charlas", access: "edit" },
   { id: "equipo", label: "Equipo", access: "edit" },
+  { id: "workshops", label: "Workshops", access: "edit" },
   { id: "comunidad", label: "Comunidad", access: "view" },
 ] as const;
 

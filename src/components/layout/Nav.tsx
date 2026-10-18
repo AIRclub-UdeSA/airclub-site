@@ -15,6 +15,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/talks", label: "AIR Talks" },
+  { href: "/workshops", label: "Workshops" },
   { href: "/eventos", label: "Eventos" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
@@ -107,8 +108,10 @@ export function Nav() {
           <span className="font-display text-[.92rem] font-extrabold tracking-tight text-text">AIR Club</span>
         </Link>
 
+        {/* La barra completa recién desde lg: con seis enlaces, entre 768 y ~840 px "AIR Talks" y "AIR Club" se partían en
+            dos líneas. Debajo de lg va la hamburguesa. */}
         <NavHoverHighlight>
-          <div className="hidden items-center gap-1 md:flex">
+          <div className="hidden items-center gap-1 lg:flex">
             {NAV_LINKS.map((link) => (
               <NavItem key={link.href} href={link.href} active={isActive(pathname, link.href)}>
                 {link.label}
@@ -134,7 +137,7 @@ export function Nav() {
             aria-label="Abrir menú"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex flex-col justify-center items-center gap-[4px] h-8 w-8 rounded-full border border-border bg-card p-1 md:hidden text-text"
+            className="flex flex-col justify-center items-center gap-[4px] h-8 w-8 rounded-full border border-border bg-card p-1 lg:hidden text-text"
           >
             <span className={cn("h-[1.5px] w-4 bg-current transition-transform duration-200", open && "translate-y-[5.5px] rotate-45")} />
             <span className={cn("h-[1.5px] w-4 bg-current transition-opacity duration-200", open && "opacity-0")} />
@@ -143,7 +146,7 @@ export function Nav() {
         </div>
 
         {open && (
-          <div className="absolute inset-x-4 top-[calc(100%+8px)] flex flex-col gap-1 rounded-3xl border border-border bg-bg/95 p-4 shadow-xl backdrop-blur-2xl md:hidden">
+          <div className="absolute inset-x-4 top-[calc(100%+8px)] flex flex-col gap-1 rounded-3xl border border-border bg-bg/95 p-4 shadow-xl backdrop-blur-2xl lg:hidden">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -204,6 +207,13 @@ function AccountMenu({ className, variant = "dropdown" }: { className?: string; 
         className="block rounded-xl px-3 py-2 font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
       >
         Mi perfil
+      </Link>
+      <Link
+        href="/perfil/aprendizaje"
+        onClick={() => setOpen(false)}
+        className="block rounded-xl px-3 py-2 font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text"
+      >
+        Mi aprendizaje
       </Link>
       <SignOutButton className="block w-full rounded-xl px-3 py-2 text-left font-body text-[.85rem] font-medium text-text2 transition-colors hover:bg-crimson/5 hover:text-crimson-text">
         Cerrar sesión

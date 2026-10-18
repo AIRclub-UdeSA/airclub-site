@@ -17,6 +17,12 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     section: "equipo",
   },
   {
+    href: "/admin/workshops",
+    title: "Workshops",
+    description: "Sumar workshops a /workshops, con sus guías y sus talleres presenciales (fotos, diapositivas y grabación).",
+    section: "workshops",
+  },
+  {
     href: "/admin/usuarios",
     title: "Usuarios",
     description: "Quién puede entrar al panel y qué secciones puede editar cada persona.",
