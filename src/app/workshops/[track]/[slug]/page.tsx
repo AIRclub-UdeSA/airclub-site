@@ -18,6 +18,7 @@ import { CompletionPanel } from "@/components/workshops/CompletionPanel";
 import { SetupBlock } from "@/components/workshops/GuideRoute";
 import { LEVEL_LABEL, LevelNode } from "@/components/workshops/level";
 import { SessionMaterial } from "@/components/workshops/SessionMaterial";
+import { DetailHero } from "@/components/workshops/DetailHero";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 const CONTAINER = "mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12";
@@ -56,18 +57,7 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[tr
 
   return (
     <WorkshopProgressProvider>
-      <article className="pb-16 pt-28 md:pb-24 md:pt-32">
-        <div className={CONTAINER}>
-          <Link
-            href={backHref(detail)}
-            // Por encima del número en Anton: con `leading-[0.8]` su caja sube hasta acá y se comía el clic.
-            className="relative z-10 inline-flex items-center gap-2 font-mono text-[.74rem] uppercase tracking-[.14em] text-text2 transition-colors hover:text-crimson-text"
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
-            {skipsTrackPage(detail) ? "Todos los workshops" : detail.track.title}
-          </Link>
-        </div>
-
+      <article>
         {detail.kind === "guide" ? <GuideDetail detail={detail} /> : <PastDetail detail={detail} />}
       </article>
     </WorkshopProgressProvider>
@@ -77,6 +67,10 @@ export default async function WorkshopPage({ params }: PageProps<"/workshops/[tr
 // Si el workshop tiene un solo taller, su caja lleva directo acá (trackEntryHref): "volver" va a esa caja y no a la página
 // intermedia del workshop, que se salteó al entrar.
 const skipsTrackPage = (detail: WorkshopDetail) => trackEntryHref(detail.track) !== trackHref(detail.track.key);
+
+function backLink(detail: WorkshopDetail) {
+  return { href: backHref(detail), label: skipsTrackPage(detail) ? "Todos los workshops" : detail.track.title };
+}
 
 function backHref(detail: WorkshopDetail) {
   if (skipsTrackPage(detail)) return `/workshops#workshop-${detail.track.key}`;
@@ -91,20 +85,17 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
 
   return (
     <>
-      <header className={`${CONTAINER} mt-10 md:mt-14`}>
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-          <span className="font-logo text-[clamp(6rem,16vw,14rem)] leading-[0.8] text-crimson-text" aria-hidden="true">
-            {w.week}
-          </span>
-          <h1 className="min-w-0 pb-2 font-display text-[clamp(1.6rem,5.4vw,4.4rem)] font-black uppercase leading-[0.98] tracking-tight text-text [overflow-wrap:anywhere]">
-            <span className="sr-only">Semana {w.week}: </span>
-            {w.title}
-          </h1>
-        </div>
-        <p className="mt-8 max-w-[62ch] text-[1.15rem] leading-[1.7] text-text2">{w.summary}</p>
-      </header>
+      <DetailHero
+        number={w.week}
+        srLabel={`Semana ${w.week}: `}
+        title={w.title}
+        text={w.summary}
+        back={backLink(detail)}
+        tone="dark"
+        kicker={`Guía ${w.week} de ${String(track.guides.length).padStart(2, "0")}`}
+      />
 
-      <div className={`${CONTAINER} mt-12 grid grid-cols-1 gap-12 md:mt-16 lg:grid-cols-12 lg:gap-4`}>
+      <div className={`${CONTAINER} grid grid-cols-1 gap-12 py-16 md:py-24 lg:grid-cols-12 lg:gap-4`}>
         <div className="min-w-0 lg:col-span-7">
           <h2 className={LABEL}>Al terminar</h2>
           <p className="mt-3 max-w-[40ch] text-balance font-display text-[clamp(1.35rem,2.4vw,2rem)] font-bold leading-[1.2] tracking-tight text-text">
@@ -149,7 +140,7 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
+        <aside className="flex min-w-0 flex-col gap-10 lg:sticky lg:top-28 lg:col-span-4 lg:col-start-9 lg:self-start">
           <CompletionPanel
             slug={w.slug}
             href={workshopHref(w)}
@@ -203,7 +194,7 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
       </div>
 
       {(prev || next) && (
-        <nav aria-label="Otros talleres del workshop" className={`${CONTAINER} mt-16 md:mt-24`}>
+        <nav aria-label="Otros talleres del workshop" className={`${CONTAINER} pb-16 md:pb-24`}>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {prev ? <Neighbor guide={prev} dir="prev" /> : <span className="hidden sm:block" />}
             {next && <Neighbor guide={next} dir="next" />}
@@ -264,24 +255,21 @@ function PastDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "past"
 
   return (
     <>
-      <header className={`${CONTAINER} mt-10 md:mt-14`}>
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
-          <span className="font-logo text-[clamp(6rem,16vw,14rem)] leading-[0.8] text-crimson-text" aria-hidden="true">
-            {number}
-          </span>
-          <h1 className="min-w-0 pb-2 font-display text-[clamp(1.6rem,5.4vw,4.4rem)] font-black uppercase leading-[0.98] tracking-tight text-text [overflow-wrap:anywhere]">
-            <span className="sr-only">Taller {number}: </span>
-            {w.title}
-          </h1>
-        </div>
-      </header>
+      <DetailHero
+        number={number}
+        srLabel={`Taller ${number}: `}
+        title={w.title}
+        back={backLink(detail)}
+        tone="dark"
+        kicker={`Taller ${number} de ${String(track.past.length).padStart(2, "0")}`}
+      />
 
-      <div className={`${CONTAINER} mt-12 grid grid-cols-1 gap-12 md:mt-16 lg:grid-cols-12 lg:gap-4`}>
+      <div className={`${CONTAINER} grid grid-cols-1 gap-12 py-16 md:py-24 lg:grid-cols-12 lg:gap-4`}>
         <div className="min-w-0 lg:col-span-7">
           <SessionMaterial workshop={w} />
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-10 lg:col-span-4 lg:col-start-9">
+        <aside className="flex min-w-0 flex-col gap-10 lg:sticky lg:top-28 lg:col-span-4 lg:col-start-9 lg:self-start">
           <CompletionPanel slug={w.slug} href={workshopHref(w)} question="¿Viniste?" />
 
           <dl className="grid grid-cols-1 border-t border-text">
