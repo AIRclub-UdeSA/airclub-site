@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
-import type { AsyncWorkshop, WorkshopLevel } from "@/lib/workshops";
+import type { AsyncWorkshop } from "@/lib/workshops";
 import { workshopHref } from "@/lib/workshop-href";
 import { routeStates, type StepState } from "@/lib/workshop-progress";
 import { useWorkshopProgress } from "./WorkshopProgress";
@@ -17,29 +17,23 @@ const STRETCH = "after:absolute after:inset-0 after:content-['']";
  * sesión, la 01 es la que va en carmesí ("Empezá acá"). Mientras carga, ninguna: si no, se veía la 01 en carmesí y
  * después saltaba al progreso real.
  */
-export function RouteSteps({ guides }: { guides: AsyncWorkshop[] }) {
+export function RouteSteps({ guides, before }: { guides: AsyncWorkshop[]; before?: React.ReactNode }) {
   const { status, completed } = useWorkshopProgress();
   const slugs = guides.map((g) => g.slug);
   const states = status === "loading" ? new Map<string, StepState>() : routeStates(slugs, completed);
   const started = slugs.some((s) => completed.has(s));
 
   return (
-    <div className="mt-12 md:mt-16">
-      {/* La leyenda va pegada a la ruta: sus cuadrados quedan en la misma columna que los nodos que explica. */}
-      <dl className="flex flex-wrap gap-x-6 gap-y-3 font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
-        {(Object.keys(LEVEL_LABEL) as WorkshopLevel[]).map((level) => (
-          <div key={level} className="flex items-center gap-2">
-            <dt>
-              <LevelNode level={level} />
-            </dt>
-            <dd>{LEVEL_LABEL[level]}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <ol className="relative mt-6 grid min-w-0 grid-cols-1 gap-3">
+    <div>
+      <ol className="relative grid min-w-0 grid-cols-1 gap-3">
         {/* La ruta: una línea de 1px que une los nodos de todas las semanas. */}
         <span className="absolute bottom-8 left-[6px] top-8 w-px bg-text/30" aria-hidden="true" />
+        {before && (
+          <li className="relative grid grid-cols-[14px_minmax(0,1fr)] items-start gap-4 sm:gap-6">
+            <span className="relative mt-6 block size-3.5 shrink-0 border border-dashed border-text/50 bg-bg2" aria-hidden="true" />
+            {before}
+          </li>
+        )}
         {guides.map((w) => (
           <RouteStop key={w.slug} workshop={w} state={states.get(w.slug) ?? "todo"} started={started} />
         ))}
@@ -61,13 +55,15 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
 
   return (
     <li id={`semana-${w.week}`} className="relative grid scroll-mt-28 grid-cols-[14px_minmax(0,1fr)] items-start gap-4 sm:gap-6">
-      <LevelNode level={w.level} done={done} className="relative mt-9 sm:mt-12" />
+      <LevelNode level={w.level} done={done} className={`relative ${next ? "mt-9 sm:mt-12" : "mt-9 lg:mt-10"}`} />
 
       <article
-        className={`group relative grid min-w-0 grid-cols-1 gap-x-8 gap-y-5 p-6 transition-colors sm:grid-cols-[auto_minmax(0,1fr)] sm:p-8 lg:min-h-[13rem] lg:grid-cols-[auto_minmax(0,1fr)_17rem] lg:p-10 ${CARD[state]}`}
+        className={`group relative grid min-w-0 grid-cols-1 gap-x-8 gap-y-5 p-6 transition-colors sm:grid-cols-[auto_minmax(0,1fr)] sm:p-8 lg:grid-cols-[auto_minmax(0,1fr)_13rem] ${
+          next ? "lg:min-h-[12rem] lg:p-8" : "lg:items-center lg:p-6"
+        } ${CARD[state]}`}
       >
         <span
-          className={`font-logo text-[clamp(3.6rem,7vw,6rem)] leading-[0.8] ${done ? "text-text/25" : ""}`}
+          className={`font-logo leading-[0.8] ${next ? "text-[clamp(3.6rem,7vw,6rem)]" : "text-[clamp(3rem,5vw,4rem)] lg:min-w-[4.5rem]"} ${done ? "text-text/25" : ""}`}
           aria-hidden="true"
         >
           {w.week}
@@ -76,7 +72,7 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
             <h3
-              className={`font-display text-[clamp(1.4rem,2.4vw,2.1rem)] font-bold leading-[1.1] tracking-tight transition-colors ${
+              className={`font-display ${next ? "text-[clamp(1.4rem,2.4vw,2.1rem)]" : "text-[clamp(1.25rem,1.8vw,1.5rem)]"} font-bold leading-[1.1] tracking-tight transition-colors ${
                 state === "todo" ? "group-hover:text-crimson-text" : ""
               }`}
             >
@@ -98,14 +94,14 @@ function RouteStop({ workshop: w, state, started }: { workshop: AsyncWorkshop; s
             )}
           </div>
 
-          <p className={`mt-3 max-w-[62ch] text-[1rem] leading-[1.65] ${next ? "text-white/85" : done ? "text-text3" : "text-text2"}`}>
+          <p className={`${next ? "mt-3" : "mt-2"} max-w-[62ch] text-[1rem] leading-[1.65] ${next ? "text-white/85" : done ? "text-text3" : "text-text2"}`}>
             {w.outcome}
           </p>
         </div>
 
         {/* Datos: debajo del texto en celular y tablet, en su propia columna en escritorio. */}
         <div
-          className={`flex min-w-0 flex-col gap-4 sm:col-start-2 lg:col-start-3 lg:row-start-1 lg:border-l lg:pl-8 ${
+          className={`flex min-w-0 flex-col gap-4 sm:col-start-2 lg:col-start-3 lg:row-start-1 lg:border-l lg:pl-6 ${
             next ? "border-white/35" : done ? "border-text/15" : "border-text/20"
           }`}
         >

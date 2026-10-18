@@ -20,3 +20,19 @@ export function LevelNode({ level, done = false, className = "" }: { level: Work
         : "border-crimson-text bg-bg";
   return <span className={`block size-3.5 shrink-0 border ${fill} ${className}`} aria-hidden="true" />;
 }
+
+/** Qué significa el relleno de los nodos de la ruta. Va junto al progreso, fuera de la ruta. */
+export function LevelLegend() {
+  return (
+    <dl className="flex flex-wrap gap-x-6 gap-y-3 font-mono text-[.7rem] uppercase tracking-[.16em] text-text3">
+      {(Object.keys(LEVEL_LABEL) as WorkshopLevel[]).map((level) => (
+        <div key={level} className="flex items-center gap-2">
+          <dt>
+            <LevelNode level={level} />
+          </dt>
+          <dd>{LEVEL_LABEL[level]}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

@@ -2,6 +2,8 @@ import { ArrowUpRight } from "lucide-react";
 import type { AsyncWorkshop } from "@/lib/workshops";
 import { RouteProgress } from "./RouteProgress";
 import { RouteSteps } from "./RouteSteps";
+import { SectionLayout } from "./SectionLayout";
+import { LevelLegend } from "./level";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
@@ -28,42 +30,43 @@ export function GuideRoute({
   const first = guides[0];
 
   return (
-    <div id="asincronicos" className="scroll-mt-24">
-      <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-4">
-        <div className="min-w-0 lg:col-span-5">
-          <p className="max-w-[52ch] text-[1.02rem] leading-[1.7] text-text2">
-            Cada guía tiene su código en GitHub y deja andando algo que la siguiente da por hecho: hacelas en orden. En
-            total, {totalHours}.
-          </p>
-
-          {setupUrl && (
-            <a
-              href={setupUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
-            >
-              Guía de instalación del simulador
-              <ArrowUpRight size={13} aria-hidden="true" />
-              {NEW_TAB_HINT}
-            </a>
-          )}
-
+    <SectionLayout
+      title="Guías a tu ritmo"
+      intro={
+        <>
+          Hacelas en orden: cada guía deja andando algo que la siguiente da por hecho. En total, {totalHours} de práctica.
+        </>
+      }
+      aside={
+        <div className="flex flex-col gap-6">
           <RouteProgress guides={guides} back={back} />
+          <LevelLegend />
         </div>
-
-        {first?.ros2Package && (
-          <SetupBlock
-            ros2Package={first.ros2Package}
-            caption={`Antes de la ${first.week}`}
-            repoUrl={repoUrl}
-            className="lg:col-span-6 lg:col-start-7"
-          />
-        )}
-      </div>
-
-      <RouteSteps guides={guides} />
-    </div>
+      }
+    >
+      <RouteSteps
+        guides={guides}
+        before={
+          first?.ros2Package ? (
+            <div className="min-w-0">
+              <SetupBlock ros2Package={first.ros2Package} caption={`Antes de la ${first.week}`} repoUrl={repoUrl} />
+              {setupUrl && (
+                <a
+                  href={setupUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 font-mono text-[.74rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
+                >
+                  Guía de instalación del simulador
+                  <ArrowUpRight size={13} aria-hidden="true" />
+                  {NEW_TAB_HINT}
+                </a>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
+    </SectionLayout>
   );
 }
 
