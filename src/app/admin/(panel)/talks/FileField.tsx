@@ -6,6 +6,12 @@ import { isPendingUpload, uploadError } from "@/lib/upload-rules";
 
 const THUMB = "size-16 shrink-0 rounded-[var(--r-sm)] border border-border object-cover";
 
+// Un link (http/https) o un archivo propio del sitio (`/talks/…`, `/workshops/…`), como los que carga el seed: no puede
+// ser `type="url"`, que rechaza las rutas relativas y no deja guardar una charla o un taller sembrado. Mismo criterio que
+// isSiteImageUrl (una ruta empieza con una sola barra). Las barras van escapadas: el navegador compila el patrón con el
+// flag `v`, donde una `/` sin escapar dentro de `[...]` lo invalida.
+const URL_OR_SITE_PATH = String.raw`(\/[^\/].*|https?:\/\/.+)`;
+
 /** Miniatura de lo que se va a publicar. Si no carga (ej. un link de YouTube), queda el recuadro vacío. */
 function Thumb({ kind, src }: { kind: "image" | "video"; src: string }) {
   const [broken, setBroken] = useState(false);
@@ -88,7 +94,10 @@ export function FileField({
         ) : (
           <>
             <input
-              type="url"
+              type="text"
+              inputMode="url"
+              pattern={URL_OR_SITE_PATH}
+              title="Un link que empiece con https:// o una ruta del sitio que empiece con /"
               name={name}
               required={required}
               placeholder={placeholder}

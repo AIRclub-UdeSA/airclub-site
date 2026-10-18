@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getAllEventSlugs } from "@/lib/events";
+import { getWorkshopItems, getWorkshopTracks, trackHref, workshopHref } from "@/lib/workshops";
 import { SITE_URL } from "@/lib/seo";
 
 // Solo rutas públicas que responden 200: /proximamente y lo que redirige ahí (/plataformas, /proyectos) no van.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const eventSlugs = await getAllEventSlugs();
+  const [eventSlugs, tracks, workshops] = await Promise.all([getAllEventSlugs(), getWorkshopTracks(), getWorkshopItems()]);
 
-  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/equipo", "/contacto"].map((path) => ({
+  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/workshops", "/equipo", "/contacto"].map((path) => ({
     url: new URL(path || "/", SITE_URL).toString(),
     lastModified: new Date(),
   }));
@@ -16,5 +17,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
   }));
 
-  return [...staticRoutes, ...eventRoutes];
+  const workshopRoutes: MetadataRoute.Sitemap = [...tracks.map((t) => trackHref(t.key)), ...workshops.map(workshopHref)].map(
+    (path) => ({ url: new URL(path, SITE_URL).toString(), lastModified: new Date() }),
+  );
+
+  return [...staticRoutes, ...eventRoutes, ...workshopRoutes];
 }
