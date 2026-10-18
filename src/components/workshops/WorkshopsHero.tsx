@@ -1,55 +1,39 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { StartButton } from "./StartButton";
+
+// El nodo sube de vacío a macizo, como los niveles de la ruta: cada palabra es un escalón.
+const NODE_TODO = "border-text bg-bg";
+const NODE_SOLID = "border-crimson bg-crimson";
 
 /**
- * Título de /workshops (Anton, centrado, misma altura de letra que /talks y /equipo, a dos tonos como "EVENTOS") y un
- * párrafo corto: qué es un workshop del club y cómo se entra (presencial o asincrónico). Las cajas van justo abajo.
+ * Hero de /workshops: una sola pieza, sin el título centrado de las otras páginas. "WORK" y "SHOPS" en Anton, uno encima del
+ * otro y escalonados (SHOPS un escalón más adentro), cada uno con su línea de 1px y su nodo cuadrado, como la ruta. La frase
+ * va al lado de WORK y el botón al lado de SHOPS, en el hueco que deja la escalera. El botón baja a las cajas.
  */
-export function WorkshopsHero({
-  trackCount,
-  itemCount,
-  firstTrackHref,
-}: {
-  trackCount: number;
-  itemCount: number;
-  firstTrackHref?: string;
-}) {
+export function WorkshopsHero() {
   return (
-    <header className="pb-16 pt-24 md:pb-24">
-      <h1 className="talk-rise select-none overflow-hidden whitespace-nowrap px-4 text-center font-logo text-[min(36rem,calc((100vw-2rem)/5))] uppercase leading-[0.92] tracking-tight text-text sm:px-8 sm:text-[min(36rem,calc((100vw-4rem)/5.8))] md:px-12 md:text-[min(36rem,calc((100vw-6rem)/6.8))]">
-        Work<span className="text-crimson-text">shops</span>
-      </h1>
-
-      <div
-        className="talk-rise mx-auto mt-12 grid max-w-[1440px] grid-cols-1 gap-8 px-4 sm:px-8 md:mt-16 md:px-12 lg:grid-cols-12 lg:gap-4"
-        style={{ "--d": "120ms" } as React.CSSProperties}
-      >
-        <p className="max-w-[46ch] text-[clamp(1.2rem,2vw,1.5rem)] leading-[1.55] text-text lg:col-span-7">
-          Talleres presenciales en el Campus Victoria y guías para hacer a tu ritmo. Cada workshop es un recorrido en orden:
-          elegí uno y arrancá por el primer taller.
-        </p>
-
-        <div className="min-w-0 lg:col-span-4 lg:col-start-9 lg:pt-2">
-          <p className=" font-mono text-[.74rem] font-semibold uppercase tracking-[.16em] text-mauve">
-            {String(trackCount).padStart(2, "0")} workshops · {String(itemCount).padStart(2, "0")} talleres
+    <header className="flex min-h-svh flex-col justify-center px-4 py-20 sm:px-8 md:px-12">
+      <div className="mx-auto w-full max-w-[1440px]">
+        <div className="talk-rise relative border-t border-text/25 pt-5 md:pt-6 lg:grid lg:grid-cols-12 lg:items-end lg:gap-6">
+          <span className={`absolute -top-[.4375rem] left-0 block size-3.5 border ${NODE_TODO}`} aria-hidden="true" />
+          <h1 className="sr-only">Workshops</h1>
+          <span className="block font-logo text-[min(37vw,23rem)] lg:text-[min(27vw,23rem,40svh)] uppercase leading-[0.82] tracking-tight text-text lg:col-span-8" aria-hidden="true">
+            Work
+          </span>
+          <p className="mt-5 max-w-[26ch] text-balance text-[clamp(1.15rem,1.8vw,1.45rem)] leading-[1.45] text-text lg:col-span-4 lg:mt-0 lg:pb-3">
+            Talleres y guías para aprender haciendo.
           </p>
+        </div>
 
-          <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-            {firstTrackHref && (
-              <Link
-                href={firstTrackHref}
-                className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
-              >
-                <span>Empezar por el 01</span>
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-            )}
-            <a
-              href="#proximos"
-              className="font-mono text-[.78rem] uppercase tracking-[.12em] text-text underline decoration-text/35 underline-offset-[6px] transition-colors hover:text-crimson-text hover:decoration-crimson-text"
-            >
-              Talleres presenciales
-            </a>
+        <div
+          className="talk-rise relative mt-6 border-t border-text/25 pt-5 md:pt-6 lg:ml-[12%] lg:grid lg:grid-cols-12 lg:items-end lg:gap-6"
+          style={{ "--d": "120ms" } as React.CSSProperties}
+        >
+          <span className={`absolute -top-[.4375rem] left-0 block size-3.5 border ${NODE_SOLID}`} aria-hidden="true" />
+          <span className="block font-logo text-[min(37vw,23rem)] lg:text-[min(27vw,23rem,40svh)] uppercase leading-[0.82] tracking-tight text-crimson-text lg:col-span-9" aria-hidden="true">
+            Shops
+          </span>
+          <div className="mt-6 lg:col-span-3 lg:mt-0 lg:pb-3">
+            <StartButton target="#workshops">Empezar</StartButton>
           </div>
         </div>
       </div>

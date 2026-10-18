@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, Suspense, useContext } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
 import type { RegistrationState } from "@/components/talks/RegisterButton";
@@ -30,16 +31,17 @@ const RegistrationContext = createContext<{
  * La inscripción a los talleres presenciales, con el mismo diálogo y el mismo recorrido que la de charlas
  * (registration-flow.tsx): el botón (o "?inscribir=<slug>", al volver del login o de completar el perfil) espera a que
  * cargue la sesión; con sesión abre el diálogo y sin sesión lleva al login de Google, que vuelve a
- * /workshops?inscribir=<slug>. Con sesión, el botón
+ * la misma página (/workshops o la de su workshop) con ?inscribir=<slug>. Con sesión, el botón
  * sabe si ya está inscripta o si el cupo está lleno (#72), y el diálogo abre directo en "Ya estás inscripto/a".
  */
 export function WorkshopRegistration({ workshops, children }: { workshops: RegistrableWorkshop[]; children: React.ReactNode }) {
+  const pathname = usePathname();
   const { registrationOf, request, dialog } = useRegistrationFlow({
     items: workshops,
     // La lista ya trae solo los que tienen la inscripción abierta (el servidor lo vuelve a chequear).
     canRegister: () => true,
     fetchMine: getMyWorkshopRegistrationsAction,
-    returnTo: (slug) => `/workshops?inscribir=${encodeURIComponent(slug)}`,
+    returnTo: (slug) => `${pathname}?inscribir=${encodeURIComponent(slug)}`,
   });
 
   return (

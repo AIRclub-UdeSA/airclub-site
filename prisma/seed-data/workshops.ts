@@ -7,6 +7,7 @@
 // duración, nivel y prerequisitos salen del frontmatter de cada guía (src/content/docs/workshops/semana-NN-*.md en jar_site).
 
 import type { TalkMedia, TalkSlide } from "./talks";
+import type { GuideBlock } from "../../src/lib/guide-blocks";
 
 export type WorkshopLevel = "inicial" | "intermedio" | "avanzado";
 
@@ -100,7 +101,7 @@ export const pastWorkshops: SeedPastWorkshop[] = [
 
 export type SeedAsyncWorkshop = {
   track: string;
-  /** Número de semana, "01" a "09". Es el numeral grande de la página. */
+  /** Número de semana, con dos cifras ("01", "02"…). Es el numeral grande de la página. */
   week: string;
   /** Carpeta en jar_workshops y ruta de la guía en jar_site ("semana-01-talkers-listeners"). */
   slug: string;
@@ -116,10 +117,12 @@ export type SeedAsyncWorkshop = {
   ros2Package?: string;
   /** Semanas que hay que tener hechas antes (además del setup del simulador, que vale para todas). */
   requires: string[];
-  /** La guía completa. */
-  guideUrl: string;
+  /** La guía completa, si vive en otro sitio (las del JAR). */
+  guideUrl?: string;
   /** Su código. */
   codeUrl?: string;
+  /** Contenido propio (#69): los bloques de la guía, si vive en este sitio. Una guía tiene esto, `guideUrl` o las dos. */
+  content?: GuideBlock[];
 };
 
 // Las guías del JAR: la guía está en jar_site y el código en jar_workshops, las dos en una carpeta con el slug.
@@ -128,7 +131,7 @@ const jarUrls = (slug: string) => ({
   codeUrl: `${JAR_WORKSHOPS_REPO}/tree/main/${slug}`,
 });
 
-export const asyncWorkshops: SeedAsyncWorkshop[] = (
+const jarGuides: SeedAsyncWorkshop[] = (
   [
   {
     track: "ros2",
@@ -235,7 +238,8 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = (
     outcome: "Corrés el stack real de Nav2 sobre el mismo laberinto y ves qué gana y qué pierde cada módulo manual.",
     minutes: [90, 120],
     level: "avanzado",
-    ros2Package: "nav2_bringup",
+    // Sin paquete: esta semana no compila nada (el launch se corre por ruta y usa nav2_bringup, que viene con Nav2), así
+    // que la página no muestra comandos de colcon.
     requires: ["06"],
   },
   {
@@ -255,3 +259,5 @@ export const asyncWorkshops: SeedAsyncWorkshop[] = (
   },
 ] satisfies Omit<SeedAsyncWorkshop, "guideUrl" | "codeUrl">[]
 ).map((w) => ({ ...w, ...jarUrls(w.slug) }));
+
+export const asyncWorkshops: SeedAsyncWorkshop[] = jarGuides;

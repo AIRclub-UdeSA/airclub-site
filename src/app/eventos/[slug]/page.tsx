@@ -6,6 +6,8 @@ import { formatEventDate, isUpcoming } from "@/lib/dates";
 import { Button } from "@/components/shared/Button";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/shared/JsonLd";
+import { eventJsonLd } from "@/lib/structured-data";
 
 export async function generateMetadata({ params }: PageProps<"/eventos/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -28,6 +30,7 @@ export default async function EventoDetailPage({ params }: PageProps<"/eventos/[
 
   return (
     <section className="px-15 py-32 max-md:px-5.5 max-md:py-24">
+      <JsonLd data={eventJsonLd(event)} />
       <RevealOnScroll>
         <Link href="/eventos" className="mb-7 inline-flex items-center gap-2 text-[.84rem] text-text2 transition-all hover:gap-3 hover:text-crimson-text">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 rotate-180" aria-hidden="true">

@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireAdminSession } from "@/lib/admin/permissions";
+import { canEditSection, requireSectionView } from "@/lib/admin/permissions";
 import { careerText, distributions, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
 import { BarList } from "@/components/admin/BarList";
 import { RemoveRegistrationButton } from "./RemoveRegistrationButton";
@@ -31,8 +30,9 @@ function firstParam(value: string | string[] | undefined): string {
 }
 
 export default async function AdminComunidadPage({ searchParams }: PageProps<"/admin/comunidad">) {
-  const admin = await requireAdminSession();
-  if (admin.role !== "ADMIN") redirect("/admin/sin-permiso");
+  // Un Editor con "comunidad" asignada ve y exporta, pero no da de baja (#97): eso queda para ADMIN.
+  const admin = await requireSectionView("comunidad");
+  const canRemove = canEditSection(admin, "comunidad");
 
   const params = await searchParams;
   const charlaSlug = firstParam(params.charla);
@@ -71,8 +71,9 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       <div>
         <h2 className="font-display text-xl font-bold text-text">Comunidad</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
-          Quién se inscribió a cada AIR Talk y a cada taller presencial. Las cuentas con perfil están en Cuentas. Las inscripciones a
-          charlas se pueden dar de baja desde acá; cada baja queda en los logs.
+          {canRemove
+            ? "Quién se inscribió a cada AIR Talk y a cada taller presencial. Las cuentas con perfil están en Cuentas. Las inscripciones a charlas se pueden dar de baja desde acá; cada baja y cada exportación quedan en los logs."
+            : "Quién se inscribió a cada AIR Talk y a cada taller presencial. Tenés acceso de solo lectura: podés ver los inscriptos y exportar los de las charlas, pero no darlos de baja. Cada exportación queda registrada con tu email."}
         </p>
       </div>
 
@@ -188,7 +189,7 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                             {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
                             <p className="font-mono text-xs text-text3">{formatDate(r.createdAt)}</p>
                           </div>
-                          <RemoveRegistrationButton id={r.id} email={r.email} />
+                          {canRemove && <RemoveRegistrationButton id={r.id} email={r.email} />}
                         </li>
                       );
                     })}

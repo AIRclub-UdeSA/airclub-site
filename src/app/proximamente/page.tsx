@@ -4,13 +4,12 @@ import { ArrowRight, ArrowUpRight, Wrench, FolderGit2, Bot } from "lucide-react"
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { buildMetadata } from "@/lib/seo";
 
-// Página de "en construcción": no tiene que aparecer en buscadores.
+// Página de "en construcción": no tiene que aparecer en buscadores. Sin `path`, sin canonical: no da dos señales opuestas.
 export const metadata: Metadata = {
   ...buildMetadata({
     title: "Próximamente, AIR Club UdeSA",
     description:
       "Espacio en desarrollo: estamos preparando nuevas secciones, talleres y plataformas de robótica e inteligencia artificial.",
-    path: "/proximamente",
   }),
   robots: { index: false },
 };

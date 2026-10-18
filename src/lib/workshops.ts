@@ -10,6 +10,7 @@ import { isUpcoming } from "@/lib/dates";
 import { talkCover } from "@/lib/talk-format";
 import { trackHref, workshopHref } from "@/lib/workshop-href";
 import type { TalkMedia, TalkSlide } from "@/lib/talks";
+import { storedGuideBlocks, type GuideBlock } from "@/lib/guide-blocks";
 
 export type { WorkshopLevel } from "../../prisma/seed-data/workshops";
 
@@ -26,7 +27,7 @@ const OTHERS = {
 
 export type AsyncWorkshop = {
   track: TrackKey;
-  /** Número de semana, "01" a "09". Es el numeral grande de la página. */
+  /** Número de semana, con dos cifras ("01", "02"…). Es el numeral grande de la página. */
   week: string;
   slug: string;
   title: string;
@@ -40,8 +41,11 @@ export type AsyncWorkshop = {
   ros2Package?: string;
   /** Semanas del mismo workshop que hay que tener hechas antes. */
   requires: string[];
-  guideUrl: string;
+  /** La guía en otro sitio (las del JAR); sin él, la guía es solo su contenido propio. */
+  guideUrl?: string;
   codeUrl?: string;
+  /** Contenido propio (#69): los bloques cargados en el panel, en orden. Vacío si la guía vive en otro sitio. */
+  content: GuideBlock[];
   /** "60–90 min" o "2–3 h". */
   durationLabel: string;
 };
@@ -213,8 +217,9 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
         level: LEVELS[g.level],
         ros2Package: g.ros2Package ?? undefined,
         requires: g.requires,
-        guideUrl: g.guideUrl,
+        guideUrl: g.guideUrl ?? undefined,
         codeUrl: g.codeUrl ?? undefined,
+        content: storedGuideBlocks(g.content),
         durationLabel: formatMinutes([g.minutesMin, g.minutesMax]),
       })),
     ),
@@ -249,7 +254,7 @@ function fromRows(rows: TrackRow[]): WorkshopContent {
 function fromSeed(): WorkshopContent {
   return {
     tracks: seedTracks,
-    guides: seedAsyncWorkshops.map((w) => ({ ...w, durationLabel: formatMinutes(w.minutes) })),
+    guides: seedAsyncWorkshops.map((w) => ({ ...w, content: w.content ?? [], durationLabel: formatMinutes(w.minutes) })),
     sessions: seedPastWorkshops.map((w) => {
       const media = w.media ?? [];
       return {
@@ -332,6 +337,18 @@ const byDateDesc = (a: PastWorkshop, b: PastWorkshop) =>
 export function totalHoursLabel(workshops: AsyncWorkshop[]): string {
   const [min, max] = workshops.reduce(([a, b], w) => [a + w.minutes[0], b + w.minutes[1]], [0, 0]);
   return `${Math.floor(min / 60)}–${Math.ceil(max / 60)} h`;
+}
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Lo que dice un workshop en mono, igual en su caja de /workshops y en su página: cuántos talleres tiene, de qué tipo y cuánto lleva. */
+export function trackFacts(t: WorkshopTrack): string[] {
+  return [
+    t.guides.length > 0 && `${pad2(t.guides.length)} ${t.guides.length === 1 ? "guía asincrónica" : "guías asincrónicas"}`,
+    t.guides.length > 0 && `${totalHoursLabel(t.guides)} de práctica`,
+    t.past.length > 0 && `${pad2(t.past.length)} ${t.past.length === 1 ? "taller presencial" : "talleres presenciales"}`,
+    t.upcoming.length > 0 && `${pad2(t.upcoming.length)} ${t.upcoming.length === 1 ? "fecha próxima" : "fechas próximas"}`,
+  ].filter((f): f is string => Boolean(f));
 }
 
 /** Los próximos talleres del panel con la inscripción abierta, para el diálogo de inscripción (#70). */
