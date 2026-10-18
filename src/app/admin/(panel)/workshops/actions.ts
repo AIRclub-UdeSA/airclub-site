@@ -5,6 +5,7 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionEdit, type AdminSession } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
+import { AUDIENCE_REQUIRED_ERROR, parseAudience } from "@/lib/udesa";
 import { isSiteImageUrl, storagePublicPrefix } from "@/lib/storage-url";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
 import { guideBlockImageUrls, parseGuideBlocks, storedGuideBlocks, type GuideBlock } from "@/lib/guide-blocks";
@@ -151,6 +152,7 @@ function sessionData(formData: FormData) {
     recordingUrl: optStr(formData, "recordingUrl"),
     registrationOpen: formData.get("registrationOpen") === "on",
     capacity: optStr(formData, "capacity") === null ? null : Number(str(formData, "capacity")),
+    audience: parseAudience(formData.get("audience")),
     status: status(formData),
   };
 }
@@ -352,6 +354,8 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
   const links = parseLinks(str(formData, "links") || "[]");
   const error = validateSession(data, media);
   if (error) return { error };
+  const audience = data.audience;
+  if (!audience) return { error: AUDIENCE_REQUIRED_ERROR };
 
   let replacedFiles: string[] = [];
   try {
@@ -362,6 +366,7 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
           where: { id },
           data: {
             ...data,
+            audience,
             slug: before.slug, // como en las guías: no cambia
             media: { deleteMany: {}, createMany: { data: media } },
             slides: { deleteMany: {}, createMany: { data: slides } },
@@ -378,6 +383,7 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
         const created = await tx.workshopSession.create({
           data: {
             ...data,
+            audience,
             order: (last?.order ?? -1) + 1,
             media: { createMany: { data: media } },
             slides: { createMany: { data: slides } },
