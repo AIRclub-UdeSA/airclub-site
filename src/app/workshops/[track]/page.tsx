@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getWorkshopTracks, trackFacts, trackHref } from "@/lib/workshops";
+import { getWorkshopTracks, registrableOf, trackFacts, trackHref } from "@/lib/workshops";
 import { getContactReason } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
 import { WorkshopProgressProvider } from "@/components/workshops/WorkshopProgress";
@@ -8,6 +8,7 @@ import { TrackBody, firstSectionId } from "@/components/workshops/TrackBody";
 import { DetailHero } from "@/components/workshops/DetailHero";
 import { StartButton } from "@/components/workshops/StartButton";
 import { ProposeWorkshop } from "@/components/workshops/ProposeWorkshop";
+import { WorkshopRegistration } from "@/components/workshops/WorkshopRegistration";
 
 
 // Estática (ISR, 1 h), como /workshops: el progreso de la persona se pide desde el cliente.
@@ -38,25 +39,27 @@ export default async function TrackPage({ params }: PageProps<"/workshops/[track
 
   return (
     <WorkshopProgressProvider>
-      <article>
-        <DetailHero
-          number={String(index + 1).padStart(2, "0")}
-          srLabel={`Workshop ${String(index + 1).padStart(2, "0")}: `}
-          title={track.title}
-          text={track.summary}
-          meta={trackFacts(track).join(" · ")}
-          back={{ href: `/workshops#workshop-${track.key}`, label: "Todos los workshops" }}
-          kicker={`Workshop ${String(index + 1).padStart(2, "0")} de ${String(tracks.length).padStart(2, "0")}`}
-        >
-          <StartButton target={`#${firstSectionId(track)}`} tone="light">
-            Empezar
-          </StartButton>
-        </DetailHero>
+      <WorkshopRegistration workshops={registrableOf(track.upcoming)}>
+        <article>
+          <DetailHero
+            number={String(index + 1).padStart(2, "0")}
+            srLabel={`Workshop ${String(index + 1).padStart(2, "0")}: `}
+            title={track.title}
+            text={track.summary}
+            meta={trackFacts(track).join(" · ")}
+            back={{ href: `/workshops#workshop-${track.key}`, label: "Todos los workshops" }}
+            kicker={`Workshop ${String(index + 1).padStart(2, "0")} de ${String(tracks.length).padStart(2, "0")}`}
+          >
+            <StartButton target={`#${firstSectionId(track)}`} tone="light">
+              Empezar
+            </StartButton>
+          </DetailHero>
 
-        <TrackBody track={track} />
-      </article>
+          <TrackBody track={track} />
+        </article>
 
-      <ProposeWorkshop reason={propose} />
+        <ProposeWorkshop reason={propose} />
+      </WorkshopRegistration>
     </WorkshopProgressProvider>
   );
 }

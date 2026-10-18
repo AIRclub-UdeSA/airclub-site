@@ -31,7 +31,7 @@ const RegistrationContext = createContext<{
 /**
  * La inscripción a los talleres presenciales, con el mismo diálogo y el mismo recorrido que la de charlas (TalksHub): el
  * botón (o "?inscribir=<slug>", al volver del login o de completar el perfil) espera a que cargue la sesión; con sesión
- * abre el diálogo y sin sesión lleva al login de Google, que vuelve a /workshops?inscribir=<slug>. Con sesión, el botón
+ * abre el diálogo y sin sesión lleva al login de Google, que vuelve a la misma página (/workshops o la de su workshop) con ?inscribir=<slug>. Con sesión, el botón
  * sabe si ya está inscripta o si el cupo está lleno (#72), y el diálogo abre directo en "Ya estás inscripto/a".
  */
 export function WorkshopRegistration({ workshops, children }: { workshops: RegistrableWorkshop[]; children: React.ReactNode }) {
@@ -39,6 +39,7 @@ export function WorkshopRegistration({ workshops, children }: { workshops: Regis
   const [requestedSlug, setRequestedSlug] = useState<string | null>(null);
   const [registeringSlug, setRegisteringSlug] = useState<string | null>(null);
   const [loginSlug, setLoginSlug] = useState<string | null>(null);
+  const pathname = usePathname();
   const registering = workshops.find((w) => w.slug === registeringSlug) ?? null;
 
   // Se ajusta el estado durante el render, como TalksHub: espera a la sesión y, con sesión, a saber si ya está inscripta.
@@ -54,9 +55,9 @@ export function WorkshopRegistration({ workshops, children }: { workshops: Regis
 
   useEffect(() => {
     if (!loginSlug) return;
-    const back = encodeURIComponent(`/workshops?inscribir=${encodeURIComponent(loginSlug)}`);
+    const back = encodeURIComponent(`${pathname}?inscribir=${encodeURIComponent(loginSlug)}`);
     signIn("google", { redirectTo: `/bienvenida?next=${back}` });
-  }, [loginSlug]);
+  }, [loginSlug, pathname]);
 
   return (
     <RegistrationContext.Provider value={{ request: setRequestedSlug, registrationOf }}>
