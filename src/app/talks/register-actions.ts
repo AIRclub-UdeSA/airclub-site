@@ -20,8 +20,9 @@ const MAX_ATTEMPTS = 3;
  * Pide sesión y perfil completo (nombre, afiliación y consentimiento, ver isProfileComplete): las
  * cuentas anteriores a esos campos los completan al inscribirse. No usa requireUserProfile() a propósito: esa redirige a
  * /perfil/completar sin el parámetro `next`, así que si falta el perfil se perdería la charla
- * puntual al volver. Acá sí se arrastra (ver src/components/talks/TalksHub.tsx, que abre este
- * mismo diálogo al volver con "?inscribir=<slug>").
+ * puntual al volver. Acá sí se arrastra (ver src/components/talks/registration-flow.tsx, que abre
+ * este mismo diálogo al volver con "?inscribir=<slug>"). Vuelve siempre a /talks, aunque se haya
+ * pedido desde /eventos: es el mismo diálogo para la misma charla.
  */
 async function requireRegistrantEmail(talkSlug: string): Promise<string> {
   const email = await getSessionEmail();
@@ -113,8 +114,8 @@ export async function cancelTalkRegistrationAction(talkSlug: string): Promise<Ca
 export type MyRegistrationsResult = { signedIn: false } | { signedIn: true; registered: string[]; full: string[] };
 
 /**
- * /talks es estática (ISR): lo que depende de quién mira se pide desde el cliente cuando hay
- * sesión (ver TalksHub). No exige perfil: sin perfil no puede haber inscripciones.
+ * /talks y /eventos son estáticas (ISR): lo que depende de quién mira se pide desde el cliente
+ * cuando hay sesión (ver use-my-registrations.ts). No exige perfil: sin perfil no puede haber inscripciones.
  */
 export async function getMyTalkRegistrationsAction(): Promise<MyRegistrationsResult> {
   const email = await getSessionEmail();

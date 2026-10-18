@@ -3,6 +3,7 @@ import { Check, TriangleAlert } from "lucide-react";
 import { getSessionName, requireUserProfile } from "@/lib/perfil/require-profile";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
 import { missingProfileFields } from "@/lib/perfil/completeness";
+import { PerfilTabs } from "@/components/perfil/PerfilTabs";
 import { DeleteMyAccount } from "@/components/perfil/DeleteMyAccount";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default async function PerfilPage({ searchParams }: PageProps<"/perfil">)
           Usamos estos datos para la inscripción a las charlas y para saber quiénes vienen.
         </p>
       </div>
+      <PerfilTabs active="/perfil" />
       {guardado && (
         <p className="flex items-center gap-2 border border-crimson/25 bg-crimson/8 px-4 py-3 font-body text-[.9rem] font-medium text-crimson-text">
           <Check className="h-4 w-4 shrink-0" /> Perfil guardado.
