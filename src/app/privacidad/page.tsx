@@ -17,7 +17,7 @@ const SECTIONS: { title: string; accent: string; body: React.ReactNode }[] = [
     body: (
       <>
         <p>
-          Entrás con tu cuenta de Google, así que tenemos tu mail y tu nombre. Después te pedimos un perfil cortito: tu rol (estudiante,
+          Entrás con tu cuenta de Google, así que vemos tu mail y tu nombre, pero solo guardamos el mail. Después te pedimos un perfil cortito: tu rol (estudiante,
           docente u otro), y si sos estudiante, tu carrera, el año en que empezaste y si seguís cursando o ya te graduaste.
         </p>
         <p>Guardamos también a qué charlas te inscribiste.</p>
