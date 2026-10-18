@@ -32,11 +32,7 @@ export function GuideRoute({
   return (
     <SectionLayout
       title="Guías a tu ritmo"
-      intro={
-        <>
-          Hacelas en orden: cada guía deja andando algo que la siguiente da por hecho. En total, {totalHours} de práctica.
-        </>
-      }
+      intro={introOf(guides, totalHours)}
       aside={
         <div className="flex flex-col gap-6">
           <RouteProgress guides={guides} back={back} />
@@ -68,6 +64,13 @@ export function GuideRoute({
       />
     </SectionLayout>
   );
+}
+
+/** La intro de la ruta. El texto de las guías del JAR se mantiene; una sola guía no tiene orden que explicar. */
+function introOf(guides: AsyncWorkshop[], totalHours: string): string {
+  if (guides.length === 1) return `Lleva ${totalHours}.`;
+  const code = guides.every((g) => g.codeUrl) ? "Cada guía tiene su código en GitHub y deja" : "Cada guía deja";
+  return `${code} andando algo que la siguiente da por hecho: hacelas en orden. En total, ${totalHours}.`;
 }
 
 /**

@@ -19,6 +19,7 @@ import { SetupBlock } from "@/components/workshops/GuideRoute";
 import { LEVEL_LABEL, LevelNode } from "@/components/workshops/level";
 import { SessionMaterial } from "@/components/workshops/SessionMaterial";
 import { DetailHero } from "@/components/workshops/DetailHero";
+import { GuideContent } from "@/components/workshops/GuideContent";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 const CONTAINER = "mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12";
@@ -102,33 +103,43 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
             {w.outcome}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <a
-              href={w.guideUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
-            >
-              <span>Abrir la guía</span>
-              <ArrowUpRight size={15} aria-hidden="true" />
-              {NEW_TAB_HINT}
-            </a>
-            {w.codeUrl && (
-              <a
-                href={w.codeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-text px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-text transition-colors hover:border-crimson hover:bg-crimson hover:text-white"
-              >
-                <span>Ver el código</span>
-                <ArrowUpRight size={15} aria-hidden="true" />
-                {NEW_TAB_HINT}
-              </a>
-            )}
-          </div>
-          <p className="mt-4 max-w-[56ch] text-[.92rem] leading-[1.65] text-text3">
-            {w.codeUrl ? "La guía paso a paso y el código se abren en otra pestaña." : "La guía paso a paso se abre en otra pestaña."}
-          </p>
+          {(w.guideUrl || w.codeUrl) && (
+            <>
+              <div className="mt-10 flex flex-wrap items-center gap-3">
+                {w.guideUrl && (
+                  <a
+                    href={w.guideUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-white transition-colors hover:bg-crimson-hover"
+                  >
+                    <span>Abrir la guía</span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                    {NEW_TAB_HINT}
+                  </a>
+                )}
+                {w.codeUrl && (
+                  <a
+                    href={w.codeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-text px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase tracking-[.14em] text-text transition-colors hover:border-crimson hover:bg-crimson hover:text-white"
+                  >
+                    <span>Ver el código</span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                    {NEW_TAB_HINT}
+                  </a>
+                )}
+              </div>
+              <p className="mt-4 max-w-[56ch] text-[.92rem] leading-[1.65] text-text3">
+                {w.guideUrl && w.codeUrl
+                  ? "La guía paso a paso y el código se abren en otra pestaña."
+                  : w.guideUrl
+                    ? "La guía paso a paso se abre en otra pestaña."
+                    : "El código se abre en otra pestaña."}
+              </p>
+            </>
+          )}
 
           {w.ros2Package && (
             <SetupBlock
@@ -137,6 +148,13 @@ function GuideDetail({ detail }: { detail: Extract<WorkshopDetail, { kind: "guid
               repoUrl={prev ? undefined : track.repoUrl}
               className="mt-10 block"
             />
+          )}
+
+          {/* Contenido propio (#69): la guía entera, acá adentro. */}
+          {w.content.length > 0 && (
+            <div className="mt-14 border-t border-text pt-10">
+              <GuideContent blocks={w.content} />
+            </div>
           )}
         </div>
 
