@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma, type Prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { ADMIN_SECTIONS } from "@/lib/admin/sections";
+import { isUdesaEmail, UDESA_EMAIL_DOMAIN } from "@/lib/udesa";
 
-const ALLOWED_EMAIL_DOMAIN = "@udesa.edu.ar";
 const VALID_SECTION_IDS = new Set<string>(ADMIN_SECTIONS.map((s) => s.id));
 
 export type ActionState = { error: string | null };
@@ -36,8 +36,8 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
   const role = formData.get("role") === "ADMIN" ? "ADMIN" : "EDITOR";
   const sections = parseSections(formData);
 
-  if (!email.endsWith(ALLOWED_EMAIL_DOMAIN)) {
-    return { error: `El email tiene que terminar en ${ALLOWED_EMAIL_DOMAIN}.` };
+  if (!isUdesaEmail(email)) {
+    return { error: `El email tiene que terminar en ${UDESA_EMAIL_DOMAIN}.` };
   }
 
   try {
