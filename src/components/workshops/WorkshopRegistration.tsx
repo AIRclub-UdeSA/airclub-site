@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, Suspense, useContext } from "react";
+import { createContext, Suspense, useContext, useId } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
-import type { RegistrationState } from "@/components/talks/RegisterButton";
+import { RESTRICTED_BUTTON, RESTRICTED_NOTE, type RegistrationState } from "@/components/talks/RegisterButton";
 import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
 import {
   cancelWorkshopRegistrationAction,
@@ -78,6 +78,10 @@ const STYLES: Record<RegistrationState, { crimson: string; plain: string }> = {
     crimson: "cursor-not-allowed border-[1.5px] border-white/50 text-white/70",
     plain: "cursor-not-allowed border-[1.5px] border-text3/50 text-text3",
   },
+  restricted: {
+    crimson: "cursor-not-allowed border-[1.5px] border-white/50 text-white/70",
+    plain: "cursor-not-allowed border-[1.5px] border-text3/50 text-text3",
+  },
   // Neutro: mismo tamaño que "Inscribirme" (el texto queda invisible), sin decir nada todavía.
   loading: {
     crimson: "bg-white/40 animate-pulse motion-reduce:animate-none",
@@ -88,6 +92,7 @@ const STYLES: Record<RegistrationState, { crimson: string; plain: string }> = {
 /** "Inscribirme" de un próximo taller del panel. Fuera de WorkshopRegistration no se muestra. */
 export function RegisterButton({ slug, onCrimson }: { slug: string; onCrimson: boolean }) {
   const ctx = useContext(RegistrationContext);
+  const noteId = useId();
   if (!ctx) return null;
   const state = ctx.registrationOf(slug);
   const className = `${BUTTON} ${STYLES[state][onCrimson ? "crimson" : "plain"]}`;
@@ -108,6 +113,19 @@ export function RegisterButton({ slug, onCrimson }: { slug: string; onCrimson: b
       <button type="button" disabled className={className}>
         Cupo completo
       </button>
+    );
+  }
+
+  if (state === "restricted") {
+    return (
+      <span className="inline-flex flex-col items-start gap-1.5">
+        <button type="button" disabled aria-describedby={noteId} className={className}>
+          {RESTRICTED_BUTTON}
+        </button>
+        <span id={noteId} className={`font-body text-[.82rem] ${onCrimson ? "text-white/80" : "text-text3"}`}>
+          {RESTRICTED_NOTE}
+        </span>
+      </span>
     );
   }
 

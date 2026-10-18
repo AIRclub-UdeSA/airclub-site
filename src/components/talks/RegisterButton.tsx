@@ -1,12 +1,17 @@
 "use client";
 
+import { useId } from "react";
 import { ArrowUpRight, Check } from "lucide-react";
 
 /**
  * Lo que sabe el cliente de la cuenta frente a una charla (ver getMyTalkRegistrationsAction):
  * `loading` mientras se resuelve la sesión y la consulta, para no mostrar un estado equivocado.
  */
-export type RegistrationState = "loading" | "open" | "registered" | "full";
+export type RegistrationState = "loading" | "open" | "registered" | "full" | "restricted";
+
+/** Por qué está deshabilitado el botón de un evento solo UdeSA; va visible junto al botón, no solo en un tooltip. */
+export const RESTRICTED_BUTTON = "Solo para la comunidad UdeSA";
+export const RESTRICTED_NOTE = "Para inscribirte necesitás una cuenta @udesa.edu.ar.";
 
 type Variant = "hero" | "card" | "modal";
 
@@ -37,6 +42,15 @@ const FULL: Record<Variant, string> = {
   card: "cursor-not-allowed text-text3 line-through decoration-text3/50",
 };
 
+// Como FULL, pero sin tachar: el texto es la explicación, no un "agotado".
+const RESTRICTED: Record<Variant, string> = { ...FULL, card: "cursor-not-allowed text-text3" };
+
+const RESTRICTED_NOTE_CLASS: Record<Variant, string> = {
+  hero: "font-body text-[.82rem] text-white/80",
+  modal: "mt-2 font-body text-[.82rem] text-white/80",
+  card: "font-body text-[.78rem] text-text3",
+};
+
 // Neutro: mismo tamaño que "Inscribirme" (el texto queda invisible), sin decir nada todavía.
 const LOADING: Record<Variant, string> = {
   hero: "bg-white/40",
@@ -55,6 +69,7 @@ interface RegisterButtonProps<T extends { registrationLabel?: string }> {
 export function RegisterButton<T extends { registrationLabel?: string }>({ talk, state, variant, onRegister }: RegisterButtonProps<T>) {
   const label = talk.registrationLabel ?? "Inscribirme";
   // Los botones no son del mismo alto en las tres variantes: el de la tarjeta es solo texto.
+  const noteId = useId();
   const loadingShape = variant === "card" ? "rounded-sm" : "rounded-full";
 
   if (state === "loading") {
@@ -79,6 +94,20 @@ export function RegisterButton<T extends { registrationLabel?: string }>({ talk,
       <button type="button" disabled className={`${BASE[variant]} ${FULL[variant]}`}>
         Cupo completo
       </button>
+    );
+  }
+
+  if (state === "restricted") {
+    // El botón no puede explicarse solo: la línea va visible al lado, no en un tooltip.
+    return (
+      <span className={variant === "modal" ? "block" : "inline-flex flex-col items-start gap-1.5"}>
+        <button type="button" disabled aria-describedby={noteId} className={`${BASE[variant]} ${RESTRICTED[variant]}`}>
+          {RESTRICTED_BUTTON}
+        </button>
+        <span id={noteId} className={`block ${RESTRICTED_NOTE_CLASS[variant]}`}>
+          {RESTRICTED_NOTE}
+        </span>
+      </span>
     );
   }
 

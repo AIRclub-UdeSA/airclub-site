@@ -16,7 +16,7 @@ import type { RegistrationState } from "./RegisterButton";
 export function useMyRegistrations(fetchMine: () => Promise<MyRegistrationsResult>) {
   const { data: session, status } = useSession();
   // null = todavía no se sabe.
-  const [mine, setMine] = useState<{ email: string; registered: Set<string>; full: Set<string> } | null>(null);
+  const [mine, setMine] = useState<{ email: string; registered: Set<string>; full: Set<string>; restricted: Set<string> } | null>(null);
   const sessionEmail = session?.user?.email?.toLowerCase() ?? null;
 
   useEffect(() => {
@@ -27,12 +27,12 @@ export function useMyRegistrations(fetchMine: () => Promise<MyRegistrationsResul
         if (cancelled) return;
         // El servidor puede no ver la sesión que ve el cliente (venció o falló al validarla): sin
         // esto los botones quedarían en "loading" para siempre. Se trata igual que un error.
-        const own = res.signedIn ? res : { registered: [], full: [] };
-        setMine({ email: sessionEmail, registered: new Set(own.registered), full: new Set(own.full) });
+        const own = res.signedIn ? res : { registered: [], full: [], restricted: [] };
+        setMine({ email: sessionEmail, registered: new Set(own.registered), full: new Set(own.full), restricted: new Set(own.restricted) });
       })
       // Sin la consulta no se puede saber: el botón vuelve a "Inscribirme" y el servidor decide al confirmar.
       .catch(() => {
-        if (!cancelled) setMine({ email: sessionEmail, registered: new Set(), full: new Set() });
+        if (!cancelled) setMine({ email: sessionEmail, registered: new Set(), full: new Set(), restricted: new Set() });
       });
     return () => {
       cancelled = true;
@@ -45,6 +45,7 @@ export function useMyRegistrations(fetchMine: () => Promise<MyRegistrationsResul
     if (!sessionEmail) return "open";
     if (!mine || mine.email !== sessionEmail) return "loading";
     if (mine.registered.has(slug)) return "registered";
+    if (mine.restricted.has(slug)) return "restricted";
     return mine.full.has(slug) ? "full" : "open";
   };
 
@@ -53,10 +54,12 @@ export function useMyRegistrations(fetchMine: () => Promise<MyRegistrationsResul
       if (!prev) return prev;
       const registered = new Set(prev.registered);
       const full = new Set(prev.full);
+      const restricted = new Set(prev.restricted);
       if (result === "registered" || result === "already") registered.add(slug);
       else if (result === "cancelled") registered.delete(slug);
       else if (result === "full") full.add(slug);
-      return { ...prev, registered, full };
+      else if (result === "restricted") restricted.add(slug);
+      return { ...prev, registered, full, restricted };
     });
   };
 
