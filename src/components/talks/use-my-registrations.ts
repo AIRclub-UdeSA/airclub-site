@@ -6,8 +6,9 @@ import type { CancelResult, MyRegistrationsResult, RegisterResult } from "@/app/
 import type { RegistrationState } from "./RegisterButton";
 
 /**
- * Qué sabe el cliente de la cuenta logueada frente a lo que se inscribe con TalkRegisterDialog: charlas (TalksHub) o
- * talleres presenciales (WorkshopRegistration). /talks y /workshops son estáticas (ISR), así que se pide acá, con sesión.
+ * Qué sabe el cliente de la cuenta logueada frente a lo que se inscribe con TalkRegisterDialog: charlas (TalksHub y
+ * EventsHub) o talleres presenciales (WorkshopRegistration). /talks, /eventos y /workshops son estáticas (ISR), así que
+ * se pide acá, con sesión. Lo usa registration-flow.tsx.
  *
  * `registrationOf` da el estado del botón de cada slug y `onResult` lo actualiza después de inscribirse o cancelar, sin
  * recargar.

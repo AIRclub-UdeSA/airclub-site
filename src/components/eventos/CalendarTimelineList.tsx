@@ -4,16 +4,20 @@ import { Clock, MapPin, ArrowRight, ExternalLink } from "lucide-react";
 import type { CalendarActivity } from "@/lib/calendar-types";
 import { buildGoogleCalendarUrl } from "@/lib/calendar-types";
 import { CategoryBadge, StatusBadge } from "./EventBadge";
+import { RegisterButton, type RegistrationState } from "@/components/talks/RegisterButton";
 import { cn } from "@/lib/utils";
 
 interface CalendarTimelineListProps {
   activities: CalendarActivity[];
   onOpenActivity: (activity: CalendarActivity) => void;
+  /** Charlas con inscripción propia (#50): el mismo botón que en /talks, que abre el diálogo acá mismo. */
+  onRegister: (slug: string) => void;
+  registrationOf: (slug: string) => RegistrationState;
 }
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
-export function CalendarTimelineList({ activities, onOpenActivity }: CalendarTimelineListProps) {
+export function CalendarTimelineList({ activities, onOpenActivity, onRegister, registrationOf }: CalendarTimelineListProps) {
   // Agrupar actividades por Año-Mes
   const groups: { monthLabel: string; activities: CalendarActivity[] }[] = [];
   const map = new Map<string, CalendarActivity[]>();
@@ -179,7 +183,9 @@ export function CalendarTimelineList({ activities, onOpenActivity }: CalendarTim
                             <ArrowRight className="h-3.5 w-3.5" />
                           </button>
 
-                          {act.externalUrl && (
+                          {act.registrationOpen && act.isUpcoming ? (
+                            <RegisterButton talk={act} state={registrationOf(act.slug)} variant="card" onRegister={(a) => onRegister(a.slug)} />
+                          ) : act.externalUrl && (
                             <a
                               href={act.externalUrl}
                               target={act.externalUrl.startsWith("http") ? "_blank" : undefined}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -9,6 +9,9 @@ import { EventsHero } from "./EventsHero";
 import { CalendarMonthGrid } from "./CalendarMonthGrid";
 import { CalendarTimelineList } from "./CalendarTimelineList";
 import { EventDetailModal } from "./EventDetailModal";
+import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
+import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
+import { getMyTalkRegistrationsAction } from "@/app/talks/register-actions";
 
 interface EventsHubProps {
   initialActivities: CalendarActivity[];
@@ -22,6 +25,15 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(() => searchParams.get("evento"));
   const [isModalOpen, setIsModalOpen] = useState(() => Boolean(searchParams.get("evento")));
   const [, startTransition] = useTransition();
+  // Charlas con inscripción propia (#50): mismo botón, diálogo y recorrido que /talks, sin salir de acá. Al volver del
+  // login se reabre el modal de la charla ("?evento=") con el diálogo encima ("?inscribir=").
+  const { registrationOf, request, dialog } = useRegistrationFlow({
+    // Solo charlas: un evento o un taller podría tener el mismo slug.
+    items: initialActivities.filter((a) => a.category === "talk"),
+    canRegister: (a) => Boolean(a.registrationOpen) && a.isUpcoming,
+    fetchMine: getMyTalkRegistrationsAction,
+    returnTo: (slug) => `/eventos?evento=${encodeURIComponent(slug)}&inscribir=${encodeURIComponent(slug)}`,
+  });
 
   const activeSlug = isModalOpen ? selectedSlug : null;
   const activeActivity = initialActivities.find((a) => a.slug === activeSlug) ?? null;
@@ -54,6 +66,10 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <RegisterDeepLink onRequest={request} />
+      </Suspense>
+
       <EventsHero
         nextActivity={nextActivity}
         selectedCategory={selectedCategory}
@@ -84,7 +100,12 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
         ) : viewMode === "grid" ? (
           <CalendarMonthGrid activities={filteredActivities} onOpenActivity={handleOpenActivity} />
         ) : (
-          <CalendarTimelineList activities={filteredActivities} onOpenActivity={handleOpenActivity} />
+          <CalendarTimelineList
+            activities={filteredActivities}
+            onOpenActivity={handleOpenActivity}
+            onRegister={request}
+            registrationOf={registrationOf}
+          />
         )}
       </main>
 
@@ -131,7 +152,11 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
           const target = initialActivities.find((a) => a.slug === slug);
           if (target) handleOpenActivity(target);
         }}
+        onRegister={request}
+        registrationOf={registrationOf}
       />
+
+      <TalkRegisterDialog {...dialog} />
     </>
   );
 }

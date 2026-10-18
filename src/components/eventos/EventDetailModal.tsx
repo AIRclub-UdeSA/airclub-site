@@ -3,6 +3,7 @@
 import { TalkModal, type TalkSection } from "@/components/talks/TalkModal";
 import type { CalendarActivity } from "@/lib/calendar-types";
 import type { TimelineTalk } from "@/components/talks/TalksTimeline";
+import type { RegistrationState } from "@/components/talks/RegisterButton";
 
 export type EventSection = TalkSection;
 
@@ -13,6 +14,9 @@ interface EventDetailModalProps {
   initialSection?: EventSection;
   onClose: () => void;
   onSelectActivity?: (slug: string, section?: EventSection) => void;
+  /** Charlas con inscripción propia (#50): mismo botón y mismo diálogo que /talks (ver EventsHub). */
+  onRegister: (slug: string) => void;
+  registrationOf: (slug: string) => RegistrationState;
 }
 
 /**
@@ -27,6 +31,8 @@ export function EventDetailModal({
   initialSection = "overview",
   onClose,
   onSelectActivity,
+  onRegister,
+  registrationOf,
 }: EventDetailModalProps) {
   return (
     <TalkModal
@@ -36,10 +42,8 @@ export function EventDetailModal({
       initialSection={initialSection}
       onClose={onClose}
       onSelectTalk={(slug, sec) => onSelectActivity?.(slug, sec)}
-      // Los eventos no tienen inscripcion propia (eso es RSVP, #50 solo es para /talks):
-      // registrationOpen siempre da false/undefined acá, así que nunca se llega a usar esto.
-      onRegister={() => {}}
-      registrationOf={() => "open"}
+      onRegister={(talk) => onRegister(talk.slug)}
+      registrationOf={registrationOf}
     />
   );
 }
