@@ -106,6 +106,7 @@ async function main() {
       where: { slug: talk.slug },
       create: {
         ...data,
+        audience: "UDESA", // como quedaron las charlas que ya existían (ver la migración add_event_audience)
         media: { create: media.map((m, j) => toTalkMediaRow(m, j)) },
         slides: { create: (slides ?? []).map((s, j) => ({ ...s, order: j })) },
         links: { create: (links ?? []).map((l, j) => ({ ...l, order: j })) },
@@ -152,6 +153,7 @@ async function main() {
       where: { slug: session.slug },
       create: {
         ...session,
+        audience: "UDESA", // idem charlas
         trackId: trackId(track),
         order: i,
         media: { create: (media ?? []).map((m, j) => toTalkMediaRow(m, j)) },
