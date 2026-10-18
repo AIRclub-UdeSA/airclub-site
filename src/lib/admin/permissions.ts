@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { canEditSection, canViewSection } from "./sections";
 
 export type AdminSession = {
   adminId: string;
@@ -28,14 +29,18 @@ export async function requireAdminSession(): Promise<AdminSession> {
   };
 }
 
-/** true si la sesion puede escribir en `section` (ADMIN entra a todas). */
-export function canAccessSection(admin: Pick<AdminSession, "role" | "sections">, section: string): boolean {
-  return admin.role === "ADMIN" || admin.sections.includes(section);
+export { canEditSection, canViewSection } from "./sections";
+
+/** Como requireAdminSession, pero ademas exige poder ver `section`. Para paginas de lectura. */
+export async function requireSectionView(section: string): Promise<AdminSession> {
+  const admin = await requireAdminSession();
+  if (!canViewSection(admin, section)) redirect("/admin/sin-permiso");
+  return admin;
 }
 
-/** Como requireAdminSession, pero ademas exige acceso a `section` puntual. */
-export async function requireSectionAccess(section: string): Promise<AdminSession> {
+/** Como requireAdminSession, pero ademas exige poder escribir en `section`. Para paginas de edicion y server actions. */
+export async function requireSectionEdit(section: string): Promise<AdminSession> {
   const admin = await requireAdminSession();
-  if (!canAccessSection(admin, section)) redirect("/admin/sin-permiso");
+  if (!canEditSection(admin, section)) redirect("/admin/sin-permiso");
   return admin;
 }

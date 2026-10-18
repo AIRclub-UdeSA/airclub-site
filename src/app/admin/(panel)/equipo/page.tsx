@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { requireSectionAccess } from "@/lib/admin/permissions";
+import { requireSectionEdit } from "@/lib/admin/permissions";
 import { getFoundersPhoto } from "@/lib/team";
 import { EquipoManager, type AdminMember } from "./EquipoManager";
 
 export default async function AdminEquipoPage() {
-  await requireSectionAccess("equipo");
+  await requireSectionEdit("equipo");
 
   const [rows, foundersPhoto] = await Promise.all([
     prisma.teamMember.findMany({ orderBy: [{ order: "asc" }, { createdAt: "asc" }] }),

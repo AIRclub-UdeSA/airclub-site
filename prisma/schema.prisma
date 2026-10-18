@@ -258,15 +258,16 @@ model WorkshopTrack {
   sessions  WorkshopSession[]
 }
 
-// Guía asincrónica de un workshop (una semana del recorrido del JAR). La guía completa vive en otro
-// sitio (`guideUrl`) y el código en su repositorio (`codeUrl`): acá solo va lo que hace falta para
-// presentarla. El `slug` es con lo que se guarda quién la hizo (WorkshopCompletion): no cambiarlo.
+// Guía asincrónica de un workshop (una semana del recorrido del JAR). Su contenido puede vivir en otro
+// sitio (`guideUrl`, con el código en `codeUrl`), dentro de este (`content`: bloques cargados desde
+// /admin/workshops, ver src/lib/guide-blocks.ts), o las dos cosas; al menos una. El `slug` es con lo que
+// se guarda quién la hizo (WorkshopCompletion): no cambiarlo.
 model WorkshopGuide {
   id          String        @id @default(cuid())
   trackId     String
   track       WorkshopTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
   slug        String        @unique
-  week        String // "01" a "09": el numeral grande de la página
+  week        String // dos cifras ("01", "02"…): el numeral grande de la página
   title       String
   summary     String        @db.Text
   outcome     String        @db.Text // qué te llevás al terminar
@@ -275,8 +276,9 @@ model WorkshopGuide {
   level       WorkshopLevel
   ros2Package String? // paquete que se compila esa semana; sin él no se muestran los comandos
   requires    String[] // semanas (`week`) del mismo workshop que hay que tener hechas antes
-  guideUrl    String
+  guideUrl    String?
   codeUrl     String?
+  content     Json? // bloques de la guía (texto, pasos, código, imagen, aviso, checkpoint), en orden
   status      TalkStatus    @default(PUBLISHED)
   order       Int           @default(0)
   createdAt   DateTime      @default(now())

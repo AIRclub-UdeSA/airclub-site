@@ -41,7 +41,8 @@ export async function Footer() {
             </div>
           </div>
           <p className="font-body text-[.88rem] leading-[1.65] text-text2">
-            Espacio estudiantil abierto dedicado al aprendizaje y desarrollo de robótica móvil, percepción autónoma y modelos de IA aplicados.
+            Club de Robótica e Inteligencia Artificial de la Universidad de San Andrés. Un espacio estudiantil abierto dedicado al
+            aprendizaje y desarrollo de robótica móvil, percepción autónoma y modelos de IA aplicados.
           </p>
         </div>
 

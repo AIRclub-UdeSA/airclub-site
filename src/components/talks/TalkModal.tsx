@@ -8,7 +8,7 @@ import { RegisterButton, type RegistrationState } from "./RegisterButton";
 import type { TimelineTalk } from "./TalksTimeline";
 import { TalkSlideshow } from "./TalkSlideshow";
 import { TalkLinks, TalkRecording, TalkSlides, TalkTabs, TEXT_LINK } from "./TalkMaterial";
-import { talkDateParts, talkDateText } from "@/lib/talk-format";
+import { talkDateParts, talkDateText, textParagraphs } from "@/lib/talk-format";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
 import { buildGoogleCalendarUrl, buildIcsDataUri } from "@/lib/calendar-types";
 import { cn } from "@/lib/utils";
@@ -392,7 +392,7 @@ export function TalkModal({
                   )}
 
                   <div className="space-y-4 font-body text-[1.04rem] leading-[1.85] text-text2">
-                    {talk.abstract.split("\n\n").map((paragraph, idx) => (
+                    {textParagraphs(talk.abstract).map((paragraph, idx) => (
                       <p key={idx} className="max-w-[64ch]">
                         {paragraph}
                       </p>

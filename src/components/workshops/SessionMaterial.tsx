@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { PastWorkshop } from "@/lib/workshops";
 import { TalkSlideshow } from "@/components/talks/TalkSlideshow";
 import { TalkLinks, TalkRecording, TalkSlides, TalkTabs } from "@/components/talks/TalkMaterial";
+import { textParagraphs } from "@/lib/talk-format";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
 
 type Section = "overview" | "slides" | "recording";
@@ -44,7 +45,7 @@ export function SessionMaterial({ workshop: w }: { workshop: PastWorkshop }) {
       {active === "overview" && (
         <div className="mt-8 space-y-8">
           <div className="space-y-4 text-[1.1rem] leading-[1.7] text-text2">
-            {(w.description ?? w.summary).split("\n\n").map((paragraph, i) => (
+            {textParagraphs(w.description ?? w.summary).map((paragraph, i) => (
               <p key={i} className="max-w-[62ch]">
                 {paragraph}
               </p>

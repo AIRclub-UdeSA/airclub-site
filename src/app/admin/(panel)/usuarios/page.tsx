@@ -15,7 +15,7 @@ export default async function AdminUsuariosPage() {
         <h2 className="font-display text-xl font-bold text-text">Personas con acceso</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
           Solo entra al panel quien esté acá con un mail @udesa.edu.ar. Admin ve y gestiona todo, Editor solo las
-          secciones listadas.
+          secciones listadas: las marcadas &ldquo;solo ver&rdquo; las puede ver pero no editar.
         </p>
       </div>
 

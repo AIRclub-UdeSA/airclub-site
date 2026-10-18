@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ArmHero } from "@/components/home/ArmHero";
 import { AboutSection } from "@/components/home/AboutSection";
 import { WordSlideshow } from "@/components/home/WordSlideshow";
@@ -11,6 +12,11 @@ import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { LegacyHashRedirect } from "@/components/home/LegacyHashRedirect";
 import { getFeaturedCountdownEvent } from "@/lib/events";
+import { JsonLd } from "@/components/shared/JsonLd";
+import { homeJsonLd } from "@/lib/structured-data";
+import { buildMetadata, HOME_DESCRIPTION, HOME_TITLE } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({ title: HOME_TITLE, description: HOME_DESCRIPTION, path: "/" });
 
 // ISR, igual que /eventos y /talks: la landing se pre-renderiza como página estática y se revalida cada 60s.
 // Sin esto quedaba fija al último deploy, y como "Próximas actividades" se decide al renderizar, una talk que ya
@@ -19,13 +25,14 @@ import { getFeaturedCountdownEvent } from "@/lib/events";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const featuredEvent = await getFeaturedCountdownEvent();
+  const [featuredEvent, jsonLd] = await Promise.all([getFeaturedCountdownEvent(), homeJsonLd()]);
 
   return (
     <>
       {/* El hero usa las letras A/R como logo decorativo, no como texto real:
           este h1 le da a lectores de pantalla y buscadores el titulo real de la pagina. */}
-      <h1 className="sr-only">AIR Club UdeSA — Artificial Intelligence &amp; Robotics Club</h1>
+      <h1 className="sr-only">AIR Club UdeSA — Club de Robótica e Inteligencia Artificial de la Universidad de San Andrés</h1>
+      <JsonLd data={jsonLd} />
       {/* Enlaces del sitio viejo con hash (/#/equipo): ver LegacyHashRedirect. */}
       <LegacyHashRedirect />
       <ArmHero />

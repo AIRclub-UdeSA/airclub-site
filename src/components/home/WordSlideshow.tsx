@@ -5,6 +5,7 @@ import type { KeyboardEvent, PointerEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useEdgeClip } from "@/components/shared/SectionEdge";
+import { GITHUB_ORG_URL } from "@/lib/contact";
 
 interface WordSlide {
   title: string;
@@ -53,7 +54,7 @@ const SLIDES: WordSlide[] = [
     title: "GITHUB",
     short: "GitHub",
     tagline: "Nuestros paquetes, librerías y simuladores están abiertos en GitHub para que cualquiera clone y colabore.",
-    href: "https://github.com/airclub-udesa",
+    href: GITHUB_ORG_URL,
     isExternal: true,
     bg: "#3b0d2a", // Saturated Deep Mauve Wine
     accent: "#f7a8c4",

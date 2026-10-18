@@ -12,10 +12,12 @@ import {
   saveGuide,
   saveSession,
   saveTrack,
+  validateGuideForm,
   validateSessionForm,
   type ActionState,
 } from "./actions";
 import type { AdminGuide, AdminTrack, AdminWorkshopSession } from "./WorkshopsManager";
+import { BlockEditor } from "./BlockEditor";
 
 const inputClass = "rounded-[var(--r-sm)] border border-border bg-card px-3 py-2 text-sm text-text";
 const labelClass = "flex flex-1 min-w-[12rem] flex-col gap-1 text-sm text-text2";
@@ -170,9 +172,16 @@ export function GuideForm({
   trackKey,
   item,
   nextWeek,
-  ...props
-}: FormProps & { trackId: string; trackKey: string; item: AdminGuide | null; nextWeek: string }) {
-  const { saving, error, handleSubmit } = useSave(saveGuide, props);
+  storagePrefix,
+  onDone,
+  onSavingChange,
+}: FormProps & { trackId: string; trackKey: string; item: AdminGuide | null; nextWeek: string; storagePrefix: string | null }) {
+  const { saving, error, progress, handleSubmit, pickFile, pendingFile } = useUploadingForm({
+    validate: validateGuideForm,
+    save: saveGuide,
+    onDone,
+    onSavingChange,
+  });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[var(--r-md)] border border-border bg-card-muted p-5">
@@ -251,10 +260,15 @@ export function GuideForm({
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className={legendClass}>Links</legend>
+        <legend className={legendClass}>Contenido propio (la guía, acá adentro)</legend>
+        <BlockEditor initialBlocks={item?.content ?? []} storagePrefix={storagePrefix} pickFile={pickFile} pendingFile={pendingFile} />
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
+        <legend className={legendClass}>Links (si la guía vive en otro sitio)</legend>
         <label className={wideLabel}>
           La guía completa
-          <input type="url" name="guideUrl" required placeholder="https://airclub-udesa.github.io/jar_site/workshops/…/" defaultValue={item?.guideUrl ?? ""} className={inputClass} />
+          <input type="url" name="guideUrl" placeholder="https://airclub-udesa.github.io/jar_site/workshops/…/" defaultValue={item?.guideUrl ?? ""} className={inputClass} />
         </label>
         <label className={wideLabel}>
           El código (opcional)
@@ -267,7 +281,9 @@ export function GuideForm({
         <StatusField value={item?.status} />
       </fieldset>
 
-      <Submit saving={saving} label={item ? "Guardar cambios" : "Crear guía"} error={error} onCancel={props.onDone} />
+      <p className={hintClass}>La guía necesita contenido propio, el link a la guía completa, o las dos cosas.</p>
+
+      <Submit saving={saving} label={item ? "Guardar cambios" : "Crear guía"} error={error} onCancel={onDone} note={progress} />
     </form>
   );
 }
@@ -297,20 +313,27 @@ function withUploadedUrls(formData: FormData, urls: Map<string, string>): FormDa
   return next;
 }
 
-export function SessionForm({
-  trackId,
-  item,
-  storagePrefix,
+/**
+ * Guardar con archivos, como en TalkForm: validar, recién ahí subir los archivos elegidos (directo a Storage), reemplazar
+ * sus marcadores por las URLs y guardar. Si algo falla después de subir, se borra lo recién subido. Lo usan el taller
+ * presencial (fotos y videos) y la guía (imágenes de sus bloques).
+ */
+function useUploadingForm({
+  validate,
+  save,
   onDone,
   onSavingChange,
-}: FormProps & { trackId: string; item: AdminWorkshopSession | null; storagePrefix: string | null }) {
+}: FormProps & {
+  validate: (formData: FormData) => Promise<ActionState>;
+  save: (prev: ActionState, formData: FormData) => Promise<ActionState>;
+}) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const pendingFiles = useRef(new Map<string, File>());
-  const slugRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => onSavingChange(saving), [saving, onSavingChange]);
+  // Mientras sube, cerrar la pestaña cortaría la subida a la mitad: el navegador pide confirmación.
   useEffect(() => {
     if (!saving) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -325,8 +348,6 @@ export function SessionForm({
   }
   const pendingFile = (placeholder: string) => pendingFiles.current.get(placeholder);
 
-  // Como en TalkForm: validar, recién ahí subir los archivos (directo a Storage) y por último guardar. Si algo falla
-  // después de subir, se borra lo recién subido.
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (saving) return;
@@ -336,7 +357,7 @@ export function SessionForm({
 
     let uploadedUrls: string[] = [];
     try {
-      const check = await validateSessionForm(formData);
+      const check = await validate(formData);
       if (check.error) return setError(check.error);
 
       const values = [...formData.values()].filter((v): v is string => typeof v === "string");
@@ -358,18 +379,36 @@ export function SessionForm({
         setProgress("Guardando…");
       }
 
-      const result = await saveSession({ error: null }, withUploadedUrls(formData, urls));
+      const result = await save({ error: null }, withUploadedUrls(formData, urls));
       if (result.error) return setError(result.error);
       uploadedUrls = []; // guardado: los archivos ya están en uso
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar el taller.");
+      setError(err instanceof Error ? err.message : "No se pudo guardar.");
     } finally {
       if (uploadedUrls.length > 0) void discardWorkshopUploads(uploadedUrls);
       setSaving(false);
       setProgress(null);
     }
   }
+
+  return { saving, error, progress, handleSubmit, pickFile, pendingFile };
+}
+
+export function SessionForm({
+  trackId,
+  item,
+  storagePrefix,
+  onDone,
+  onSavingChange,
+}: FormProps & { trackId: string; item: AdminWorkshopSession | null; storagePrefix: string | null }) {
+  const { saving, error, progress, handleSubmit, pickFile, pendingFile } = useUploadingForm({
+    validate: validateSessionForm,
+    save: saveSession,
+    onDone,
+    onSavingChange,
+  });
+  const slugRef = useRef<HTMLInputElement>(null);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-[var(--r-md)] border border-border bg-card-muted p-5">

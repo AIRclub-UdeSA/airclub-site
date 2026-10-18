@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma, Prisma } from "@/lib/prisma";
-import { requireSectionAccess } from "@/lib/admin/permissions";
+import { requireSectionEdit } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
 import { normalizeUrl } from "@/lib/links";
@@ -102,7 +102,7 @@ async function nextOrder(tx: Prisma.TransactionClient, group: TeamGroup): Promis
 }
 
 export async function saveMember(input: MemberInput): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const data = memberData(input);
   const error = validateMember(data);
   if (error) return { error };
@@ -141,7 +141,7 @@ export async function saveMember(input: MemberInput): Promise<ActionState> {
 
 /** Cambia la foto grupal de una lista y el texto de su cartel (hoy solo Fundadores la muestra en /equipo). */
 export async function saveGroupPhoto(group: TeamGroup, input: { photo: string; caption: string }): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   const photoUrl = input.photo.trim();
   const caption = input.caption.trim();
   if (!photoUrl || isPendingUpload(photoUrl)) return { error: "La foto no se terminó de subir. Probá de nuevo." };
@@ -175,7 +175,7 @@ export async function saveGroupPhoto(group: TeamGroup, input: { photo: string; c
 
 /** Ocultar en vez de borrar: la ficha queda (y vuelve con un click), pero deja de verse en /equipo. */
 export async function setMemberActive(id: string, active: boolean): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   try {
     await prisma.$transaction(async (tx) => {
       const before = await tx.teamMember.findUniqueOrThrow({ where: { id } });
@@ -196,7 +196,7 @@ export async function setMemberActive(id: string, active: boolean): Promise<Acti
 
 /** Mueve a la persona un lugar antes o después dentro de su lista (entre las visibles). */
 export async function moveMember(id: string, direction: -1 | 1): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   try {
     await prisma.$transaction(async (tx) => {
       const target = await tx.teamMember.findUniqueOrThrow({ where: { id } });
@@ -224,7 +224,7 @@ export async function moveMember(id: string, direction: -1 | 1): Promise<ActionS
 
 /** Borrar de verdad, solo para fichas ya ocultas (ej. alguien cargado por error). */
 export async function deleteMember(id: string): Promise<ActionState> {
-  const actor = await requireSectionAccess(SECTION);
+  const actor = await requireSectionEdit(SECTION);
   let deletedFiles: string[] = [];
   try {
     await prisma.$transaction(async (tx) => {
@@ -268,13 +268,13 @@ async function removeUnusedTeamFiles(urls: string[]): Promise<void> {
 
 /** Firma la URL para que el navegador suba la foto directo a Storage. */
 export async function prepareTeamPhotoUpload(file: { type: string; size: number }): Promise<SignedUpload | { error: string }> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   if (!file.type.startsWith("image/")) return { error: "Acá va una foto (jpg, png o webp)." };
   return signUpload(file, STORAGE_FOLDER);
 }
 
 /** Borra una foto recién subida cuando el guardado falla (solo de la carpeta del equipo y si nadie la usa). */
 export async function discardTeamUpload(url: string): Promise<void> {
-  await requireSectionAccess(SECTION);
+  await requireSectionEdit(SECTION);
   if (url.includes(`/${STORAGE_FOLDER}/`)) await removeUnusedTeamFiles([url]);
 }
