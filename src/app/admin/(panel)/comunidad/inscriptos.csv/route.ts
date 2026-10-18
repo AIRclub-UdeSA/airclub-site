@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
+import { AFFILIATION_LABELS } from "@/lib/perfil/completeness";
 import { careerText, csvCell, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
 
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
@@ -36,13 +37,16 @@ export async function GET(request: Request) {
   const profiles = await prisma.userProfile.findMany({ where: { email: { in: registrations.map((r) => r.email) } } });
   const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
 
-  const header = ["Charla", "Email", "Inscripto el (hora de Argentina)", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
+  const header = ["Charla", "Nombre", "Email", "Inscripto el (hora de Argentina)", "Afiliación", "Institución", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
   const rows = registrations.map((r) => {
     const p = profileByEmail.get(r.email);
     return [
       r.talk.title,
+      p?.fullName,
       r.email,
       registeredAt.format(r.createdAt),
+      p?.affiliation ? AFFILIATION_LABELS[p.affiliation] : "",
+      p?.institution,
       p ? ROLE_LABELS[p.role] : "Sin perfil",
       p?.otherRole,
       p?.careers.map((c) => careerText(c, p.otherCareer)).join("; "),
