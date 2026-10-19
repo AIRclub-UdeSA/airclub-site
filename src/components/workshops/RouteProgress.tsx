@@ -18,7 +18,7 @@ export function RouteProgress({ guides, back }: { guides: AsyncWorkshop[]; back:
     return (
       <div className="mt-8 border-t border-text/20 pt-5">
         <p className="max-w-[46ch] text-[.95rem] leading-[1.65] text-text2">
-          Ingresá con tu cuenta de Google para marcar lo que vas haciendo y ver por dónde seguir.
+          Ingresá con tu cuenta de UdeSA o, si no tenés, con una de Google para marcar lo que vas haciendo y ver por dónde seguir.
         </p>
         <button
           type="button"
