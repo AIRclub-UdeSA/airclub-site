@@ -29,17 +29,6 @@ function KindTag({ kind, tilted = false }: { kind: ContactReason["kind"]; tilted
   );
 }
 
-/** Lo que va a pasar al tocar: a dónde va y, si es un mail, con qué asunto. */
-function Destination({ reason }: { reason: ContactReason }) {
-  return (
-    <p className="font-mono text-[.72rem] leading-[1.6] text-current/75 [overflow-wrap:anywhere]">
-      <span aria-hidden="true">→ </span>
-      {reason.destination}
-      {reason.kind === "mail" && reason.subject ? ` · Asunto: ${reason.subject}` : ""}
-    </p>
-  );
-}
-
 /**
  * Motivo: un panel recto de 1px que es un solo enlace, relleno con el color de su intención (--paper, texto --ink).
  * `outline` lo deja solo con contorno (se rellena al acercarse); `featured` es la acción principal de la página, con su
@@ -80,9 +69,6 @@ export function ReasonPanel({
           {reason.title}
         </h3>
         <p className="mt-3 max-w-[48ch] text-[.98rem] leading-[1.65] text-current/85">{reason.desc}</p>
-        <div className="mt-3">
-          <Destination reason={reason} />
-        </div>
       </div>
     </>
   );

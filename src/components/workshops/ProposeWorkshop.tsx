@@ -27,11 +27,6 @@ export function ProposeWorkshop({ reason }: { reason: ContactReason }) {
             <ArrowUpRight size={15} aria-hidden="true" />
             {reason.external && <span className="sr-only"> (se abre en una pestaña nueva)</span>}
           </a>
-          <p className="mt-4 font-mono text-[.72rem] leading-[1.6] text-[#f5e8ec]/60 [overflow-wrap:anywhere]">
-            <span aria-hidden="true">→ </span>
-            {reason.destination}
-            {reason.kind === "mail" && reason.subject ? ` · Asunto: ${reason.subject}` : ""}
-          </p>
         </div>
       </div>
     </section>
