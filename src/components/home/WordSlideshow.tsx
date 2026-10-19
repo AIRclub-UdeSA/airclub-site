@@ -22,7 +22,7 @@ const SLIDES: WordSlide[] = [
     title: "WORKSHOPS",
     short: "Workshops",
     tagline: "Aprender metiendo mano. Conectamos cables, cargamos código y movemos motores sin requisitos previos.",
-    href: "/eventos",
+    href: "/workshops",
     bg: "#440924", // Deep Velvet Bordeaux Vivo
     accent: "#ff2a6d",
   },
