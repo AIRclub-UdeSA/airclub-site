@@ -1,4 +1,5 @@
 import { careerLabel } from "@/lib/perfil/careers";
+import { AFFILIATION_LABELS } from "@/lib/perfil/completeness";
 
 export const ROLE_LABELS = { STUDENT: "Estudiante", PROFESSOR: "Profesor/a", OTHER: "Otro" } as const;
 export const STATUS_LABELS = { STUDYING: "Cursando", GRADUATED: "Recibido/a" } as const;
@@ -10,12 +11,14 @@ export type ProfileLike = {
   otherCareer: string | null;
   startYear: number | null;
   studentStatus: keyof typeof STATUS_LABELS | null;
+  affiliation: keyof typeof AFFILIATION_LABELS | null;
 };
 
 export type Bucket = { label: string; count: number };
 
 export type Distributions = {
   role: Bucket[];
+  affiliation: Bucket[];
   career: Bucket[];
   startYear: Bucket[];
   status: Bucket[];
@@ -44,6 +47,7 @@ export function careerText(slug: string, otherCareer: string | null): string {
  */
 export function distributions(profiles: (ProfileLike | null)[]): Distributions {
   const role = new Map<string, number>();
+  const affiliation = new Map<string, number>();
   const career = new Map<string, number>();
   const year = new Map<string, number>();
   const status = new Map<string, number>();
@@ -54,13 +58,14 @@ export function distributions(profiles: (ProfileLike | null)[]): Distributions {
       continue;
     }
     tally(role, ROLE_LABELS[p.role]);
+    tally(affiliation, p.affiliation ? AFFILIATION_LABELS[p.affiliation] : "Sin completar");
     if (p.role !== "STUDENT") continue;
     for (const slug of p.careers) tally(career, careerText(slug, p.otherCareer));
     if (p.startYear) tally(year, String(p.startYear));
     if (p.studentStatus) tally(status, STATUS_LABELS[p.studentStatus]);
   }
 
-  return { role: sorted(role), career: sorted(career), startYear: sorted(year, "label"), status: sorted(status) };
+  return { role: sorted(role), affiliation: sorted(affiliation), career: sorted(career), startYear: sorted(year, "label"), status: sorted(status) };
 }
 
 /** Una celda de CSV: comillas dobles escapadas y, contra la inyección de fórmulas, un apóstrofo si empieza con = + - @. */

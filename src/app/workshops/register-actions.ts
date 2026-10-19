@@ -6,6 +6,7 @@ import { Prisma, prisma } from "@/lib/prisma";
 import { isUpcoming } from "@/lib/dates";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
 import { canRegisterTo } from "@/lib/udesa";
+import { isProfileComplete } from "@/lib/perfil/completeness";
 import type { CancelResult, MyRegistrationsResult, RegisterResult } from "@/app/talks/register-actions";
 
 // Inscripción a talleres presenciales (#70). Mismo comportamiento que la de charlas (#50, src/app/talks/register-actions.ts):
@@ -13,13 +14,19 @@ import type { CancelResult, MyRegistrationsResult, RegisterResult } from "@/app/
 
 const MAX_ATTEMPTS = 3;
 
-/** Pide sesión y perfil completo; si falta el perfil, vuelve a /workshops con "?inscribir=<slug>" después de completarlo. */
+/**
+ * Pide sesión y perfil completo (nombre, afiliación y consentimiento, ver isProfileComplete): las cuentas anteriores a esos
+ * campos los completan al inscribirse. Si falta, vuelve a /workshops con "?inscribir=<slug>" después de completarlo.
+ */
 async function requireRegistrantEmail(slug: string): Promise<string> {
   const email = await getSessionEmail();
   if (!email) redirect("/");
 
-  const profile = await prisma.userProfile.findUnique({ where: { email }, select: { email: true } });
-  if (!profile) {
+  const profile = await prisma.userProfile.findUnique({
+    where: { email },
+    select: { fullName: true, affiliation: true, institution: true, consentAcceptedAt: true },
+  });
+  if (!profile || !isProfileComplete(profile)) {
     const nextTarget = `/workshops?inscribir=${encodeURIComponent(slug)}`;
     redirect(`/perfil/completar?next=${encodeURIComponent(nextTarget)}`);
   }
@@ -82,7 +89,9 @@ export async function registerForWorkshopAction(slug: string): Promise<RegisterR
 
 /** Da de baja la inscripción de la cuenta logueada. Solo mientras el taller no haya pasado. */
 export async function cancelWorkshopRegistrationAction(slug: string): Promise<CancelResult> {
-  const email = await requireRegistrantEmail(slug);
+  // Solo pide sesión: darse de baja no exige el perfil completo.
+  const email = await getSessionEmail();
+  if (!email) redirect("/");
 
   const session = await findUpcomingSession(slug);
   if (!session) return { status: "closed" };

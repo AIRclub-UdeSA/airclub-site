@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/seo";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [eventSlugs, tracks, workshops] = await Promise.all([getAllEventSlugs(), getWorkshopTracks(), getWorkshopItems()]);
 
-  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/workshops", "/equipo", "/contacto"].map((path) => ({
+  const staticRoutes: MetadataRoute.Sitemap = ["", "/eventos", "/talks", "/workshops", "/equipo", "/contacto", "/privacidad"].map((path) => ({
     url: new URL(path || "/", SITE_URL).toString(),
     lastModified: new Date(),
   }));

@@ -10,6 +10,7 @@ const FOOTER_LINKS = [
   { href: "/eventos", label: "Eventos" },
   { href: "/equipo", label: "Equipo" },
   { href: "/contacto", label: "Contacto" },
+  { href: "/privacidad", label: "Privacidad" },
 ];
 
 export async function Footer() {

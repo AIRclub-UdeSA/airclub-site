@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 import { saveProfileAction, type ActionState } from "@/app/perfil/actions";
 import { CareerSelect } from "./CareerSelect";
 import { MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
+import { AFFILIATION_OPTIONS, needsInstitution } from "@/lib/perfil/completeness";
 import { cn } from "@/lib/utils";
-import type { ProfileRole, StudentStatus } from "../../../generated/prisma/client";
+import type { ProfileAffiliation, ProfileRole, StudentStatus } from "../../../generated/prisma/client";
 
 const initialState: ActionState = { error: null };
 
@@ -16,6 +18,10 @@ export type ExistingProfile = {
   otherCareer: string | null;
   startYear: number | null;
   studentStatus: StudentStatus | null;
+  fullName: string | null;
+  affiliation: ProfileAffiliation | null;
+  institution: string | null;
+  consentAcceptedAt: Date | null;
 };
 
 const labelClass = "font-mono text-[.76rem] uppercase tracking-[.1em] text-text3";
@@ -56,16 +62,20 @@ function PillToggleGroup<T extends string>({
 
 export function PerfilForm({
   existing,
+  defaultName = "",
   submitLabel,
   next,
 }: {
   existing?: ExistingProfile;
+  /** Nombre de la cuenta de Google, para prellenar cuando el perfil todavia no tiene uno. */
+  defaultName?: string;
   submitLabel: string;
   /** A donde redirigir despues de guardar (ver saveProfileAction y safeNext). */
   next: string;
 }) {
   const [state, formAction, pending] = useActionState(saveProfileAction, initialState);
   const [role, setRole] = useState<"STUDENT" | "PROFESSOR" | "OTHER">(existing?.role ?? "STUDENT");
+  const [affiliation, setAffiliation] = useState<ProfileAffiliation | null>(existing?.affiliation ?? null);
   const [careers, setCareers] = useState<string[]>(existing?.careers ?? []);
   const [studentStatus, setStudentStatus] = useState<"STUDYING" | "GRADUATED" | null>(existing?.studentStatus ?? null);
   const [, startTransition] = useTransition();
@@ -87,6 +97,38 @@ export function PerfilForm({
       className="flex flex-col gap-8 border border-border bg-card p-6 sm:p-10"
     >
       <input type="hidden" name="next" value={next} />
+      <label className="flex flex-col gap-2">
+        <span className={labelClass}>Nombre y apellido</span>
+        <input
+          type="text"
+          name="fullName"
+          required
+          autoComplete="name"
+          maxLength={120}
+          defaultValue={existing?.fullName ?? defaultName}
+          className={inputClass}
+        />
+      </label>
+
+      <fieldset className="flex flex-col gap-2.5">
+        <legend className={labelClass}>¿De dónde sos?</legend>
+        <PillToggleGroup name="affiliation" value={affiliation} onChange={setAffiliation} options={AFFILIATION_OPTIONS} />
+      </fieldset>
+
+      {needsInstitution(affiliation) && (
+        <label className="flex flex-col gap-2">
+          <span className={labelClass}>{affiliation === "WORK" ? "Empresa o lugar de trabajo" : "Universidad"}</span>
+          <input
+            type="text"
+            name="institution"
+            required
+            maxLength={120}
+            defaultValue={existing?.institution ?? ""}
+            className={inputClass}
+          />
+        </label>
+      )}
+
       <fieldset className="flex flex-col gap-2.5">
         <legend className={labelClass}>¿Cuál es tu rol?</legend>
         <PillToggleGroup
@@ -127,18 +169,35 @@ export function PerfilForm({
             />
           </fieldset>
 
-          <div className="flex flex-col gap-2">
-            <span className={labelClass}>Carrera(s)</span>
-            <CareerSelect selected={careers} onChange={setCareers} />
-          </div>
+          {affiliation === "UDESA" && (
+            <div className="flex flex-col gap-2">
+              <span className={labelClass}>Carrera(s)</span>
+              <CareerSelect selected={careers} onChange={setCareers} />
+            </div>
+          )}
 
-          {careers.includes(OTHER_CAREER_SLUG) && (
+          {affiliation === "UDESA" && careers.includes(OTHER_CAREER_SLUG) && (
             <label className="flex flex-col gap-2 border-l-2 border-crimson pl-4">
               <span className={cn(labelClass, "text-crimson-text")}>Contanos qué carrera es</span>
               <input
                 type="text"
                 name="otherCareer"
                 required
+                placeholder="Nombre de tu carrera"
+                defaultValue={existing?.otherCareer ?? ""}
+                className={inputClass}
+              />
+            </label>
+          )}
+
+          {affiliation && affiliation !== "UDESA" && (
+            <label className="flex flex-col gap-2">
+              <span className={labelClass}>Carrera</span>
+              <input
+                type="text"
+                name="otherCareer"
+                required
+                maxLength={120}
                 placeholder="Nombre de tu carrera"
                 defaultValue={existing?.otherCareer ?? ""}
                 className={inputClass}
@@ -163,6 +222,23 @@ export function PerfilForm({
           )}
         </>
       )}
+
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          name="consent"
+          required
+          defaultChecked={Boolean(existing?.consentAcceptedAt)}
+          className="mt-1 h-4 w-4 shrink-0 accent-crimson"
+        />
+        <span className="font-body text-[.9rem] leading-[1.6] text-text2">
+          Leí y acepto el{" "}
+          <Link href="/privacidad" target="_blank" className="text-crimson-text underline underline-offset-2">
+            aviso de privacidad
+          </Link>
+          .
+        </span>
+      </label>
 
       <div className="flex items-center gap-4 pt-1">
         <button
