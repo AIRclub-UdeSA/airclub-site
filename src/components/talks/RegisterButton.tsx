@@ -1,6 +1,8 @@
 "use client";
 
-import { ArrowUpRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+
+// La flecha es → y no ↗: el botón abre el diálogo en la misma página, no sale a otro sitio (igual que el de /workshops).
 
 /**
  * Lo que sabe el cliente de la cuenta frente a una charla (ver getMyTalkRegistrationsAction):
@@ -69,7 +71,7 @@ export function RegisterButton<T extends { registrationLabel?: string }>({ talk,
         <span aria-hidden="true" className="invisible">
           {label}
         </span>
-        <ArrowUpRight size={variant === "card" ? 14 : 15} aria-hidden="true" className="invisible" />
+        <ArrowRight size={variant === "card" ? 14 : 15} aria-hidden="true" className="invisible" />
       </button>
     );
   }
@@ -94,7 +96,7 @@ export function RegisterButton<T extends { registrationLabel?: string }>({ talk,
   return (
     <button type="button" onClick={() => onRegister(talk)} className={`${BASE[variant]} ${OPEN[variant]}`}>
       <span>{label}</span>
-      <ArrowUpRight size={variant === "card" ? 14 : 15} aria-hidden="true" />
+      <ArrowRight size={variant === "card" ? 14 : 15} aria-hidden="true" />
     </button>
   );
 }
