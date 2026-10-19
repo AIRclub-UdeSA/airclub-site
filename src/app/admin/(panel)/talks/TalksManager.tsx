@@ -27,6 +27,7 @@ const NEW_TBD_TEMPLATE: Omit<EditingTalk, "id"> = {
   ctaUrl: null,
   registrationOpen: false,
   capacity: null,
+  audience: null,
   confirmed: false,
   status: "PUBLISHED",
   media: [],

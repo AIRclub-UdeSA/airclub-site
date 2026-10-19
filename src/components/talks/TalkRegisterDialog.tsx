@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Calendar, Check, X } from "lucide-react";
 import { buildGoogleCalendarUrl, type SchedulableActivity } from "@/lib/calendar-types";
+import { RESTRICTED_BUTTON, RESTRICTED_NOTE } from "./RegisterButton";
 import {
   cancelTalkRegistrationAction,
   registerForTalkAction,
@@ -182,17 +183,25 @@ export function TalkRegisterDialog({
               Reintentar
             </button>
           </>
-        ) : status === "closed" || status === "full" || status === "cancelled" ? (
+        ) : status === "closed" || status === "full" || status === "restricted" || status === "cancelled" ? (
           <>
             <h2 id={titleId} className="pr-10 font-display text-[1.15rem] font-bold text-text">
               {status === "closed"
                 ? `La inscripción ${COPY[kind].this} está cerrada`
                 : status === "full"
                   ? "No quedan lugares"
-                  : "Cancelaste tu inscripción"}
+                  : status === "restricted"
+                    ? RESTRICTED_BUTTON
+                    : "Cancelaste tu inscripción"}
             </h2>
             <p className="font-body text-[.92rem] text-text2">
-              {status === "full" ? "Se completó el cupo de " : ""}&ldquo;{talk.title}&rdquo;{status === "full" ? "." : ""}
+              {status === "restricted" ? (
+                RESTRICTED_NOTE
+              ) : (
+                <>
+                  {status === "full" ? "Se completó el cupo de " : ""}&ldquo;{talk.title}&rdquo;{status === "full" ? "." : ""}
+                </>
+              )}
             </p>
             <button
               type="button"

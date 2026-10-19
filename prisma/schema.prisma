@@ -181,6 +181,13 @@ enum TalkStatus {
   PUBLISHED
 }
 
+// Quién puede inscribirse a una charla o a un taller presencial: solo cuentas @udesa.edu.ar o cualquiera.
+// Sin valor por defecto: al crear un evento se elige a propósito (los que ya existían quedaron en UDESA).
+enum Audience {
+  UDESA
+  ALL
+}
+
 model Talk {
   id                 String      @id @default(cuid())
   slug               String      @unique
@@ -203,6 +210,7 @@ model Talk {
   ctaUrl             String?
   registrationOpen   Boolean     @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
   capacity           Int? // cupo de la inscripcion propia; null = sin limite
+  audience           Audience // quien puede inscribirse (ver src/lib/udesa.ts); se ve para todos
   status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
   confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
   order              Int         @default(0)
@@ -317,6 +325,7 @@ model WorkshopSession {
   recordingUrl     String? // siempre link externo (YouTube), como en Talk
   registrationOpen Boolean                @default(false) // inscripción propia del sitio mientras no pasó
   capacity         Int? // cupo de la inscripción; null = sin límite
+  audience         Audience // quién puede inscribirse (ver src/lib/udesa.ts); se ve para todos
   status           TalkStatus             @default(PUBLISHED)
   order            Int                    @default(0)
   createdAt        DateTime               @default(now())

@@ -7,6 +7,7 @@ import { deleteWorkshopEntity, moveWorkshopEntity, type WorkshopEntity } from ".
 import { GuideForm, SessionForm, TrackForm } from "./WorkshopForms";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
 import type { GuideBlock } from "@/lib/guide-blocks";
+import type { Audience } from "@/lib/udesa";
 
 type Status = "DRAFT" | "PUBLISHED";
 
@@ -44,6 +45,7 @@ export type AdminWorkshopSession = {
   recordingUrl: string | null;
   registrationOpen: boolean;
   capacity: number | null;
+  audience: Audience;
   /** Cuántos se inscribieron (#70). La lista está en /admin/comunidad. */
   registrations: number;
   status: Status;

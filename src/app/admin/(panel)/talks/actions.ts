@@ -5,6 +5,7 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionEdit } from "@/lib/admin/permissions";
 import { removeStorageFiles, signUpload, type SignedUpload } from "@/lib/admin/storage";
 import { isPendingUpload } from "@/lib/upload-rules";
+import { AUDIENCE_REQUIRED_ERROR, parseAudience } from "@/lib/udesa";
 import type { MediaItem, SlideItem, LinkItem, SpeakerItem } from "./types";
 
 const SECTION = "talks";
@@ -171,6 +172,7 @@ function talkScalarData(formData: FormData) {
     ctaUrl: optStr(formData, "ctaUrl"),
     registrationOpen: formData.get("registrationOpen") === "on",
     capacity: optNumber(formData, "capacity"),
+    audience: parseAudience(formData.get("audience")),
     confirmed: formData.get("confirmed") === "on",
     status: (formData.get("status") === "DRAFT" ? "DRAFT" : "PUBLISHED") as "DRAFT" | "PUBLISHED",
   };
@@ -189,6 +191,7 @@ function validateTalkData(data: ReturnType<typeof talkScalarData>): string | nul
   if (data.capacity !== null && (!Number.isInteger(data.capacity) || data.capacity < 1)) {
     return "El cupo tiene que ser un número entero mayor a 0, o quedar vacío (sin límite).";
   }
+  if (!data.audience) return AUDIENCE_REQUIRED_ERROR;
   if (data.startsAt && data.endsAt && data.endsAt < data.startsAt) return "La fecha de fin no puede ser anterior a la de inicio.";
   return null;
 }
@@ -216,6 +219,7 @@ function talkAuditSnapshot(talk: {
   ctaUrl: string | null;
   registrationOpen: boolean;
   capacity: number | null;
+  audience: string;
   confirmed: boolean;
   status: string;
   order: number;
@@ -237,6 +241,8 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
   const data = talkScalarData(formData);
   const error = validateTalkData(data);
   if (error) return { error };
+  const audience = data.audience; // validateTalkData ya exigió que esté
+  if (!audience) return { error: AUDIENCE_REQUIRED_ERROR };
 
   const speakers = parseSpeakerItems(str(formData, "speakers") || "[]");
   const media = parseMediaItems(str(formData, "media") || "[]");
@@ -251,6 +257,7 @@ export async function createTalk(_prevState: ActionState, formData: FormData): P
       const created = await tx.talk.create({
         data: {
           ...data,
+          audience,
           ...legacySpeakerColumns(speakers),
           order: (last?.order ?? -1) + 1,
           speakers: { createMany: { data: speakers } },
@@ -287,6 +294,8 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
   const data = talkScalarData(formData);
   const error = validateTalkData(data);
   if (error) return { error };
+  const audience = data.audience; // validateTalkData ya exigió que esté
+  if (!audience) return { error: AUDIENCE_REQUIRED_ERROR };
 
   const speakers = parseSpeakerItems(str(formData, "speakers") || "[]");
   const media = parseMediaItems(str(formData, "media") || "[]");
@@ -304,6 +313,7 @@ export async function updateTalk(_prevState: ActionState, formData: FormData): P
         where: { id },
         data: {
           ...data,
+          audience,
           ...legacySpeakerColumns(speakers),
           speakers: { deleteMany: {}, createMany: { data: speakers } },
           media: { deleteMany: {}, createMany: { data: media } },

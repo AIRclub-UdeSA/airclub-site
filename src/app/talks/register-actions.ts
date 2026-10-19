@@ -4,13 +4,15 @@ import { redirect } from "next/navigation";
 import { Prisma, prisma } from "@/lib/prisma";
 import { isUpcoming } from "@/lib/dates";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
+import { canRegisterTo } from "@/lib/udesa";
 import { isProfileComplete } from "@/lib/perfil/completeness";
 
 /**
  * `closed`: la charla no existe, es un borrador, no tiene inscripción propia o ya pasó.
  * `full`: se llegó al cupo (`Talk.capacity`).
+ * `restricted`: la charla es solo para la comunidad UdeSA (`Talk.audience`) y el mail de la sesión no lo es.
  */
-export type RegisterResult = { status: "registered" | "already" | "closed" | "full" };
+export type RegisterResult = { status: "registered" | "already" | "closed" | "full" | "restricted" };
 export type CancelResult = { status: "cancelled" | "closed" };
 
 // Intentos de la transacción de inscripción ante un conflicto de serialización (P2034).
@@ -44,7 +46,7 @@ async function requireRegistrantEmail(talkSlug: string): Promise<string> {
 async function findUpcomingTalk(talkSlug: string) {
   const talk = await prisma.talk.findUnique({
     where: { slug: talkSlug },
-    select: { id: true, status: true, registrationOpen: true, startsAt: true, endsAt: true, capacity: true },
+    select: { id: true, status: true, registrationOpen: true, startsAt: true, endsAt: true, capacity: true, audience: true },
   });
   if (!talk || talk.status !== "PUBLISHED" || !talk.startsAt || !isUpcoming(talk.startsAt, talk.endsAt)) return null;
   return talk;
@@ -73,6 +75,9 @@ export async function registerForTalkAction(talkSlug: string): Promise<RegisterR
             select: { id: true },
           });
           if (existing) return { status: "already" };
+
+          // Después de "already" (quien ya estaba adentro lo sigue estando) y antes del cupo: no se inscribe nadie de afuera.
+          if (!canRegisterTo(talk.audience, email)) return { status: "restricted" };
 
           if (talk.capacity !== null) {
             const taken = await tx.talkRegistration.count({ where: { talkId: talk.id } });
@@ -108,10 +113,13 @@ export async function cancelTalkRegistrationAction(talkSlug: string): Promise<Ca
 
 /**
  * Estado de la cuenta logueada frente a las charlas con inscripción propia:
- * `registered` son los slugs en los que ya está inscripta y `full` los que llegaron al cupo sin
- * que ella esté adentro. Sin sesión, `signedIn: false`.
+ * `registered` son los slugs en los que ya está inscripta, `full` los que llegaron al cupo sin
+ * que ella esté adentro y `restricted` los que son solo para la comunidad UdeSA y su mail no lo es
+ * (si ya estaba inscripta, queda en `registered` y puede cancelar). Sin sesión, `signedIn: false`.
  */
-export type MyRegistrationsResult = { signedIn: false } | { signedIn: true; registered: string[]; full: string[] };
+export type MyRegistrationsResult =
+  | { signedIn: false }
+  | { signedIn: true; registered: string[]; full: string[]; restricted: string[] };
 
 /**
  * /talks y /eventos son estáticas (ISR): lo que depende de quién mira se pide desde el cliente
@@ -123,7 +131,7 @@ export async function getMyTalkRegistrationsAction(): Promise<MyRegistrationsRes
 
   const talks = await prisma.talk.findMany({
     where: { status: "PUBLISHED", registrationOpen: true, startsAt: { not: null } },
-    select: { id: true, slug: true, startsAt: true, endsAt: true, capacity: true, _count: { select: { registrations: true } } },
+    select: { id: true, slug: true, startsAt: true, endsAt: true, capacity: true, audience: true, _count: { select: { registrations: true } } },
   });
 
   const mine = await prisma.talkRegistration.findMany({
@@ -134,10 +142,12 @@ export async function getMyTalkRegistrationsAction(): Promise<MyRegistrationsRes
 
   const registered: string[] = [];
   const full: string[] = [];
+  const restricted: string[] = [];
   for (const t of talks) {
     if (!t.startsAt || !isUpcoming(t.startsAt, t.endsAt)) continue;
     if (mineIds.has(t.id)) registered.push(t.slug);
+    else if (!canRegisterTo(t.audience, email)) restricted.push(t.slug);
     else if (t.capacity !== null && t._count.registrations >= t.capacity) full.push(t.slug);
   }
-  return { signedIn: true, registered, full };
+  return { signedIn: true, registered, full, restricted };
 }

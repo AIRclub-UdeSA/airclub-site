@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadToSignedUrl } from "@/lib/admin/upload-client";
 import { PENDING_PREFIX } from "@/lib/upload-rules";
+import { AUDIENCE_OPTIONS } from "@/lib/udesa";
 import { FileField } from "../talks/FileField";
 import { ListEditor } from "../talks/ListEditor";
 import type { LinkItem, MediaItem, SlideItem } from "../talks/types";
@@ -487,6 +488,19 @@ export function SessionForm({
         <label className={`${labelClass} max-w-[16rem]`}>
           Cupo
           <input type="number" name="capacity" min={1} step={1} placeholder="Sin límite" defaultValue={item?.capacity ?? ""} className={inputClass} />
+        </label>
+        <label className={`${labelClass} max-w-[24rem]`}>
+          Quién puede inscribirse
+          <select name="audience" required defaultValue={item?.audience ?? ""} className={inputClass}>
+            <option value="" disabled>
+              Elegí una opción
+            </option>
+            {AUDIENCE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </label>
         <p className={hintClass}>
           Con fecha futura, el taller aparece en &ldquo;Próximos talleres&rdquo; de /workshops y en /eventos; con la inscripción abierta,

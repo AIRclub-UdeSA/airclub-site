@@ -7,6 +7,7 @@ import { ListEditor } from "./ListEditor";
 import { uploadToSignedUrl } from "@/lib/admin/upload-client";
 import type { MediaItem, SlideItem, LinkItem, SpeakerItem } from "./types";
 import { PENDING_PREFIX } from "@/lib/upload-rules";
+import { AUDIENCE_OPTIONS, type Audience } from "@/lib/udesa";
 
 const PENDING_PATTERN = new RegExp(`${PENDING_PREFIX}[0-9a-f-]{36}`, "g");
 
@@ -37,6 +38,8 @@ export type EditingTalk = {
   ctaUrl: string | null;
   registrationOpen: boolean;
   capacity: number | null;
+  /** null = charla nueva: no se preselecciona nada, se elige a propósito. */
+  audience: Audience | null;
   confirmed: boolean;
   status: "DRAFT" | "PUBLISHED";
   media: MediaItem[];
@@ -393,6 +396,19 @@ export function TalkForm({
             className={inputClass}
           />
         </label>
+        <label className={`${labelClass} max-w-[24rem]`}>
+          Quién puede inscribirse
+          <select name="audience" required defaultValue={values?.audience ?? ""} className={inputClass}>
+            <option value="" disabled>
+              Elegí una opción
+            </option>
+            {AUDIENCE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex flex-wrap gap-3">
           <label className={labelClass}>
             Texto del botón
@@ -407,7 +423,8 @@ export function TalkForm({
           El botón aparece en el panel de la próxima charla, en su tarjeta del cronograma y en su detalle. Cuando la charla termina se
           oculta solo, así que en una charla pasada no hace falta borrarlo. Con la inscripción propia tildada, el link externo tiene que
           quedar vacío (son excluyentes); el texto del botón es opcional, por default dice &ldquo;Inscribirme&rdquo;. Con cupo, al llenarse el diálogo avisa que no quedan
-          lugares; vacío es sin límite.
+          lugares; vacío es sin límite. La audiencia se ve en la charla para todos; si es solo UdeSA, quien entra con otra cuenta ve el botón
+          deshabilitado con la explicación. Es obligatoria, y vale también para la inscripción propia de más adelante.
         </p>
       </fieldset>
 

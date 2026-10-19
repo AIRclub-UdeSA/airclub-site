@@ -1,8 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
-
-const ALLOWED_EMAIL_DOMAIN = "@udesa.edu.ar";
+import { isUdesaEmail } from "@/lib/udesa";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [Google],
@@ -10,7 +9,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: "/admin/login", error: "/ingresar/error" },
   callbacks: {
     async signIn({ user }) {
-      return !!user.email?.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN);
+      return isUdesaEmail(user.email);
     },
     async jwt({ token }) {
       if (!token.email) return token;

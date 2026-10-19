@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma, prisma } from "@/lib/prisma";
 import { isUpcoming } from "@/lib/dates";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
+import { canRegisterTo } from "@/lib/udesa";
 import { isProfileComplete } from "@/lib/perfil/completeness";
 import type { CancelResult, MyRegistrationsResult, RegisterResult } from "@/app/talks/register-actions";
 
@@ -36,7 +37,7 @@ async function requireRegistrantEmail(slug: string): Promise<string> {
 async function findUpcomingSession(slug: string) {
   const session = await prisma.workshopSession.findUnique({
     where: { slug },
-    select: { id: true, status: true, registrationOpen: true, startsAt: true, endsAt: true, capacity: true, track: { select: { status: true } } },
+    select: { id: true, status: true, registrationOpen: true, startsAt: true, endsAt: true, capacity: true, audience: true, track: { select: { status: true } } },
   });
   if (!session || session.status !== "PUBLISHED" || session.track.status !== "PUBLISHED") return null;
   if (!session.startsAt || !isUpcoming(session.startsAt, session.endsAt)) return null;
@@ -60,6 +61,9 @@ export async function registerForWorkshopAction(slug: string): Promise<RegisterR
             select: { id: true },
           });
           if (existing) return { status: "already" };
+
+          // Como en las charlas: después de "already" y antes del cupo.
+          if (!canRegisterTo(session.audience, email)) return { status: "restricted" };
 
           if (session.capacity !== null) {
             const taken = await tx.workshopRegistration.count({ where: { sessionId: session.id } });
@@ -100,7 +104,7 @@ export async function cancelWorkshopRegistrationAction(slug: string): Promise<Ca
 
 /**
  * Estado de la cuenta logueada frente a los talleres con inscripción propia, como getMyTalkRegistrationsAction: en cuáles
- * ya está inscripta y cuáles llegaron al cupo sin ella adentro. /workshops es estática (ISR), así que lo pide el cliente.
+ * ya está inscripta y cuáles llegaron al cupo sin ella adentro y cuáles son solo UdeSA y su mail no lo es. /workshops es estática (ISR), así que lo pide el cliente.
  */
 export async function getMyWorkshopRegistrationsAction(): Promise<MyRegistrationsResult> {
   const email = await getSessionEmail();
@@ -108,7 +112,7 @@ export async function getMyWorkshopRegistrationsAction(): Promise<MyRegistration
 
   const sessions = await prisma.workshopSession.findMany({
     where: { status: "PUBLISHED", track: { status: "PUBLISHED" }, registrationOpen: true, startsAt: { not: null } },
-    select: { id: true, slug: true, startsAt: true, endsAt: true, capacity: true, _count: { select: { registrations: true } } },
+    select: { id: true, slug: true, startsAt: true, endsAt: true, capacity: true, audience: true, _count: { select: { registrations: true } } },
   });
 
   const mine = await prisma.workshopRegistration.findMany({
@@ -119,10 +123,12 @@ export async function getMyWorkshopRegistrationsAction(): Promise<MyRegistration
 
   const registered: string[] = [];
   const full: string[] = [];
+  const restricted: string[] = [];
   for (const s of sessions) {
     if (!s.startsAt || !isUpcoming(s.startsAt, s.endsAt)) continue;
     if (mineIds.has(s.id)) registered.push(s.slug);
+    else if (!canRegisterTo(s.audience, email)) restricted.push(s.slug);
     else if (s.capacity !== null && s._count.registrations >= s.capacity) full.push(s.slug);
   }
-  return { signedIn: true, registered, full };
+  return { signedIn: true, registered, full, restricted };
 }
