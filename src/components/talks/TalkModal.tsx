@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Download, ExternalLink, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Calendar, Download, X } from "lucide-react";
 import { LinkedinIcon } from "@/components/equipo/SocialIcons";
 import { RegisterButton, type RegistrationState } from "./RegisterButton";
 import type { TimelineTalk } from "./TalksTimeline";
 import { TalkSlideshow } from "./TalkSlideshow";
-import { talkDateParts, talkDateText } from "@/lib/talk-format";
+import { TalkLinks, TalkRecording, TalkSlides, TalkTabs, TEXT_LINK } from "./TalkMaterial";
+import { talkDateParts, talkDateText, textParagraphs } from "@/lib/talk-format";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
 import { buildGoogleCalendarUrl, buildIcsDataUri } from "@/lib/calendar-types";
 import { cn } from "@/lib/utils";
@@ -29,8 +30,6 @@ interface TalkModalProps {
 const CLOSE_MS = 200;
 
 const LABEL = "font-mono text-[.74rem] uppercase tracking-[.14em] text-text3";
-const TEXT_LINK =
-  "inline-flex items-center gap-1.5 font-mono text-[.76rem] uppercase tracking-[.12em] text-crimson-text underline decoration-crimson-text/40 underline-offset-[6px] transition-colors hover:decoration-crimson-text";
 
 export function TalkModal({
   talk,
@@ -43,7 +42,6 @@ export function TalkModal({
   registrationOf,
 }: TalkModalProps) {
   const [activeSection, setActiveSection] = useState<TalkSection>(initialSection);
-  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [prevSlug, setPrevSlug] = useState(talk?.slug);
   const [prevInitialSection, setPrevInitialSection] = useState(initialSection);
   const [closing, setClosing] = useState(false);
@@ -57,7 +55,6 @@ export function TalkModal({
     setPrevSlug(talk?.slug);
     setPrevInitialSection(initialSection);
     setActiveSection(initialSection);
-    setActiveSlideIndex(0);
   }
 
   const visible = isOpen && talk !== null;
@@ -110,7 +107,6 @@ export function TalkModal({
   if (!visible || !talk) return null;
 
   const slides = talk.slides ?? [];
-  const currentSlide = slides[activeSlideIndex] ?? slides[0];
   const youtubeEmbedUrl = talk.recordingUrl ? getYoutubeEmbedUrl(talk.recordingUrl) : null;
 
   const upcoming = Boolean(talk.isUpcoming);
@@ -216,31 +212,7 @@ export function TalkModal({
             )}
 
             {!upcoming && tabs.length > 1 && (
-              <nav
-                aria-label="Secciones de la charla"
-                className="mt-7 flex gap-7 overflow-x-auto overflow-y-hidden border-b border-border"
-              >
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    aria-current={section === tab.id ? "true" : undefined}
-                    onClick={() => {
-                      setActiveSection(tab.id);
-                      setActiveSlideIndex(0);
-                    }}
-                    className={cn(
-                      "relative shrink-0 cursor-pointer pb-3 font-mono text-[.78rem] uppercase tracking-[.14em] transition-colors",
-                      "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-crimson after:transition-opacity",
-                      section === tab.id
-                        ? "text-text after:opacity-100"
-                        : "text-text3 after:opacity-0 hover:text-text",
-                    )}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
+              <TalkTabs tabs={tabs} active={section} onSelect={setActiveSection} label="Secciones de la charla" className="mt-7" />
             )}
 
             {/* RESUMEN: datos y oradores a la izquierda, texto a la derecha */}
@@ -420,100 +392,24 @@ export function TalkModal({
                   )}
 
                   <div className="space-y-4 font-body text-[1.04rem] leading-[1.85] text-text2">
-                    {talk.abstract.split("\n\n").map((paragraph, idx) => (
+                    {textParagraphs(talk.abstract).map((paragraph, idx) => (
                       <p key={idx} className="max-w-[64ch]">
                         {paragraph}
                       </p>
                     ))}
                   </div>
 
-                  {talk.links && talk.links.length > 0 && (
-                    <ul className="divide-y divide-border border-y border-border">
-                      {talk.links.map((link) => (
-                        <li key={link.label}>
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group flex items-center justify-between gap-4 py-3.5 text-[.98rem] text-text transition-colors hover:text-crimson-text"
-                          >
-                            <span>{link.label}</span>
-                            <ExternalLink
-                              size={15}
-                              aria-hidden="true"
-                              className="shrink-0 text-text3 transition-colors group-hover:text-crimson-text"
-                            />
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {talk.links && talk.links.length > 0 && <TalkLinks links={talk.links} />}
                 </div>
               </div>
             )}
 
             {/* DIAPOSITIVAS */}
-            {section === "slides" && (
-              <div className="mt-8 space-y-4">
-                {slides.length > 1 && (
-                  <div className="flex flex-wrap gap-x-6 gap-y-2">
-                    {slides.map((s, idx) => (
-                      <button
-                        key={s.title}
-                        type="button"
-                        onClick={() => setActiveSlideIndex(idx)}
-                        aria-current={idx === activeSlideIndex ? "true" : undefined}
-                        className={cn(
-                          "cursor-pointer text-left text-[.95rem] underline-offset-[6px] transition-colors",
-                          idx === activeSlideIndex
-                            ? "font-semibold text-text underline decoration-crimson decoration-2"
-                            : "text-text3 hover:text-text",
-                        )}
-                      >
-                        {s.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {currentSlide && (
-                  <>
-                    <div className="relative aspect-video w-full overflow-hidden bg-black">
-                      <iframe
-                        src={currentSlide.embedUrl}
-                        title={currentSlide.title}
-                        className="h-full w-full border-0"
-                        allowFullScreen
-                        loading="lazy"
-                      />
-                    </div>
-                    <a href={currentSlide.openUrl} target="_blank" rel="noopener noreferrer" className={TEXT_LINK}>
-                      Abrir a pantalla completa
-                      <ExternalLink size={14} aria-hidden="true" />
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
+            {section === "slides" && <TalkSlides key={talk.slug} slides={slides} className="mt-8" />}
 
             {/* GRABACIÓN */}
             {section === "recording" && talk.recordingUrl && (
-              <div className="mt-8 space-y-4">
-                {youtubeEmbedUrl && (
-                  <div className="relative aspect-video w-full overflow-hidden bg-black">
-                    <iframe
-                      src={youtubeEmbedUrl}
-                      title="Grabación de la charla"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="h-full w-full border-0"
-                    />
-                  </div>
-                )}
-                <a href={talk.recordingUrl} target="_blank" rel="noopener noreferrer" className={TEXT_LINK}>
-                  Ver en YouTube
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              </div>
+              <TalkRecording url={talk.recordingUrl} title="Grabación de la charla" className="mt-8" />
             )}
 
             {(prevTalk || nextTalk) && (

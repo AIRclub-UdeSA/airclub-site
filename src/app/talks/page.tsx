@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getAllTalks, talksHubProps } from "@/lib/talks";
 import { TalksHub } from "@/components/talks/TalksHub";
 import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/shared/JsonLd";
+import { talksJsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = buildMetadata({
   title: "AIR Talks, AIR Club UdeSA",
@@ -15,5 +17,11 @@ export const metadata: Metadata = buildMetadata({
 export const revalidate = 60;
 
 export default async function TalksPage() {
-  return <TalksHub {...talksHubProps(await getAllTalks())} />;
+  const talks = await getAllTalks();
+  return (
+    <>
+      <JsonLd data={talksJsonLd(talks)} />
+      <TalksHub {...talksHubProps(talks)} />
+    </>
+  );
 }

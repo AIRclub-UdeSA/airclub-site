@@ -21,6 +21,8 @@ export type SeedEvent = {
   instructor?: string;
   speakers?: TalkSpeaker[];
   prerequisites?: string;
+  /** Solo para `category: "workshop"`: la `key` del workshop de /workshops en el que va cuando ya pasó. */
+  track?: string;
 };
 
 export const events: SeedEvent[] = [

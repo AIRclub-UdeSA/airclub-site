@@ -41,6 +41,9 @@ export interface CalendarActivity {
   externalUrl?: string;
   ctaLabel?: string;
   cta?: { label: string; url: string };
+  /** Solo charlas: inscripción propia en la página (#50), con el mismo botón y diálogo que /talks. Excluye `cta`. */
+  registrationOpen?: boolean;
+  registrationLabel?: string;
   talkSlug?: string;
   instructorOrSpeaker?: string;
   speaker?: CalendarSpeaker;

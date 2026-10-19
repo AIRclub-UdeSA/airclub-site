@@ -13,12 +13,12 @@ Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Pr
 
 | Carpeta / archivo | Qué es |
 | --- | --- |
-| `src/app/` | Rutas de la app: Home, `eventos`, `talks`, `equipo`, `contacto`, `perfil`, `ingresar`, `bienvenida`, `admin` y `api`. `plataformas` y `proyectos` están hechas pero redirigen a `proximamente` hasta que se publiquen |
-| `src/components/` | Componentes por sección (`home/`, `talks/`, `equipo/`, `eventos/`, `contacto/`, `perfil/`, `proyectos/`, `admin/`), de layout (`layout/`) y compartidos (`shared/`) |
-| `src/lib/` | Acceso a datos (`events.ts`, `talks.ts`, `team.ts`, `robots.ts`, `projects.ts`), permisos y utilidades de `admin/` y `perfil/`, SEO (`seo.ts`), utilidades y el cliente de Prisma |
-| `prisma/schema.prisma` | Modelo de datos: eventos y sus inscripciones, robots (con specs y links), charlas (con oradores, inscripciones, medios, slides y links), equipo y sus fotos de grupo, perfiles de usuario, administradores y registro de auditoría |
-| `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo y charlas se siembran a Postgres desde acá con `npm run db:seed` |
-| `public/` | Estáticos: logo, favicon y fotos, más `equipo/`, `talks/`, `stickers/` y los modelos 3D (`models/`) |
+| `src/app/` | Rutas de la app: Home, `eventos`, `talks`, `workshops`, `equipo`, `contacto`, `perfil`, `ingresar`, `bienvenida`, `admin` y `api`. `plataformas` y `proyectos` están hechas pero redirigen a `proximamente` hasta que se publiquen |
+| `src/components/` | Componentes por sección (`home/`, `talks/`, `workshops/`, `equipo/`, `eventos/`, `contacto/`, `perfil/`, `proyectos/`, `admin/`), de layout (`layout/`) y compartidos (`shared/`) |
+| `src/lib/` | Acceso a datos (`events.ts`, `talks.ts`, `workshops.ts`, `team.ts`, `robots.ts`, `projects.ts`), permisos y utilidades de `admin/` y `perfil/`, SEO (`seo.ts`), utilidades y el cliente de Prisma |
+| `prisma/schema.prisma` | Modelo de datos: eventos y sus inscripciones, robots (con specs y links), charlas (con oradores, inscripciones, medios, slides y links), workshops (con guías, talleres presenciales, inscripciones y completados), equipo y sus fotos de grupo, perfiles de usuario, administradores y registro de auditoría |
+| `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo, charlas y workshops se siembran a Postgres desde acá con `npm run db:seed` |
+| `public/` | Estáticos: logo, favicon y fotos, más `equipo/`, `talks/`, `workshops/`, `stickers/` y los modelos 3D (`models/`) |
 
 ## Ver el sitio localmente
 
@@ -64,10 +64,13 @@ CI (`typecheck`, `lint`, `build`) corre en cada PR contra `main`.
 
 Eventos, robots, proyectos y contacto se editan directamente en `prisma/seed-data/*.ts` (arrays tipados), con el mismo flujo de PR que el resto del código. El estado "próximo/pasado" de un evento se calcula solo a partir de su fecha: no hay que marcarlo a mano ni acordarse de sacarlo cuando termina.
 
-El equipo y las charlas viven en la base, y `npm run db:seed` carga en ella lo que dice `prisma/seed-data/`:
+El equipo, las charlas y los workshops viven en la base, y `npm run db:seed` carga en ella lo que dice `prisma/seed-data/`:
 
 - **Equipo:** se edita en `prisma/seed-data/team.ts` y se corre `npm run db:seed`, que crea o actualiza a cada persona. El array (`founders` / `collaborators`) define en qué lista aparece, y `role` es su cargo, opcional. El `slug` de cada persona es su identificador fijo: no cambiarlo aunque cambie el nombre.
 - **Charlas:** la fuente de verdad es la base (se editan desde el panel). El seed solo crea las charlas que no existen y nunca modifica una existente, así que correrlo no pisa lo editado.
+- **Workshops:** la fuente de verdad es la base: se cargan desde `/admin/workshops` (sección "Workshops", asignable a un Editor), igual que las charlas. Como con ellas, el seed solo crea lo que falta y nunca pisa lo editado, y sin base (el build de CI) `/workshops` muestra lo de `prisma/seed-data/workshops.ts`.
+
+`/workshops` muestra una caja por workshop (Linux, ROS 2 y robótica…), en el orden del panel. Cada workshop tiene su página (`/workshops/<clave>`) con sus talleres adentro, y cada taller la suya (`/workshops/<clave>/<slug>`); si un workshop tiene un solo taller y no tiene guías, su caja lleva directo al taller. Un workshop tiene dos tipos de talleres: **guías asincrónicas** (en orden; su contenido puede vivir en otro sitio, como las del Challenge JAR en `jar_site` con el código en `jar_workshops`, o adentro de este, armado con bloques en el panel) y **talleres presenciales**, con el mismo material que una charla (fotos, diapositivas, grabación y links). La clave y el slug son identificadores fijos: van en la URL y el slug es con lo que se guarda quién hizo cada taller, así que el panel no deja cambiarlos. Un taller presencial que viene se carga en el mismo panel con fecha futura: aparece en los próximos de `/workshops` (y en la página de su workshop) y en `/eventos`, con inscripción propia si se abre (como las charlas), y cuando termina pasa solo a los ya hechos de su workshop; a quien se inscribió le cuenta como hecho sin tocar nada. Los inscriptos se ven en `/admin/comunidad`. Un evento con `category: "workshop"` y su `track` en `prisma/seed-data/events.ts` sigue funcionando, con su link externo. Cada persona ve su recorrido en `/perfil/aprendizaje`.
 
 El contenido de la base se carga desde `/admin`, no desde el código. `seed-data` solo sirve para poblar una base vacía.
 

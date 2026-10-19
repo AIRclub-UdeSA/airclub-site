@@ -95,3 +95,15 @@ export function talkCover(media: TalkMedia[]): string | null {
 export function moreSpeakersLabel(speakers?: unknown[]): string | null {
   return speakers && speakers.length > 1 ? `y ${speakers.length - 1} más` : null;
 }
+
+/**
+ * Párrafos de un texto cargado en el panel (abstract de una charla, "qué se vio" de un taller): los separa un renglón en
+ * blanco. Un textarea manda los saltos de línea como `\r\n`, así que cortar por `"\n\n"` no alcanza: con lo guardado desde
+ * el panel salía todo en un solo párrafo.
+ */
+export function textParagraphs(text: string): string[] {
+  return text
+    .split(/\r?\n[ \t]*\r?\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
