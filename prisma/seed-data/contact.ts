@@ -1,8 +1,5 @@
 export const CONTACT_EMAIL = "airclub@udesa.edu.ar";
 
-export const COMMUNITY_FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSeJj7cS6SaCPaBr4a6dfJzeFF9W6BRWYxfLe0BEcGepSIvJBw/viewform";
-
 /** Formulario para proponer un proyecto o una idea ("Tengo una idea" de la landing). No es el de inscripción al JAR. */
 export const PROJECT_PROPOSAL_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSe-lew786UN7sTBu1ZOLYjrVAzwFXKTMiSTKS7wUhQFpNhHqQ/viewform";
@@ -30,6 +27,8 @@ export type SeedContactReason = {
   desc: string;
   /** Texto del botón; el destino sale de `url` o, si no hay, del mail del club con `subject` y `body`. */
   action: string;
+  /** "account": no va a un formulario ni a un mail, es entrar con Google y completar el perfil del sitio (CommunityJoinAction). */
+  kind?: "account";
   url?: string;
   subject?: string;
   body?: string[];
@@ -73,9 +72,9 @@ export const reasons: SeedContactReason[] = [
   {
     key: "comunidad",
     title: "Sumarme a la comunidad",
-    desc: "Sin requisitos ni experiencia previa. Te llegan las novedades, charlas, cursos y workshops.",
-    action: "Completar el formulario",
-    url: COMMUNITY_FORM_URL,
+    desc: "Sin requisitos ni experiencia previa. Entrás con Google, completás tu perfil y ya sos parte.",
+    action: "Sumarme con Google",
+    kind: "account",
   },
   {
     key: "equipo",
