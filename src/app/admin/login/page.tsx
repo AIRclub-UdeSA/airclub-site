@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signIn } from "@/auth";
 
 export default async function AdminLoginPage({ searchParams }: PageProps<"/admin/login">) {
@@ -7,7 +8,9 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center gap-6 px-6 pt-24 text-center">
       <h1 className="font-display text-2xl font-black uppercase text-text">AIR Club UdeSA</h1>
-      <p className="text-text2">Entrá con tu cuenta de Google de UdeSA (@udesa.edu.ar).</p>
+      <p className="text-text2">
+        Este panel es solo para el equipo del club: entrá con tu cuenta de Google de UdeSA (@udesa.edu.ar).
+      </p>
       {errorKey && (
         <p className="text-sm text-crimson">No se pudo iniciar sesión, probá de nuevo.</p>
       )}
@@ -24,6 +27,13 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
           Continuar con Google
         </button>
       </form>
+      <p className="text-sm text-text2">
+        ¿Querés sumarte a la comunidad? Es desde{" "}
+        <Link href="/contacto" className="text-text underline underline-offset-4 hover:text-crimson-text">
+          Contacto
+        </Link>
+        .
+      </p>
     </div>
   );
 }
