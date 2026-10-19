@@ -40,6 +40,7 @@ Thumbs.db
 .vscode/
 .idea/
 .claude/
+.agents/
 
 # Capturas de auditoría / UI
 /public/eventos/capturas/

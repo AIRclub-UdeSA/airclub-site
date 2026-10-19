@@ -3,22 +3,22 @@
 Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, el equipo y los enlaces al Challenge JAR 2026.
 
 > [!NOTE]
-> El sitio es Next.js + Supabase y se publica en Vercel: producción sale de la rama `main` en https://airclub.com.ar y cada PR tiene su preview. **Antes de tocar diseño o frontend, leer [DESIGN.md](DESIGN.md)** (qué no se toca, qué ya se probó y se rechazó). [CONTEXTO.md](CONTEXTO.md) es el contexto histórico del rediseño.
+> El sitio es Next.js + Supabase y se publica en Vercel: producción sale de la rama `main` en https://airclub.com.ar y cada PR tiene su preview. **Antes de tocar diseño o frontend, leer [DESIGN.md](DESIGN.md)** (qué no se toca, qué ya se probó y se rechazó). [CONTEXTO-historico.md](docs/CONTEXTO-historico.md) es el contexto histórico del rediseño.
 
 ## Stack
 
-Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Prisma para el contenido dinámico. Sin login ni RSVP todavía — el modelo de datos ya los deja preparados, pero no están construidos en esta fase.
+Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Prisma para el contenido dinámico. Hay login con Google (cuentas @udesa.edu.ar), perfil público, inscripción a charlas y un panel `/admin`.
 
 ## Estructura
 
 | Carpeta / archivo | Qué es |
 | --- | --- |
-| `src/app/` | Rutas de la app (Home, Talks, Workshops, Eventos, Plataformas, Equipo, Contacto) |
-| `src/components/` | Componentes de layout (`layout/`), compartidos (`shared/`) y de Home (`home/`) |
-| `src/lib/` | Acceso a datos (`events.ts`, `robots.ts`, `team.ts`), utilidades y el cliente de Prisma |
-| `prisma/schema.prisma` | Modelo de datos (Event, EventRegistration, Robot, TeamMember) |
+| `src/app/` | Rutas de la app: Home, `eventos`, `talks`, `workshops`, `equipo`, `contacto`, `perfil`, `ingresar`, `bienvenida`, `admin` y `api`. `plataformas` y `proyectos` están hechas pero redirigen a `proximamente` hasta que se publiquen |
+| `src/components/` | Componentes por sección (`home/`, `talks/`, `workshops/`, `equipo/`, `eventos/`, `contacto/`, `perfil/`, `proyectos/`, `admin/`), de layout (`layout/`) y compartidos (`shared/`) |
+| `src/lib/` | Acceso a datos (`events.ts`, `talks.ts`, `workshops.ts`, `team.ts`, `robots.ts`, `projects.ts`), permisos y utilidades de `admin/` y `perfil/`, SEO (`seo.ts`), utilidades y el cliente de Prisma |
+| `prisma/schema.prisma` | Modelo de datos: eventos y sus inscripciones, robots (con specs y links), charlas (con oradores, inscripciones, medios, slides y links), workshops (con guías, talleres presenciales, inscripciones y completados), equipo y sus fotos de grupo, perfiles de usuario, administradores y registro de auditoría |
 | `prisma/seed-data/` | Contenido tipado. Eventos, robots, proyectos y contacto se leen directo de acá; equipo, charlas y workshops se siembran a Postgres desde acá con `npm run db:seed` |
-| `public/` | Imágenes estáticas (logo, favicon, fotos) |
+| `public/` | Estáticos: logo, favicon y fotos, más `equipo/`, `talks/`, `workshops/`, `stickers/` y los modelos 3D (`models/`) |
 
 ## Ver el sitio localmente
 
@@ -53,6 +53,12 @@ gh pr create --base main
 ```
 
 CI (`typecheck`, `lint`, `build`) corre en cada PR contra `main`.
+
+### Capturas, borradores y ramas
+
+- **Capturas de un PR:** se arrastran a la descripción del PR (GitHub las aloja solo). No se commitean ni se suben a ramas aparte (`pr-assets/`, `review-assets/`, `docs/screenshots/`).
+- **Lo local y temporal** (borradores, mails, capturas de trabajo, datos de prueba) va afuera del repo, en una carpeta propia.
+- **Ramas:** se borran al mergear el PR (botón «Delete branch» en GitHub y `git branch -d` en local).
 
 ### Contenido (eventos, robots, equipo)
 
@@ -106,5 +112,7 @@ convert foto-original.png -strip -interlace Plane -quality 82 foto.jpg
 ## Convenciones
 
 Este repositorio se escribe en **español**: código, commits, PRs, issues y documentación.
+
+Las skills y la configuración personal de los agentes (`.claude/`, `.agents/`) son locales y no se versionan.
 
 Guías generales de la organización: [CONTRIBUTING](https://github.com/AIRclub-UdeSA/.github/blob/main/CONTRIBUTING.md) y [código de conducta](https://github.com/AIRclub-UdeSA/.github/blob/main/CODE_OF_CONDUCT.md).
