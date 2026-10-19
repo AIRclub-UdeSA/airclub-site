@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { ALL_CAREER_SLUGS, MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
 import { safeNext } from "@/lib/safe-next";
 import { signOut } from "@/auth";
-import { AFFILIATION_LABELS, needsInstitution } from "@/lib/perfil/completeness";
+import { AFFILIATION_LABELS, isProfileComplete, needsInstitution } from "@/lib/perfil/completeness";
 import type { ProfileAffiliation } from "../../../generated/prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -51,10 +51,17 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
 
   if (formData.get("consent") !== "on") return { error: "Para guardar el perfil tenés que aceptar el aviso de privacidad." };
   // Si ya lo había aceptado se conserva la fecha original.
-  const previous = await prisma.userProfile.findUnique({ where: { email }, select: { consentAcceptedAt: true } });
-  const consentAcceptedAt = previous?.consentAcceptedAt ?? new Date();
+  const previous = await prisma.userProfile.findUnique({
+    where: { email },
+    select: { consentAcceptedAt: true, communityJoinedAt: true },
+  });
+  const now = new Date();
+  const consentAcceptedAt = previous?.consentAcceptedAt ?? now;
+  // Todo lo que se valida acá hace al perfil completo (ver isProfileComplete): guardarlo con éxito es sumarse a la
+  // comunidad. Se completa la primera vez y no se vuelve a tocar.
+  const communityJoinedAt = previous?.communityJoinedAt ?? now;
 
-  const common = { fullName, affiliation, institution, consentAcceptedAt };
+  const common = { fullName, affiliation, institution, consentAcceptedAt, communityJoinedAt };
   const blank = { otherRole: null, careers: [], otherCareer: null, startYear: null, studentStatus: null };
 
   const role = String(formData.get("role") ?? "");
@@ -122,6 +129,24 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
     update: { role, otherRole: null, careers, otherCareer, startYear, studentStatus, ...common },
   });
   redirect(next);
+}
+
+/**
+ * Qué sabe el sitio de la cuenta logueada frente a "Sumarme a la comunidad": ser miembro es tener el perfil completo
+ * (ver isProfileComplete). /contacto y /equipo son estáticas, así que el botón lo pide desde el cliente cuando hay
+ * sesión (ver use-community-status.ts).
+ */
+export type CommunityStatusResult = { signedIn: false } | { signedIn: true; complete: boolean };
+
+export async function getMyCommunityStatusAction(): Promise<CommunityStatusResult> {
+  const email = await getSessionEmail();
+  if (!email) return { signedIn: false };
+
+  const profile = await prisma.userProfile.findUnique({
+    where: { email },
+    select: { fullName: true, affiliation: true, institution: true, consentAcceptedAt: true },
+  });
+  return { signedIn: true, complete: !!profile && isProfileComplete(profile) };
 }
 
 /**

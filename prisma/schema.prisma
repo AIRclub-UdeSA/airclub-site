@@ -25,8 +25,9 @@ enum AdminRole {
   EDITOR // acceso solo a las secciones listadas en AdminUser.sections
 }
 
-// Personas con acceso a /admin. Loguearse con Google restringido a @udesa.edu.ar no alcanza
-// por si solo: hace falta ademas estar cargado aca. Ver src/lib/admin/permissions.ts.
+// Personas con acceso a /admin. Cualquier cuenta de Google puede loguearse al sitio, pero el panel
+// pide ademas un mail @udesa.edu.ar y estar cargado aca y activo (ver adminAccessFor en
+// src/lib/auth-access.ts y src/lib/admin/permissions.ts).
 model AdminUser {
   id        String     @id @default(cuid())
   email     String     @unique
@@ -68,10 +69,11 @@ enum StudentStatus {
   GRADUATED
 }
 
-// Perfil publico de cualquier cuenta @udesa.edu.ar (no es AdminUser: una persona puede
-// tener las dos filas, por el mismo email, sin relacion entre ellas). Se completa una sola
-// vez al loguearse por primera vez (ver requireUserProfile en src/lib/perfil/require-profile.ts)
-// y despues sirve para autocompletar la inscripcion a charlas (ver #50).
+// Perfil publico de cualquier cuenta de Google (no es AdminUser: una persona puede tener las dos
+// filas, por el mismo email, sin relacion entre ellas). Se completa una sola vez al loguearse por
+// primera vez (ver requireUserProfile en src/lib/perfil/require-profile.ts) y despues sirve para
+// autocompletar la inscripcion a charlas (ver #50). Ser miembro de la comunidad es tener el perfil
+// completo (ver isProfileComplete en src/lib/perfil/completeness.ts).
 model UserProfile {
   id                String              @id @default(cuid())
   email             String              @unique
@@ -85,6 +87,7 @@ model UserProfile {
   affiliation       ProfileAffiliation? // de donde es la persona; NULL en cuentas anteriores
   institution       String? // nombre de la institucion, solo si affiliation != UDESA
   consentAcceptedAt DateTime? // cuando aceptó el aviso de /privacidad
+  communityJoinedAt DateTime? // la primera vez que el perfil quedó completo (saveProfileAction); NULL en cuentas que no lo completaron
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 }
