@@ -59,6 +59,7 @@ export default async function AdminCuentasPage({ searchParams }: PageProps<"/adm
           <BarList title="Altas por semana (últimas 8)" buckets={weekly} total={profiles.length} />
         </div>
         <BarList title="Por rol" buckets={dist.role} total={profiles.length} />
+        <BarList title="Por afiliación" buckets={dist.affiliation} total={profiles.length} />
         <BarList title="Por estado" buckets={dist.status} total={dist.status.reduce((n, b) => n + b.count, 0)} />
         <BarList title="Por carrera" buckets={dist.career} total={students} />
         <BarList title="Por año de inicio" buckets={dist.startYear} total={dist.startYear.reduce((n, b) => n + b.count, 0)} />
@@ -103,7 +104,7 @@ export default async function AdminCuentasPage({ searchParams }: PageProps<"/adm
                 <li key={p.id}>
                   <Link href={`/admin/cuentas/${p.id}`} className="flex flex-col gap-1 py-3 hover:bg-card-muted sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                     <span className="min-w-0 break-words text-sm text-text">
-                      {p.email} · <span className="text-text2">{ROLE_LABELS[p.role]}</span>
+                      {p.fullName ? `${p.fullName} · ` : ""}{p.email} · <span className="text-text2">{ROLE_LABELS[p.role]}</span>
                     </span>
                     <span className="shrink-0 font-mono text-xs text-text3">
                       {count} {count === 1 ? "inscripción" : "inscripciones"} · alta {formatDate(p.createdAt)}

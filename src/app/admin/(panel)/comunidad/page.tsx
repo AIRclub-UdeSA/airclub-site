@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { canEditSection, requireSectionView } from "@/lib/admin/permissions";
+import { AFFILIATION_LABELS } from "@/lib/perfil/completeness";
+import type { ProfileAffiliation } from "../../../../../generated/prisma/client";
 import { careerText, distributions, ROLE_LABELS, STATUS_LABELS } from "@/lib/admin/community-stats";
 import { BarList } from "@/components/admin/BarList";
 import { RemoveRegistrationButton } from "./RemoveRegistrationButton";
@@ -17,9 +19,15 @@ function formatDate(date: Date): string {
   }).format(date);
 }
 
-function profileDetail(profile: { role: "STUDENT" | "PROFESSOR" | "OTHER"; otherRole: string | null; careers: string[]; otherCareer: string | null; startYear: number | null; studentStatus: "STUDYING" | "GRADUATED" | null }): string {
+function profileDetail(profile: { affiliation: ProfileAffiliation | null; institution: string | null; role: "STUDENT" | "PROFESSOR" | "OTHER"; otherRole: string | null; careers: string[]; otherCareer: string | null; startYear: number | null; studentStatus: "STUDYING" | "GRADUATED" | null }): string {
+  const origin = profile.affiliation ? [AFFILIATION_LABELS[profile.affiliation], profile.institution].filter(Boolean).join(": ") : null;
+  const rest = roleDetail(profile);
+  return [origin, rest].filter(Boolean).join(" · ") || "—";
+}
+
+function roleDetail(profile: { role: "STUDENT" | "PROFESSOR" | "OTHER"; otherRole: string | null; careers: string[]; otherCareer: string | null; startYear: number | null; studentStatus: "STUDYING" | "GRADUATED" | null }): string {
   if (profile.role === "OTHER") return profile.otherRole ?? "—";
-  if (profile.role === "PROFESSOR") return "—";
+  if (profile.role === "PROFESSOR") return "";
   const careers = profile.careers.map((slug) => careerText(slug, profile.otherCareer));
   const status = profile.studentStatus ? STATUS_LABELS[profile.studentStatus] : null;
   return [careers.join(", "), profile.startYear ? `desde ${profile.startYear}` : null, status].filter(Boolean).join(" · ");
@@ -171,6 +179,7 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
 
                   <div className="grid gap-8 md:grid-cols-2">
                     <BarList title="Por rol" buckets={dist.role} total={count} />
+                    <BarList title="Por afiliación" buckets={dist.affiliation} total={count} />
                     <BarList title="Por estado" buckets={dist.status} total={dist.status.reduce((n, b) => n + b.count, 0)} />
                     <BarList title="Por carrera" buckets={dist.career} total={dist.role.find((b) => b.label === "Estudiante")?.count ?? 0} />
                     <BarList title="Por año de inicio" buckets={dist.startYear} total={dist.startYear.reduce((n, b) => n + b.count, 0)} />
@@ -183,7 +192,7 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                         <li key={r.id} className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                           <div className="min-w-0 break-words">
                             <p className="text-sm text-text2">
-                              {r.email}
+                              {profile?.fullName ? `${profile.fullName} · ` : ""}{r.email}
                               {profile ? <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span> : <span className="text-text3"> · sin perfil</span>}
                             </p>
                             {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
