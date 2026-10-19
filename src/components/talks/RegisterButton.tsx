@@ -1,13 +1,9 @@
 "use client";
 
-<<<<<<< HEAD
 import { useId } from "react";
-import { ArrowUpRight, Check } from "lucide-react";
-=======
 import { ArrowRight, Check } from "lucide-react";
 
 // La flecha es → y no ↗: el botón abre el diálogo en la misma página, no sale a otro sitio (igual que el de /workshops).
->>>>>>> origin/main
 
 /**
  * Lo que sabe el cliente de la cuenta frente a una charla (ver getMyTalkRegistrationsAction):
