@@ -134,7 +134,7 @@ export async function saveProfileAction(_prevState: ActionState, formData: FormD
 /**
  * Qué sabe el sitio de la cuenta logueada frente a "Sumarme a la comunidad": ser miembro es tener el perfil completo
  * (ver isProfileComplete). /contacto y /equipo son estáticas, así que el botón lo pide desde el cliente cuando hay
- * sesión (ver use-community-status.ts).
+ * sesión (ver use-community-state.ts).
  */
 export type CommunityStatusResult = { signedIn: false } | { signedIn: true; complete: boolean };
 

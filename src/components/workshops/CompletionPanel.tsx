@@ -43,7 +43,7 @@ export function CompletionPanel({
       <section className="border border-text p-6 sm:p-8">
         <h2 className="font-display text-[1.45rem] font-bold leading-[1.15] tracking-tight text-text">Llevá tu recorrido</h2>
         <p className="mt-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-text2">
-          Ingresá con tu cuenta @udesa.edu.ar para marcar los workshops que hiciste y verlos en tu perfil.
+          Ingresá con tu cuenta de Google para marcar los workshops que hiciste y verlos en tu perfil.
         </p>
         <button
           type="button"
