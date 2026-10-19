@@ -12,7 +12,8 @@ export type DeleteAccountState = { error: string | null };
  * los talleres que marcó como hechos (WorkshopCompletion, que se guarda por email).
  * Solo ADMIN. No toca a AdminUser (quién entra al panel; eso es /admin/usuarios) ni la cuenta
  * de Google: si la persona vuelve a entrar, puede crear el perfil de nuevo. Deja en AuditLog
- * (section "cuentas") el perfil, las inscripciones y los talleres hechos que tenía.
+ * (section "cuentas") solo el rol, la fecha de alta, las inscripciones y los talleres hechos que tenía: ni el email ni
+ * los datos del perfil, para que borrar una cuenta no deje a la persona identificable (el entityId es el id del perfil).
  */
 export async function deleteAccountAction(_prev: DeleteAccountState, formData: FormData): Promise<DeleteAccountState> {
   const admin = await requireAdminSession();
@@ -49,13 +50,7 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
           entityId: id,
           action: "delete",
           before: {
-            email: profile.email,
             role: profile.role,
-            otherRole: profile.otherRole,
-            careers: profile.careers,
-            otherCareer: profile.otherCareer,
-            startYear: profile.startYear,
-            studentStatus: profile.studentStatus,
             createdAt: profile.createdAt.toISOString(),
             inscripciones: registrations.map((r) => r.talk.slug),
             talleresHechos: completions.map((c) => c.workshopSlug),
