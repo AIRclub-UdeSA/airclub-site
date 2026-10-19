@@ -10,12 +10,12 @@ import {
 } from "../../prisma/seed-data/contact";
 
 export type ContactChannel = SeedContactChannel;
-export type ContactReason = Omit<SeedContactReason, "url" | "body"> & {
+export type ContactReason = Omit<SeedContactReason, "url" | "body" | "kind"> & {
   /** Destino ya resuelto: el formulario o un mailto con asunto y plantilla. */
   href: string;
   external: boolean;
-  /** "form" abre un formulario en otra pestaña; "mail" abre tu programa de correo con el asunto ya puesto. */
-  kind: "form" | "mail";
+  /** "form" abre un formulario en otra pestaña; "mail" abre tu programa de correo con el asunto ya puesto; "account" entra con Google y completa el perfil del sitio. */
+  kind: "form" | "mail" | "account";
   /** A dónde va realmente: el dominio del formulario o la casilla del club. */
   destination: string;
 };
@@ -29,7 +29,11 @@ export function buildMailto(subject: string, body?: string[]): string {
   return `mailto:${CONTACT_EMAIL}?${params.join("&")}`;
 }
 
-function toReason({ url, subject, body, ...rest }: SeedContactReason): ContactReason {
+function toReason({ url, subject, body, kind, ...rest }: SeedContactReason): ContactReason {
+  // La cuenta no tiene a dónde ir por sí sola: el botón decide según la sesión. El href es el de crear el perfil.
+  if (kind === "account") {
+    return { ...rest, subject, href: "/perfil/completar", external: false, kind, destination: "tu cuenta de Google" };
+  }
   return {
     ...rest,
     subject,

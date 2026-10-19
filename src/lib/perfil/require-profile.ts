@@ -16,7 +16,7 @@ export async function getSessionName(): Promise<string> {
 }
 
 /**
- * Confirma que hay sesion (@udesa.edu.ar, ver src/auth.ts) y que esa cuenta ya completo su
+ * Confirma que hay sesion (cualquier cuenta de Google, ver src/auth.ts) y que esa cuenta ya completo su
  * perfil publico. Si no hay sesion, manda a "/" (ahi se loguea desde el Nav). Si hay sesion
  * pero no hay perfil, manda a completarlo. Usar antes de mostrar "/perfil" o de autocompletar
  * una inscripcion a charla (#50) con los datos del perfil.

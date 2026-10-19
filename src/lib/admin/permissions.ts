@@ -11,8 +11,9 @@ export type AdminSession = {
 };
 
 /**
- * Confirma que hay una sesion con acceso a /admin (email @udesa.edu.ar Y cargado en
- * AdminUser). Si no, redirige — a /admin/login sin sesion, a /admin/sin-permiso si esta
+ * Confirma que hay una sesion con acceso a /admin (email @udesa.edu.ar Y cargado y activo en
+ * AdminUser; cualquier otra cuenta de Google puede loguearse al sitio pero no recibe rol, ver
+ * adminAccessFor en src/lib/auth-access.ts). Si no, redirige — a /admin/login sin sesion, a /admin/sin-permiso si esta
  * logueado pero no autorizado. Usar en el layout de /admin y de nuevo en cada server
  * action de escritura (no alcanza con esconder botones en el cliente).
  */

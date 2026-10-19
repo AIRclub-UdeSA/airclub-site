@@ -1,24 +1,27 @@
 import { ArrowUpRight } from "lucide-react";
+import { CommunityJoinAction } from "@/components/community/CommunityJoinAction";
 import type { ContactReason } from "@/lib/contact";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
 /**
  * Los paneles toman "tinta" y "papel" de su sección (--ink / --paper, ver IntentSection). El tipo de destino se lee por
- * forma: relleno = formulario (otra pestaña), contorno = mail (tu programa de correo).
+ * forma: relleno = formulario (otra pestaña) o cuenta (entrar con Google, en el sitio), contorno = mail (tu programa de
+ * correo).
  */
 function KindTag({ kind, tilted = false }: { kind: ContactReason["kind"]; tilted?: boolean }) {
-  const form = kind === "form";
   return (
     <span
       className={`inline-flex items-center gap-1 border border-current px-2 py-1 font-mono text-[.68rem] font-semibold uppercase tracking-[.16em] ${
-        form ? "bg-[var(--tag-bg,var(--ink))] text-[var(--tag-fg,var(--paper))]" : ""
+        kind !== "mail" ? "bg-[var(--tag-bg,var(--ink))] text-[var(--tag-fg,var(--paper))]" : ""
       } ${tilted ? "-rotate-3" : ""}`}
     >
-      {form ? (
+      {kind === "form" ? (
         <>
           Formulario <ArrowUpRight size={11} aria-hidden="true" />
         </>
+      ) : kind === "account" ? (
+        "Cuenta"
       ) : (
         "Mail"
       )}
@@ -86,19 +89,22 @@ export function ReasonPanel({
 
   if (featured) {
     // El botón es el único enlace del panel (no anidamos enlaces).
+    const buttonClassName =
+      "inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-[var(--ink)] px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase leading-tight tracking-[.14em] text-[var(--paper)] transition-opacity hover:opacity-85";
     return (
       <article
         className={`flex min-h-[18rem] flex-col justify-between gap-8 border border-[var(--paper)] bg-[var(--paper)] p-6 text-[var(--ink)] [--tag-bg:var(--ink)] [--tag-fg:var(--paper)] sm:p-8 lg:p-10 ${className}`}
       >
         {body}
-        <a
-          {...linkProps}
-          className="inline-flex w-fit max-w-full items-center gap-2 rounded-full bg-[var(--ink)] px-6 py-3.5 font-mono text-[.78rem] font-semibold uppercase leading-tight tracking-[.14em] text-[var(--paper)] transition-opacity hover:opacity-85"
-        >
-          <span>{reason.action}</span>
-          <ArrowUpRight size={15} aria-hidden="true" />
-          {external && NEW_TAB_HINT}
-        </a>
+        {reason.kind === "account" ? (
+          <CommunityJoinAction label={reason.action} buttonClassName={buttonClassName} />
+        ) : (
+          <a {...linkProps} className={buttonClassName}>
+            <span>{reason.action}</span>
+            <ArrowUpRight size={15} aria-hidden="true" />
+            {external && NEW_TAB_HINT}
+          </a>
+        )}
       </article>
     );
   }
