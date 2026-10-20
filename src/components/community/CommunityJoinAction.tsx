@@ -16,10 +16,13 @@ import { useCommunityState } from "./use-community-state";
  */
 export function CommunityJoinAction({
   label,
+  steps,
   buttonClassName,
   returnTo,
 }: {
   label: string;
+  /** Cómo se entra ("Entrás con Google, completás tu perfil…"): solo para el visitante, con sesión ya no aplica. */
+  steps?: string;
   buttonClassName: string;
   /** A dónde vuelve después de entrar o completar el perfil; por defecto, la página actual. */
   returnTo?: string;
@@ -53,17 +56,26 @@ export function CommunityJoinAction({
     );
   }
 
+  const loading = state === "loading";
   return (
-    <button
-      type="button"
-      disabled={state === "loading"}
-      aria-hidden={state === "loading" || undefined}
-      tabIndex={state === "loading" ? -1 : undefined}
-      onClick={() => signIn("google", { redirectTo: `/bienvenida?next=${encodeURIComponent(target)}` })}
-      className={`${buttonClassName} ${state === "loading" ? "invisible" : "cursor-pointer"}`}
-    >
-      <span>{label}</span>
-      <ArrowRight size={15} aria-hidden="true" />
-    </button>
+    <div>
+      {steps && (
+        // En `loading` ocupa su lugar sin verse, igual que el botón, para que la página no salte.
+        <p className={`mb-4 max-w-[46ch] text-[.98rem] leading-[1.65] text-current/90 ${loading ? "invisible" : ""}`} aria-hidden={loading || undefined}>
+          {steps}
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={loading}
+        aria-hidden={loading || undefined}
+        tabIndex={loading ? -1 : undefined}
+        onClick={() => signIn("google", { redirectTo: `/bienvenida?next=${encodeURIComponent(target)}` })}
+        className={`${buttonClassName} ${loading ? "invisible" : "cursor-pointer"}`}
+      >
+        <span>{label}</span>
+        <ArrowRight size={15} aria-hidden="true" />
+      </button>
+    </div>
   );
 }

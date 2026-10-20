@@ -17,7 +17,6 @@ export default async function PlataformasPage() {
   return (
     <>
       <PageHero
-        label="Plataformas"
         title="Robots"
         description="Las plataformas robóticas que desarrolla y mantiene el club. Este catálogo va a crecer con cada proyecto nuevo."
       />

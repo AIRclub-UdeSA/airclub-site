@@ -1,10 +1,8 @@
 import { ScrambleText } from "@/components/shared/ScrambleText";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 
-export function PageHero({ label, title, description }: { label: string; title: string; description: string }) {
+export function PageHero({ title, description }: { title: string; description: string }) {
   return (
     <section className="page-hero">
-      <SectionLabel>{label}</SectionLabel>
       <ScrambleText
         as="h1"
         text={title}

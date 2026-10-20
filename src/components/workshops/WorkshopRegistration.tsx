@@ -118,11 +118,14 @@ export function RegisterButton({ slug, onCrimson }: { slug: string; onCrimson: b
 
   if (state === "restricted") {
     return (
-      <span className="inline-flex flex-col items-start gap-1.5">
+      // Desde `sm` el bloque se disuelve (`contents`) y la línea pasa a una fila propia debajo del botón y de "Agendar"
+      // (`sm:order-last sm:basis-full` dentro del flex-wrap de UpcomingWorkshops), para que "Agendar" quede alineado con el
+      // botón y no con el bloque botón + línea. En mobile, donde "Agendar" baja igual, la línea queda pegada al botón.
+      <span className="inline-flex flex-col items-start gap-1.5 sm:contents">
         <button type="button" disabled aria-describedby={noteId} className={className}>
           {RESTRICTED_BUTTON}
         </button>
-        <span id={noteId} className={`font-body text-[.82rem] ${onCrimson ? "text-white/80" : "text-text3"}`}>
+        <span id={noteId} className={`font-body text-[.82rem] sm:order-last sm:-mt-1.5 sm:basis-full ${onCrimson ? "text-white/80" : "text-text3"}`}>
           {RESTRICTED_NOTE}
         </span>
       </span>

@@ -83,7 +83,7 @@ export function ReasonPanel({
       >
         {body}
         {reason.kind === "account" ? (
-          <CommunityJoinAction label={reason.action} buttonClassName={buttonClassName} />
+          <CommunityJoinAction label={reason.action} steps={reason.steps} buttonClassName={buttonClassName} />
         ) : (
           <a {...linkProps} className={buttonClassName}>
             <span>{reason.action}</span>

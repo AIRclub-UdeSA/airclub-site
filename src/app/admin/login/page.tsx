@@ -12,7 +12,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
         Este panel es solo para el equipo del club: entrá con tu cuenta de Google de UdeSA (@udesa.edu.ar).
       </p>
       {errorKey && (
-        <p className="text-sm text-crimson">No se pudo iniciar sesión, probá de nuevo.</p>
+        <p className="text-sm text-crimson-text">No se pudo iniciar sesión, probá de nuevo.</p>
       )}
       <form
         action={async () => {

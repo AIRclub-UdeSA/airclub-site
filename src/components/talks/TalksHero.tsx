@@ -81,13 +81,13 @@ function LatestPanel({
         <div className="talk-hatch absolute inset-0 -z-10" aria-hidden="true" />
       )}
       <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-transparent via-45% to-black/85"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/85 via-black/20 via-30% to-black/85"
         aria-hidden="true"
       />
 
       <div className={`relative z-10 flex h-full flex-col justify-between ${PANEL_PAD}`}>
         <div>
-          <p className="font-mono text-[.78rem] uppercase tracking-[.16em] text-white/75">Última charla</p>
+          <p className="font-mono text-[.78rem] uppercase tracking-[.16em] text-white/90 [text-shadow:0_1px_6px_rgb(0_0_0/.7)]">Última charla</p>
           {date && (
             <div className="mt-3 flex items-end gap-4">
               <time
