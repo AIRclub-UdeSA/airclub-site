@@ -35,7 +35,7 @@ try {
     await page.waitForTimeout(2500);
     // recorte = el rect exacto de la foto (así se compara la misma región en los dos casos)
     const img = await page.evaluate(() => {
-      const i = document.querySelector(".arm-gate-screen > div[aria-hidden] img").getBoundingClientRect();
+      const i = document.querySelector(".arm-canvas-container > div[aria-hidden] img").getBoundingClientRect();
       return [i.x, i.y, i.width, i.height];
     });
     const clip = { x: img[0], y: img[1], width: img[2], height: img[3] };
@@ -54,7 +54,7 @@ try {
     await setCss(base + `.arm-gate-screen canvas{visibility:visible !important}.arm-gate-screen > div.pointer-events-auto{opacity:1 !important}`);
     await page.screenshot({ path: join(out, `live-${c.name}.png`), clip, omitBackground: true, timeout: 120000 });
     log(`[${c.name}] canvas vivo ok`);
-    await setCss(base + `.arm-gate-screen > div[aria-hidden]{visibility:visible !important}.arm-gate-screen > div[aria-hidden] img{visibility:visible !important}`);
+    await setCss(base + `.arm-canvas-container > div[aria-hidden]{visibility:visible !important}.arm-canvas-container > div[aria-hidden] img{visibility:visible !important}`);
     await page.screenshot({ path: join(out, `still-${c.name}.png`), clip, omitBackground: true, timeout: 120000 });
     log(`[${c.name}] foto ok`);
     await page.close();
