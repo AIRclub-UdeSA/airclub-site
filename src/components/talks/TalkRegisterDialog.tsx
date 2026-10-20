@@ -148,7 +148,7 @@ export function TalkRegisterDialog({
 
         {status === "confirm" || status === "pending" ? (
           <>
-            <h2 id={titleId} className="pr-10 font-display text-[1.3rem] font-bold leading-tight text-text">
+            <h2 id={titleId} title={talk.title} className="line-clamp-3 pr-10 font-display text-[1.3rem] font-bold leading-tight text-text">
               Te estás inscribiendo {COPY[kind].to} &ldquo;{talk.title}&rdquo;
             </h2>
             <div className="flex items-center gap-3 pt-1">
