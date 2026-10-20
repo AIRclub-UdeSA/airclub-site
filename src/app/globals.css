@@ -144,16 +144,18 @@ body {
 }
 
 /* ===== Reveal-on-scroll ===== */
+/* Visible de entrada: sin JS, o si ya está en pantalla al cargar, se ve sin esperar a hidratar (y cuenta para
+   el LCP). RevealOnScroll esconde solo lo que quedó más abajo, al instante (sin transición), y lo hace entrar
+   al llegar. */
 .reveal {
-  opacity: 0;
-  transform: translateY(40px);
   transition:
     opacity 0.9s var(--ease-club),
     transform 0.9s var(--ease-club);
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+.reveal-pending {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: none;
 }
 .reveal-d1 {
   transition-delay: 0.1s;
@@ -165,7 +167,7 @@ body {
   transition-delay: 0.3s;
 }
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
+  .reveal-pending {
     opacity: 1;
     transform: none;
   }
