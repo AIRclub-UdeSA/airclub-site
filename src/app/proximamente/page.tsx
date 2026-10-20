@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Wrench, FolderGit2, Bot } from "lucide-react";
+import { CommunityJoinLink } from "@/components/community/CommunityJoinLink";
 import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { buildMetadata } from "@/lib/seo";
 
@@ -152,13 +153,11 @@ export default async function ProximamentePage({
                     <span>Conocer al equipo</span>
                   </Link>
 
-                  <Link
-                    href="/contacto"
+                  <CommunityJoinLink
+                    guestLabel="Sumarme al club"
                     className="inline-flex items-center gap-1.5 px-4 py-3 font-mono text-[.78rem] uppercase tracking-[.14em] text-crimson-text transition-colors hover:underline"
-                  >
-                    <span>Sumarme al club</span>
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
+                    suffix={<ArrowUpRight className="h-3.5 w-3.5" />}
+                  />
                 </div>
               </div>
 

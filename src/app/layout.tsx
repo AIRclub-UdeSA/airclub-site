@@ -3,6 +3,7 @@ import { Anton, Syne, Outfit, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import "lenis/dist/lenis.css";
+import { CommunityStateProvider } from "@/components/community/use-community-state";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
@@ -48,14 +49,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             wrapper cliente alrededor de children ya armados en el servidor (mismo patrón que
             SmoothScrollProvider): no vuelve dinámica la página ni le rompe el ISR. */}
         <SessionProvider>
-          <SmoothScrollProvider>
-            <SkipLink />
-            <ParticlesBackground />
-            <Nav />
-            <main id="main-content">{children}</main>
-            <Footer />
-            <ScrollTopButton />
-          </SmoothScrollProvider>
+          <CommunityStateProvider>
+            <SmoothScrollProvider>
+              <SkipLink />
+              <ParticlesBackground />
+              <Nav />
+              <main id="main-content">{children}</main>
+              <Footer />
+              <ScrollTopButton />
+            </SmoothScrollProvider>
+          </CommunityStateProvider>
         </SessionProvider>
       </body>
     </html>

@@ -1,17 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getMyCommunityStatusAction } from "@/app/perfil/actions";
 
 /**
  * Dónde está la persona frente a "Sumarme a la comunidad": `guest` sin sesión, `incomplete` con sesión pero el perfil
  * sin completar (cuenta nueva o anterior a nombre y consentimiento) y `member` con el perfil completo. `loading` hasta
- * saberlo: /contacto y /equipo son estáticas (ISR), así que se resuelve acá, en el cliente, igual que RegisterButton.
+ * saberlo: las páginas públicas son estáticas (ISR), así que se resuelve en el cliente, igual que RegisterButton.
+ *
+ * La consulta al servidor la hace una sola vez `CommunityStateProvider` (en el RootLayout, junto al Nav); el Nav, el
+ * botón de /contacto y el de /equipo leen el mismo resultado con `useCommunityState`.
  */
 export type CommunityState = "loading" | "guest" | "incomplete" | "member";
 
+const CommunityStateContext = createContext<CommunityState | null>(null);
+
+export function CommunityStateProvider({ children }: { children: React.ReactNode }) {
+  return <CommunityStateContext.Provider value={useResolveCommunityState()}>{children}</CommunityStateContext.Provider>;
+}
+
 export function useCommunityState(): CommunityState {
+  const state = useContext(CommunityStateContext);
+  if (state === null) throw new Error("useCommunityState necesita un CommunityStateProvider arriba (ver RootLayout).");
+  return state;
+}
+
+function useResolveCommunityState(): CommunityState {
   const { data: session, status } = useSession();
   // null = todavía no se sabe; guarda el email para no mostrar el resultado de otra cuenta.
   const [mine, setMine] = useState<{ email: string; complete: boolean } | null>(null);

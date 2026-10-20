@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { CommunityJoinLink } from "@/components/community/CommunityJoinLink";
 import { signInAction } from "@/lib/admin/auth-actions";
 import { cn } from "@/lib/utils";
 import { NavHoverHighlight } from "./NavHoverHighlight";
@@ -125,12 +126,10 @@ export function Nav() {
 
           <AccountMenu className="hidden sm:block" />
 
-          <Link
-            href="/contacto"
+          <CommunityJoinLink
+            guestLabel="Sumarme"
             className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-crimson px-4 py-1.5 font-body text-[.78rem] font-semibold text-white transition-all hover:bg-crimson-hover"
-          >
-            Sumarme
-          </Link>
+          />
 
           <button
             type="button"
@@ -159,12 +158,10 @@ export function Nav() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/contacto"
-              className="mt-2 text-center rounded-full bg-crimson py-2.5 font-body text-[.85rem] font-semibold text-white"
-            >
-              Sumarme al club
-            </Link>
+            <CommunityJoinLink
+              guestLabel="Sumarme al club"
+              className="mt-2 block text-center rounded-full bg-crimson py-2.5 font-body text-[.85rem] font-semibold text-white"
+            />
             <AccountMenu variant="inline" className="mt-1" />
           </div>
         )}
