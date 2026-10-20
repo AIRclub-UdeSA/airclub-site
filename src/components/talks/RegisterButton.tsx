@@ -101,12 +101,15 @@ export function RegisterButton<T extends { registrationLabel?: string }>({ talk,
 
   if (state === "restricted") {
     // El botón no puede explicarse solo: la línea va visible al lado, no en un tooltip.
+    // En el hero, desde `sm`, el bloque se disuelve (`contents`) y la línea pasa a una fila propia debajo del botón y de
+    // "Ver detalles" (`sm:order-last sm:basis-full` dentro del flex-wrap): así "Ver detalles" queda alineado con el
+    // botón y no con el bloque botón + línea. En mobile, donde "Ver detalles" baja igual, la línea queda pegada al botón.
     return (
-      <span className={variant === "modal" ? "block" : "inline-flex flex-col items-start gap-1.5"}>
+      <span className={variant === "modal" ? "block" : `inline-flex flex-col items-start gap-1.5${variant === "hero" ? " sm:contents" : ""}`}>
         <button type="button" disabled aria-describedby={noteId} className={`${BASE[variant]} ${RESTRICTED[variant]}`}>
           {RESTRICTED_BUTTON}
         </button>
-        <span id={noteId} className={`block ${RESTRICTED_NOTE_CLASS[variant]}`}>
+        <span id={noteId} className={`block ${RESTRICTED_NOTE_CLASS[variant]}${variant === "hero" ? " sm:order-last sm:-mt-1.5 sm:basis-full" : ""}`}>
           {RESTRICTED_NOTE}
         </span>
       </span>
