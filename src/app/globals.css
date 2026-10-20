@@ -144,16 +144,18 @@ body {
 }
 
 /* ===== Reveal-on-scroll ===== */
+/* Visible de entrada: sin JS, o si ya está en pantalla al cargar, se ve sin esperar a hidratar (y cuenta para
+   el LCP). RevealOnScroll esconde solo lo que quedó más abajo, al instante (sin transición), y lo hace entrar
+   al llegar. */
 .reveal {
-  opacity: 0;
-  transform: translateY(40px);
   transition:
     opacity 0.9s var(--ease-club),
     transform 0.9s var(--ease-club);
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+.reveal-pending {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: none;
 }
 .reveal-d1 {
   transition-delay: 0.1s;
@@ -165,7 +167,7 @@ body {
   transition-delay: 0.3s;
 }
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
+  .reveal-pending {
     opacity: 1;
     transform: none;
   }
@@ -257,10 +259,12 @@ body {
 .talk-photo-host:focus-within .talk-photo {
   filter: grayscale(0) contrast(1) brightness(0.88);
 }
-/* El mismo revelado, una sola vez, cuando la foto entra en pantalla (hero y drawer). */
+/* El mismo revelado, una sola vez, cuando la foto entra en pantalla (hero y drawer). Arranca en 0.01 y no
+   en 0: Chrome no cuenta como pintado (LCP) lo que está en opacidad 0, y la foto del hero recién contaba al
+   terminar el revelado (~1,2 s más tarde). A la vista, 0.01 y 0 son lo mismo. */
 @keyframes talk-develop {
   from {
-    opacity: 0;
+    opacity: 0.01;
     filter: grayscale(1) contrast(1.06) brightness(0.35);
     transform: scale(1.035);
   }
@@ -297,9 +301,10 @@ body {
 }
 
 /* Entrada del hero: sube y aparece, una sola vez. --d = retraso. */
+/* Desde 0.01 por lo mismo que talk-develop: es la entrada de lo primero que se ve en cada subpágina. */
 @keyframes talk-rise {
   from {
-    opacity: 0;
+    opacity: 0.01;
     transform: translateY(14px);
   }
   to {

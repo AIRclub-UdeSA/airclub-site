@@ -12,11 +12,12 @@ import { scrollToTarget } from "@/lib/smooth-scroll";
 // exactamente donde y como se ve la foto fija. Para que sea 1:1 por construccion (no "casi igual"),
 // la camara de RobotArm3D es fija y esto solo mide el espaciador `.arm-canvas-container` (donde
 // esta centrada la foto) y devuelve DOS cosas calculadas juntas, con los mismos numeros:
-//  - `still`: la caja de la foto en px ENTEROS relativos a la seccion. Chrome redondea a px enteros
+//  - `still`: la caja de la foto, que cae en px ENTEROS de la seccion. Chrome redondea a px enteros
 //    la posicion de una imagen al pintarla (con 594.5 la manda a 594 o 595 segun el caso), mientras
 //    WebGL dibuja con precision de subpixel: dejar la posicion fraccionaria hacia que la foto
 //    "saltara" hasta 1px respecto del canvas vivo. Al fijarla nosotros en enteros ya no hay nada
-//    que redondear.
+//    que redondear. Como la foto vive dentro del espaciador (siempre el mismo <img>, ver ArmHero), la
+//    caja va relativa a el, descontando su posicion fraccionaria en la seccion.
 //  - `view`: la ventana de render del canvas, derivada de ESA caja ya redondeada (no del espaciador
 //    crudo): centro y escala salen de donde de verdad se pinta la foto. RobotArm3D lo traduce a
 //    setViewOffset (ver CameraView ahi).
@@ -52,12 +53,12 @@ function useArmView(
       const h = height / heightFactor;
       const next = {
         view: { cx: left + width / 2 - dx * h, cy: top + height / 2 - dy * h, h },
-        still: { left, top, width, height },
+        still: { left: left - (c.left - s.left), top: top - (c.top - s.top), width, height },
       };
       setState((prev) =>
         prev &&
-        prev.still.left === left &&
-        prev.still.top === top &&
+        prev.still.left === next.still.left &&
+        prev.still.top === next.still.top &&
         prev.still.width === width &&
         prev.still.height === height
           ? prev
@@ -114,8 +115,10 @@ const HANDOFF_DELAY_MS = 500;
 function ArmStillImage({ ready, box }: { ready: boolean; box?: StillBox }) {
   const { widthFactor, heightFactor, dx, dy } = ARM_HERO_STILL_LAYOUT;
   // Sin `box` (antes de que JS mida, o sea el primer pintado del HTML del servidor) se posiciona en CSS
-  // puro dentro del espaciador: aproximada, pero visible desde el primer frame. Con `box` (px enteros
-  // relativos a la seccion, ver useArmView) queda clavada en el mismo lugar que el canvas vivo.
+  // puro dentro del espaciador: aproximada, pero visible desde el primer frame. Con `box` (relativa al
+  // espaciador, de modo que caiga en px enteros de la seccion, ver useArmView) queda clavada en el
+  // mismo lugar que el canvas vivo. Es el mismo <img> en los dos casos: solo cambia el estilo, asi el
+  // navegador no lo ve como un elemento nuevo (que podia volverse el LCP recien al hidratar).
   // Nada de `transform` para centrarla: Chrome redondea la capa por su cuenta.
   const style: React.CSSProperties = box
     ? { left: box.left, top: box.top, width: box.width, height: box.height }
@@ -126,7 +129,8 @@ function ArmStillImage({ ready, box }: { ready: boolean; box?: StillBox }) {
         top: `calc(50% + var(--arm-h) * ${dy - heightFactor / 2})`,
       };
   return (
-    <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ visibility: ready ? "hidden" : "visible" }}>
+    // z-[1]: por encima de las letras (la "R" tiene transform y se pinta despues), como el canvas vivo.
+    <div aria-hidden="true" className="absolute inset-0 z-[1] pointer-events-none" style={{ visibility: ready ? "hidden" : "visible" }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- data URI: no aplica optimizacion de next/image */}
       <img src={ARM_HERO_STILL} alt="" className="absolute max-w-none" style={style} />
     </div>
@@ -180,11 +184,10 @@ export function ArmHero() {
       <div ref={rowRef} className="relative arm-stage-row">
         <span className="hero-letter">A</span>
         {/* Espaciador invisible: mantiene el kerning exacto entre A y R en su lugar de siempre.
-            La foto fija vive acá adentro (no en el canvas grande de abajo) para que seguir
-            alineada con la pose "congelada" del brazo mientras conviven. */}
+            La foto fija vive acá adentro: antes de medir, con la posición CSS aproximada; después,
+            clavada en px enteros donde dibuja el canvas vivo (ver useArmView). */}
         <div ref={containerRef} className="arm-canvas-container pointer-events-none">
-          {/* antes de medir: version CSS aproximada, dentro del espaciador */}
-          {!armState && <ArmStillImage ready={arm3dReady} />}
+          <ArmStillImage ready={arm3dReady} box={armState?.still} />
         </div>
         <span className="hero-letter">R</span>
       </div>
@@ -194,7 +197,6 @@ export function ArmHero() {
           (opacity 0) mientras conviven con la foto y se cambia por ella en el mismo commit que
           arm3dReady: al ser identicos no hay fade que valga, y asi no se superponen dos capas con
           bordes suavizados (que se verian levemente mas gruesos mientras conviven). */}
-      {armState && <ArmStillImage ready={arm3dReady} box={armState.still} />}
       {armView && (
         <div
           className="absolute inset-0 pointer-events-auto flex items-end justify-center"

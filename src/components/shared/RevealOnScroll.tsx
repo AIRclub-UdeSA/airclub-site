@@ -18,19 +18,16 @@ export function RevealOnScroll({
     const el = ref.current;
     if (!el) return;
 
-    if (typeof window !== "undefined") {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) {
-        el.classList.add("visible");
-        return;
-      }
-    }
+    // Lo que ya está en pantalla al cargar queda como vino del servidor: visible y sin entrada.
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) return;
 
+    el.classList.add("reveal-pending");
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
+            entry.target.classList.remove("reveal-pending");
             observer.unobserve(entry.target);
           }
         });
