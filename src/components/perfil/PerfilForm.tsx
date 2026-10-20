@@ -240,15 +240,20 @@ export function PerfilForm({
         </span>
       </label>
 
-      <div className="flex items-center gap-4 pt-1">
+      <div className="flex flex-col items-start gap-4 pt-1">
+        {/* El error va arriba del botón y no al lado: en 375px lo apretaba y el botón se partía en dos líneas. */}
+        {state.error && (
+          <p role="alert" className="font-body text-sm text-crimson">
+            {state.error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={pending}
-          className="rounded-[var(--r-pill)] border-[1.5px] border-crimson bg-crimson px-7 py-3.5 font-body text-[.88rem] font-medium text-white transition-all duration-350 ease-club hover:-translate-y-0.5 hover:bg-crimson-hover hover:border-crimson-hover active:translate-y-0 disabled:opacity-60"
+          className="whitespace-nowrap rounded-[var(--r-pill)] border-[1.5px] border-crimson bg-crimson px-7 py-3.5 font-body text-[.88rem] font-medium text-white transition-all duration-350 ease-club hover:-translate-y-0.5 hover:bg-crimson-hover hover:border-crimson-hover active:translate-y-0 disabled:opacity-60"
         >
           {pending ? "Guardando…" : submitLabel}
         </button>
-        {state.error && <p className="font-body text-sm text-crimson">{state.error}</p>}
       </div>
     </form>
   );
