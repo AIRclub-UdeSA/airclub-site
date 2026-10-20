@@ -1,17 +1,26 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ContactChannel } from "@/lib/contact";
+import { cn } from "@/lib/utils";
 
 const NEW_TAB_HINT = <span className="sr-only"> (se abre en una pestaña nueva)</span>;
 
 /**
- * Los canales directos: el handle es el diseño (Syne grande, sin íconos genéricos). Cuatro celdas en una fila;
- * en mobile, una debajo de la otra.
+ * Los canales directos: el handle es el diseño (Syne grande, sin íconos genéricos). Son cinco: en desktop, los dos
+ * primeros (mail e Instagram) arriba y más anchos, y los otros tres abajo; en tablet, de a dos con el último a lo
+ * ancho; en mobile, uno debajo del otro.
  */
 export function ChannelsBand({ channels }: { channels: ContactChannel[] }) {
   return (
-    <ul className="grid gap-px border border-text bg-text sm:grid-cols-2 lg:grid-cols-4">
-      {channels.map((c) => (
-        <li key={c.key} className="min-w-0 bg-bg2">
+    <ul className="grid gap-px border border-text bg-text sm:grid-cols-2 lg:grid-cols-6">
+      {channels.map((c, i) => (
+        <li
+          key={c.key}
+          className={cn(
+            "min-w-0 bg-bg2",
+            i < 2 ? "lg:col-span-3" : "lg:col-span-2",
+            i === channels.length - 1 && channels.length % 2 === 1 && "sm:col-span-2",
+          )}
+        >
           <a
             href={c.href}
             target={c.external ? "_blank" : undefined}

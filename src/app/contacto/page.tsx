@@ -8,7 +8,7 @@ import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contacto, AIR Club UdeSA",
-  description: "Sumate al AIR Club UdeSA: mail, Instagram, comunidad y WhatsApp.",
+  description: "Sumate al AIR Club UdeSA: comunidad, mail, Instagram, WhatsApp, LinkedIn y YouTube.",
   path: "/contacto",
 });
 

@@ -1,4 +1,4 @@
-import { CONTACT_EMAIL, GITHUB_ORG_URL, YOUTUBE_CHANNEL_URL, getContactChannels } from "@/lib/contact";
+import { CONTACT_EMAIL, GITHUB_ORG_URL, getContactChannels } from "@/lib/contact";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import { isUpcoming } from "@/lib/dates";
 import type { EventItem } from "@/lib/events";
@@ -46,7 +46,7 @@ type JsonLd = Record<string, unknown>;
 /** `Organization` + `WebSite` de la portada: qué es el club, su logo, sus perfiles y el nombre del sitio. */
 export async function homeJsonLd(): Promise<JsonLd> {
   const channels = await getContactChannels();
-  const profiles = channels.filter((c) => c.key === "instagram" || c.key === "linkedin").map((c) => c.href);
+  const profiles = channels.filter((c) => c.key === "instagram" || c.key === "linkedin" || c.key === "youtube").map((c) => c.href);
 
   return {
     "@context": "https://schema.org",
@@ -63,7 +63,7 @@ export async function homeJsonLd(): Promise<JsonLd> {
         description:
           "Comunidad de estudiantes de la Universidad de San Andrés que aprende y crea con inteligencia artificial y robótica.",
         parentOrganization: UDESA,
-        sameAs: [...profiles, YOUTUBE_CHANNEL_URL, GITHUB_ORG_URL],
+        sameAs: [...profiles, GITHUB_ORG_URL],
       },
       {
         "@type": "WebSite",
