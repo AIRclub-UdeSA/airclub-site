@@ -1,68 +1,65 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { preload } from "react-dom";
 
-/**
- * La pista, fija: el piso no se mueve. Antes corría con el scroll y, con el robot y los conos encima, se veían
- * deslizarse sobre un piso que se iba para otro lado.
- */
-function RunwayGrid() {
+/** El CAD del Rosmaster (lo carga RosmasterModel; acá se precarga). */
+export const ROSMASTER_MODEL_URL = "/models/rosmaster_unified.glb";
+
+// three y fiber pesan ~1 MB: no van en la carga inicial de la landing. La pista y el robot se bajan cuando a la banda le
+// falta pantalla y media para entrar, así llegan listos aunque se scrollee rápido, y después quedan montados. Con dos
+// pantallas, en 1440x900 la banda ya quedaba adentro al cargar.
+const NEAR_MARGIN = "150% 0px";
+
+function TrackLoading() {
   return (
-    <group position={[0, -0.75, 0]}>
-      {/* Pista de prueba de alta velocidad con grilla rosa sobre fondo blanco */}
-      <gridHelper args={[60, 40, "#ff2a6d", "#e8a4be"]} position={[0, 0, 0]} />
-      {/* Línea guía central fluorescente */}
-      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[60, 0.08]} />
-        <meshBasicMaterial color="#ff2a6d" transparent opacity={0.75} />
-      </mesh>
-    </group>
+    <div className="w-full h-full flex items-center justify-center">
+      <span className="font-mono text-[.74rem] uppercase tracking-widest text-[#a40c4c]/40 animate-pulse">
+        Cargando modelo CAD...
+      </span>
+    </div>
   );
 }
 
-const emptySubscribe = () => () => {};
+const RunwayCanvas = dynamic(() => import("./RunwayCanvas").then((m) => m.RunwayCanvas), {
+  ssr: false,
+  loading: TrackLoading,
+});
+// El Rosmaster que corre el slalom sobre esta banda (ver SeamRobot): un canvas fijo sobre toda la ventana
+const SeamRobot = dynamic(() => import("./SeamRobot").then((m) => m.SeamRobot), { ssr: false });
 
 export function RosmasterTrack() {
-  const mounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
+  const ref = useRef<HTMLElement>(null);
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        // El GLB (925 KB) se pide junto con el JS y no después: useGLTF lo toma de esta precarga
+        preload(ROSMASTER_MODEL_URL, { as: "fetch", crossOrigin: "anonymous" });
+        setNear(true);
+      },
+      { rootMargin: NEAR_MARGIN },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <section
+      ref={ref}
       id="rosmaster-track"
       data-seam="slalom"
       className="relative w-full bg-[#0e0407] py-4 sm:py-8 overflow-hidden select-none"
       aria-label="ROSMASTER X3 CAD"
     >
-      <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px]">
-        {mounted ? (
-          <Canvas
-            camera={{ position: [0, 1.8, 6.2], fov: 42 }}
-            // Fija: se dibuja al cargar y al cambiar de tamaño, no en cada cuadro
-            frameloop="demand"
-            gl={{ antialias: true, alpha: true }}
-          >
-            <ambientLight intensity={1.4} />
-            <hemisphereLight args={["#ffffff", "#f5ccd8", 1.2]} />
-            <directionalLight position={[8, 14, 6]} intensity={2.2} />
-            <pointLight position={[-4, 3, 2]} intensity={2.0} color="#ff2a6d" />
-            <pointLight position={[4, 2, -2]} intensity={1.5} color="#a40c4c" />
-
-            {/* Grid de pista continua en rosa */}
-            <RunwayGrid />
-
-            {/* El robot no vive acá: lo dibuja SeamRobot, que cruza la banda sobre esta pista */}
-          </Canvas>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="font-mono text-[.74rem] uppercase tracking-widest text-[#a40c4c]/40 animate-pulse">
-              Cargando modelo CAD...
-            </span>
-          </div>
-        )}
-      </div>
+      <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px]">{near ? <RunwayCanvas /> : <TrackLoading />}</div>
+      {near && <SeamRobot />}
     </section>
   );
 }

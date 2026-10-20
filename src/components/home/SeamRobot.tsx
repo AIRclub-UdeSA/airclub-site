@@ -28,6 +28,9 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  *
  * Todo pasa sobre la banda, así que el robot no tapa texto. No recibe clics (`pointer-events: none` en la capa y en
  * el `<Canvas>`).
+ *
+ * Lo monta RosmasterTrack recién cuando la banda está cerca de la vista (con `next/dynamic`), así three y fiber no van
+ * en la carga inicial de la landing.
  */
 
 type Run = {
@@ -426,7 +429,7 @@ function TrafficCone() {
 // Avisa a SeamRobot que cambió la escena activa (para prender o apagar el canvas)
 let wakeNow: () => void = () => {};
 
-function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | null> }) {
+function Robot({ reduced, runRef, onReady }: { reduced: boolean; runRef: RefObject<Run | null>; onReady: (ready: boolean) => void }) {
   const model = useRosmasterModel();
   // Piezas con vida propia (se preparan una sola vez, al montar): del LiDAR gira solo la torreta
   const parts = useRef<{ lidar: THREE.Mesh | null; scan: THREE.Mesh | null; camera: THREE.Mesh | null; wheels: Wheels | null }>({
@@ -443,7 +446,8 @@ function Robot({ reduced, runRef }: { reduced: boolean; runRef: RefObject<Run | 
       camera: centerPivot(model.getObjectByName("rgbd_camera")),
       wheels: groupWheels(model),
     };
-  }, [model]);
+    onReady(true);
+  }, [model, onReady]);
   // Dónde estaba el robot en el cuadro anterior (para girar las ruedas según lo que avanzó)
   const lastPos = useRef<THREE.Vector3 | null>(null);
   const wheelAngle = useRef(0);
@@ -558,6 +562,9 @@ export function SeamRobot() {
   // Fuera de la ventana de la banda el canvas no dibuja ni se ve: no gasta GPU mientras el robot no está en pantalla
   const [active, setActive] = useState(false);
   const activeRef = useRef(false);
+  // El GLB se baja recién cuando la banda está cerca: la escena arranca cuando el modelo ya está, así el robot siempre
+  // entra por la derecha y no aparece de golpe a mitad de la pista si se llegó con un scroll rápido
+  const [modelReady, setModelReady] = useState(false);
   const runRef = useRef<Run | null>(null);
 
   useEffect(() => {
@@ -593,7 +600,7 @@ export function SeamRobot() {
   // la banda por completo por abajo se descarta y la próxima vez arranca de cero.
   useGSAP(
     () => {
-      if (!mounted || reduced) return;
+      if (!mounted || reduced || !modelReady) return;
       const el = document.querySelector<HTMLElement>('[data-seam="slalom"]');
       if (!el) return;
       let run: Run | null = null;
@@ -673,7 +680,7 @@ export function SeamRobot() {
         runRef.current = null;
       };
     },
-    { dependencies: [mounted, reduced] },
+    { dependencies: [mounted, reduced, modelReady] },
   );
 
   if (!mounted) return null;
@@ -698,7 +705,7 @@ export function SeamRobot() {
         <hemisphereLight args={["#ffffff", "#f5ccd8", 0.3]} />
         <directionalLight position={[300, 500, 400]} intensity={1.7} />
         <directionalLight position={[-400, 200, 300]} intensity={1.2} color="#ff2a6d" />
-        <Robot reduced={reduced} runRef={runRef} />
+        <Robot reduced={reduced} runRef={runRef} onReady={setModelReady} />
       </Canvas>
     </div>
   );
