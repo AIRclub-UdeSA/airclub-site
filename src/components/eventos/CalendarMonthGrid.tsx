@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin } from "lucide-react";
 import type { CalendarActivity } from "@/lib/calendar-types";
 import { cn } from "@/lib/utils";
@@ -121,6 +121,12 @@ function getWeekEventSlots(week: CalendarDayCell[], activities: CalendarActivity
   return slots;
 }
 
+// "Hoy" es el día de quien mira, no el del momento en que se generó el HTML (la página es ISR y puede llegar de ayer):
+// en el servidor no se marca ninguno y se marca al hidratar.
+const subscribeNever = () => () => {};
+const getTodayKey = () => new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date());
+const getServerTodayKey = () => null;
+
 function getBaYearMonth(d: Date): { year: number; month: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: TIME_ZONE,
@@ -147,10 +153,12 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  // En UTC y no en hora de Buenos Aires: currentDate es la medianoche local del día 1, que en una máquina en UTC (el
+  // servidor que genera el HTML) o al este de Argentina cae todavía en el mes anterior.
   const monthName = new Intl.DateTimeFormat("es-AR", {
     month: "long",
-    timeZone: TIME_ZONE,
-  }).format(currentDate);
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month, 1)));
 
   const prevMonth = () => {
     setCurrentDate(new Date(year, month - 1, 1));
@@ -261,7 +269,7 @@ export function CalendarMonthGrid({ activities, onOpenActivity }: CalendarMonthG
     }
   }
 
-  const todayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date());
+  const todayKey = useSyncExternalStore(subscribeNever, getTodayKey, getServerTodayKey);
 
   // Actividades del día seleccionado en mobile
   const selectedDayActivities = selectedDayKey ? activitiesByDay.get(selectedDayKey) || [] : [];

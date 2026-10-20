@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -18,13 +18,31 @@ interface EventsHubProps {
   nextActivity: CalendarActivity | null;
 }
 
+/**
+ * Abre el modal de "?evento=<slug>" (link de la landing, link compartido o vuelta del login, #50). Va aparte y en su propio
+ * <Suspense>, como RegisterDeepLink: si EventsHub leyera useSearchParams(), el prerender cortaría ahí y el HTML saldría
+ * sin el calendario (el pie saltaba al hidratar, CLS 0,4).
+ */
+function EventoDeepLink({ onOpen }: { onOpen: (slug: string) => void }) {
+  const slug = useSearchParams().get("evento");
+
+  useEffect(() => {
+    if (slug) onOpen(slug);
+  }, [slug, onOpen]);
+
+  return null;
+}
+
 export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
-  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<CalendarActivityCategory | "all">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(() => searchParams.get("evento"));
-  const [isModalOpen, setIsModalOpen] = useState(() => Boolean(searchParams.get("evento")));
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [, startTransition] = useTransition();
+  const openFromUrl = useCallback((slug: string) => {
+    setSelectedSlug(slug);
+    setIsModalOpen(true);
+  }, []);
   // Charlas con inscripción propia (#50): mismo botón, diálogo y recorrido que /talks, sin salir de acá. Al volver del
   // login se reabre el modal de la charla ("?evento=") con el diálogo encima ("?inscribir=").
   const { registrationOf, request, dialog } = useRegistrationFlow({
@@ -67,6 +85,7 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
   return (
     <>
       <Suspense fallback={null}>
+        <EventoDeepLink onOpen={openFromUrl} />
         <RegisterDeepLink onRequest={request} />
       </Suspense>
 
