@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { Check } from "lucide-react";
 import { saveProfileAction, type ActionState } from "@/app/perfil/actions";
 import { CareerSelect } from "./CareerSelect";
 import { MIN_START_YEAR, OTHER_CAREER_SLUG } from "@/lib/perfil/careers";
@@ -325,6 +326,7 @@ export function PerfilForm({
 
       <div className="flex flex-col gap-2" data-field="consent">
         <label className="flex cursor-pointer items-start gap-3">
+          {/* Casilla propia: la nativa se ve como un cuadrado blanco liso sobre el fondo oscuro. */}
           <input
             type="checkbox"
             name="consent"
@@ -332,8 +334,17 @@ export function PerfilForm({
             defaultChecked={Boolean(existing?.consentAcceptedAt)}
             aria-invalid={fieldErrors.consent ? true : undefined}
             aria-describedby={describedBy("consent")}
-            className="mt-1 h-4 w-4 shrink-0 accent-crimson"
+            className="peer sr-only"
           />
+          <span
+            aria-hidden="true"
+            className={cn(
+              "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[4px] border-[1.5px] border-border-strong/50 bg-card text-white transition-colors peer-checked:border-crimson peer-checked:bg-crimson peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-crimson-text [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100",
+              fieldErrors.consent && "border-crimson-text",
+            )}
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+          </span>
           <span className="font-body text-[.9rem] leading-[1.6] text-text2">
             Leí y acepto el{" "}
             <Link href="/privacidad" target="_blank" className="text-crimson-text underline underline-offset-2">
