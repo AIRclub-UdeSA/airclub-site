@@ -41,7 +41,9 @@ export function TeamSections<T extends TeamMemberItem>({
 
       <section className="pb-16 md:pb-24">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
-          <RevealOnScroll>
+          {/* Está arriba de todo apenas carga: entra como el título (talk-rise, que arranca visible para el LCP) y
+              no con RevealOnScroll, que la escondía hasta hidratar. */}
+          <div className="talk-rise" style={{ "--d": "90ms" } as React.CSSProperties}>
             <CountHeading n={founders.length} title="Fundadores" />
 
             <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-4">
@@ -51,6 +53,8 @@ export function TeamSections<T extends TeamMemberItem>({
                   alt="Fundadores del AIR Club UdeSA con sus robots"
                   fill
                   sizes="(min-width: 1024px) 33vw, 100vw"
+                  loading="eager"
+                  fetchPriority="high"
                   className="object-cover object-[50%_25%]"
                 />
                 <figcaption className="absolute bottom-4 left-4 -rotate-3 border border-text bg-bg px-3 py-2 font-mono text-[.7rem] font-semibold uppercase tracking-[.16em] text-text">
@@ -64,7 +68,7 @@ export function TeamSections<T extends TeamMemberItem>({
                 {edit?.addFounder}
               </ul>
             </div>
-          </RevealOnScroll>
+          </div>
         </div>
       </section>
 
