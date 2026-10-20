@@ -95,7 +95,7 @@ export function CareerSelect({ selected, onChange }: { selected: string[]; onCha
                 />
                 <span className="font-body text-[.86rem] font-medium leading-tight text-text">{g.label}</span>
                 <span className="font-mono text-[.64rem] uppercase tracking-[.06em] text-text3">
-                  {count > 0 ? `${count} elegida${count > 1 ? "s" : ""}` : `${g.careers.length} carreras`}
+                  {count > 0 ? `${count} elegida${count > 1 ? "s" : ""}` : `${g.careers.length} ${g.careers.length === 1 ? "carrera" : "carreras"}`}
                 </span>
               </button>
             );
