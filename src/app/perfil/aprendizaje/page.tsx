@@ -5,6 +5,7 @@ import { requireUserProfile } from "@/lib/perfil/require-profile";
 import { completionsOf } from "@/lib/workshop-completions";
 import { getWorkshopTracks, trackHref, workshopHref, type WorkshopTrack } from "@/lib/workshops";
 import { routeStates } from "@/lib/workshop-progress";
+import { PerfilHeader } from "@/components/perfil/PerfilHeader";
 import { PerfilTabs } from "@/components/perfil/PerfilTabs";
 
 export const metadata: Metadata = {
@@ -38,12 +39,7 @@ export default async function AprendizajePage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[.14em] text-crimson-text">{profile.email}</p>
-        <h1 className="mt-2 font-display text-[clamp(2rem,6vw,3.2rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-text">
-          Mi perfil
-        </h1>
-      </div>
+      <PerfilHeader eyebrow={profile.email} title="Mi perfil" />
       <PerfilTabs active="/perfil/aprendizaje" />
 
       {total === 0 && (
