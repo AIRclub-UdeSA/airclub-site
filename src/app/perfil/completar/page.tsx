@@ -4,6 +4,7 @@ import { getSessionEmail, getSessionName } from "@/lib/perfil/require-profile";
 import { prisma } from "@/lib/prisma";
 import { PerfilForm } from "@/components/perfil/PerfilForm";
 import { PerfilHeader } from "@/components/perfil/PerfilHeader";
+import { returnPhrase } from "@/lib/perfil/return-label";
 import { safeNext } from "@/lib/safe-next";
 import { isProfileComplete, missingProfileFields } from "@/lib/perfil/completeness";
 
@@ -22,6 +23,7 @@ export default async function CompletarPerfilPage({ searchParams }: PageProps<"/
   const existing = await prisma.userProfile.findUnique({ where: { email } });
   if (existing && isProfileComplete(existing)) redirect(target);
   const missing = existing ? missingProfileFields(existing) : [];
+  const returnsTo = returnPhrase(target);
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-4xl flex-col gap-10 px-6 pt-28 pb-24 sm:px-8 md:pt-36">
@@ -35,6 +37,7 @@ export default async function CompletarPerfilPage({ searchParams }: PageProps<"/
         )}
         <p className="font-body text-[.92rem] leading-[1.7] text-text3">
           Usamos estos datos para la inscripción a las charlas y para saber quiénes vienen.
+          {returnsTo && ` Cuando termines, volvés ${returnsTo}.`}
         </p>
       </PerfilHeader>
       <PerfilForm existing={existing ?? undefined} defaultName={await getSessionName()} submitLabel={existing ? "Guardar perfil" : "Crear perfil"} next={target} />

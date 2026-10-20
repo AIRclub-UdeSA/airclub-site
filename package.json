@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "tsx --test src/lib/safe-next.test.ts src/lib/admin/sections.test.ts src/lib/talk-format.test.ts src/lib/udesa.test.ts src/lib/auth-access.test.ts src/lib/perfil/validate-form.test.ts",
+    "test": "tsx --test src/lib/safe-next.test.ts src/lib/admin/sections.test.ts src/lib/talk-format.test.ts src/lib/udesa.test.ts src/lib/auth-access.test.ts src/lib/perfil/validate-form.test.ts src/lib/perfil/return-label.test.ts",
     "postinstall": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"
   },
