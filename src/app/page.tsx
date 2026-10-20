@@ -7,7 +7,6 @@ import { CountdownStrip } from "@/components/home/CountdownStrip";
 import { RosmasterTrack } from "@/components/home/RosmasterTrack";
 import { EventsTeaser } from "@/components/home/EventsTeaser";
 import { ConvocatoriaBand } from "@/components/home/ConvocatoriaBand";
-import { SeamRobot } from "@/components/home/SeamRobot";
 import { SectionEdge } from "@/components/shared/SectionEdge";
 import { SponsorStrip } from "@/components/layout/SponsorStrip";
 import { LegacyHashRedirect } from "@/components/home/LegacyHashRedirect";
@@ -36,8 +35,6 @@ export default async function HomePage() {
       {/* Enlaces del sitio viejo con hash (/#/equipo): ver LegacyHashRedirect. */}
       <LegacyHashRedirect />
       <ArmHero />
-      {/* El Rosmaster viaja por las uniones entre secciones (ver SeamRobot). */}
-      <SeamRobot />
       <div id="contenido" className="scroll-mt-20">
         {/* Las uniones no llevan todas el mismo tratamiento: la curva solo abre y cierra el tramo oscuro (carrusel y
             salida del Rosmaster), la convocatoria usa el borde almenado de /talks y el resto son cambios de tono rectos. */}
@@ -47,6 +44,7 @@ export default async function HomePage() {
 
         {/* Acto II, el desafío: un solo bloque oscuro continuo (cuenta regresiva y CAD del Rosmaster). */}
         {featuredEvent && <CountdownStrip event={featuredEvent} />}
+        {/* La pista monta también al Rosmaster que la cruza (SeamRobot), los dos recién cerca de la vista. */}
         <RosmasterTrack />
 
         {/* Acto III, sumate: actividades, las dos formas de proponer algo y, al final, las alianzas. */}

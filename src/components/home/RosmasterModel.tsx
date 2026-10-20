@@ -3,18 +3,14 @@
 import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-
-const MODEL_URL = "/models/rosmaster_unified.glb";
-
-// Precarga del modelo CAD oficial
-useGLTF.preload(MODEL_URL);
+import { ROSMASTER_MODEL_URL } from "./RosmasterTrack";
 
 /** Altura/largo de referencia del modelo normalizado (la dimensión mayor mide esto, con la base en y = 0). */
 export const ROSMASTER_UNITS = 2.4;
 
 /** El CAD del Rosmaster repintado con la paleta del club, centrado en X y Z y apoyado sobre y = 0. */
 export function useRosmasterModel() {
-  const { scene } = useGLTF(MODEL_URL);
+  const { scene } = useGLTF(ROSMASTER_MODEL_URL);
 
   // Clona la escena para aislar modificaciones de materiales y nodos
   const cloned = useMemo(() => {
