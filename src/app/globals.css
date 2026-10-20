@@ -12,7 +12,7 @@
   --card-h: #fdfbfb;
   --text: #0d0407;
   --text2: rgba(13, 4, 7, 0.74);
-  --text3: rgba(13, 4, 7, 0.48);
+  --text3: rgba(13, 4, 7, 0.58);
   --crimson: #a40c4c; /* fill role: buttons, key badges, selection */
   --crimson-text: #a40c4c; /* text/link/icon role */
   --crimson-hover: #8e0a42;
@@ -39,7 +39,7 @@ html.dark {
   --card-h: #250e18;
   --text: #f5e8ec;
   --text2: rgba(245, 232, 236, 0.68);
-  --text3: rgba(245, 232, 236, 0.48);
+  --text3: rgba(245, 232, 236, 0.52);
   --crimson: #a40c4c;
   --crimson-text: #f0357f;
   --crimson-hover: #bd145a;
