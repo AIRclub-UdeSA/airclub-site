@@ -243,7 +243,7 @@ export function PerfilForm({
       <div className="flex flex-col items-start gap-4 pt-1">
         {/* El error va arriba del botón y no al lado: en 375px lo apretaba y el botón se partía en dos líneas. */}
         {state.error && (
-          <p role="alert" className="font-body text-sm text-crimson">
+          <p role="alert" className="font-body text-sm text-crimson-text">
             {state.error}
           </p>
         )}
