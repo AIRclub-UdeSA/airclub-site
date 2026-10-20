@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getUnifiedCalendarActivities } from "@/lib/calendar";
 import { EventsHub } from "@/components/eventos/EventsHub";
 import { buildMetadata } from "@/lib/seo";
@@ -18,17 +17,5 @@ export const revalidate = 60;
 export default async function EventosPage() {
   const { activities, nextActivity } = await getUnifiedCalendarActivities();
 
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <span className="font-mono text-[.82rem] uppercase tracking-[.2em] text-mauve">
-            Cargando calendario...
-          </span>
-        </div>
-      }
-    >
-      <EventsHub initialActivities={activities} nextActivity={nextActivity} />
-    </Suspense>
-  );
+  return <EventsHub initialActivities={activities} nextActivity={nextActivity} />;
 }
