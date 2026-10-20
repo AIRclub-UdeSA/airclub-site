@@ -39,7 +39,7 @@ export default async function IngresarErrorPage({ searchParams }: PageProps<"/in
       <p className="mt-6 text-[.85rem] text-text2">
         ¿Querías entrar al panel?{" "}
         <Link href="/admin/login" className="text-text underline underline-offset-4 hover:text-crimson-text">
-          Volver a /admin/login
+          Ir al ingreso del panel
         </Link>
       </p>
     </section>
