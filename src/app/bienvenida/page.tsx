@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSessionEmail } from "@/lib/perfil/require-profile";
+import { isProfileComplete } from "@/lib/perfil/completeness";
 import { prisma } from "@/lib/prisma";
 import { safeNext } from "@/lib/safe-next";
 
@@ -11,12 +12,12 @@ export const metadata: Metadata = {
 /**
  * Destino de signInAction (src/lib/admin/auth-actions.ts) y del login disparado desde el botón
  * "Inscribirme" (#50, src/components/talks/registration-flow.tsx) para el login público. Solo decide a
- * dónde mandar según si ya existe el perfil, nunca se queda: así el chequeo de sesión (que
+ * dónde mandar según si el perfil está completo (ver isProfileComplete), nunca se queda: así el chequeo de sesión (que
  * depende de cookies, por lo tanto siempre dinámico) no vive en "/" y no le rompe el ISR
  * (`revalidate = 60` en src/app/page.tsx).
  *
- * `next` es a dónde volver después (por ejemplo, "/talks?inscribir=mi-charla"): si falta el
- * perfil, se arrastra a /perfil/completar y de ahí vuelve directo, en vez de perderse en "/".
+ * `next` es a dónde volver después (por ejemplo, "/talks?inscribir=mi-charla"): si no hay
+ * perfil o le falta algo, se arrastra a /perfil/completar y de ahí vuelve directo, en vez de perderse en "/".
  */
 export default async function BienvenidaPage({ searchParams }: PageProps<"/bienvenida">) {
   const { next } = await searchParams;
@@ -26,5 +27,5 @@ export default async function BienvenidaPage({ searchParams }: PageProps<"/bienv
   if (!email) redirect("/");
 
   const profile = await prisma.userProfile.findUnique({ where: { email } });
-  redirect(profile ? target : `/perfil/completar?next=${encodeURIComponent(target)}`);
+  redirect(profile && isProfileComplete(profile) ? target : `/perfil/completar?next=${encodeURIComponent(target)}`);
 }

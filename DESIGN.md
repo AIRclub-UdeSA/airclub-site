@@ -391,6 +391,8 @@ Cada dígito de `CountdownStrip` es una solapa de tablero split-flap, hecha a ma
 * **Resto de las páginas**: se esconde al bajar y reaparece apenas se sube 4 px. Siempre se ve a menos de 80 px del tope, con el menú mobile abierto o con foco de teclado adentro. Transición de 200 ms, sin animación con `prefers-reduced-motion`.
 * **Toggle de tema** (`ThemeToggle.tsx`): vive en la píldora, a la izquierda del botón de cuenta (en mobile, al lado de la hamburguesa). Es un parche de contraste (círculo con una mitad rellena, como el de densidad de una prueba de imprenta) del mismo tamaño que el botón de cuenta (32 px, anillo de 1 px). Al cambiar de tema la mitad rellena gira 180°. El giro sale de la clase `dark` y no del estado de React, así no se anima al cargar con el tema oscuro guardado. **El tema nuevo se abre como un círculo desde el botón** (View Transitions API, `document.startViewTransition`, recorte `circle()` de 520 ms con `--ease-club`): en `globals.css` se apaga el fundido por defecto de `::view-transition-old/new(root)` para que solo se vea el recorte. Sin soporte del navegador o con movimiento reducido el cambio es instantáneo.
 
+* **Botón "Sumarme"** (`CommunityJoinLink.tsx`, también en `/proximamente`): sigue la sesión con el mismo estado que `CommunityJoinAction` (`useCommunityState`). Sin sesión, "Sumarme" (menú móvil: "Sumarme al club") lleva a `/contacto`; con sesión y el perfil sin completar, "Completar mi perfil" lleva a `/perfil/completar?next=<página actual>`; con el perfil completo no hay botón. Mientras no se sabe ocupa su lugar sin verse (no parpadea). La consulta al servidor la hace `CommunityStateProvider` (en el RootLayout), que comparten el Nav y los botones de `/contacto` y `/equipo`; con el perfil sin completar se repite al cambiar de página, para que al guardarlo el botón desaparezca sin recargar.
+
 ### Rechazado (no reintroducir)
 * El botón flotante con emojis (🌙 / ☀️) y `hover:scale-110`.
 * Sol y luna de `lucide-react`: obligan a pensar si el ícono muestra el tema actual o el que viene.
@@ -428,7 +430,7 @@ Mismo lenguaje recto que `/talks`, `/equipo` y `/contacto`: paneles con contorno
 * Un taller cargado solo con el día (sin hora) muestra el horario "A confirmar", no "00:00 a 23:59 hs".
 
 ### Recorrido de cada persona (learning path)
-* Con sesión @udesa.edu.ar, cada persona marca un taller como hecho desde su página (y lo puede desmarcar).
+* Con sesión de Google (cualquier cuenta; el login ya no es solo UdeSA), cada persona marca un taller como hecho desde su página (y lo puede desmarcar).
 * **Colores del progreso (pedido del dueño), iguales en los dos niveles:** lo hecho pasa a **gris claro** (contorno tenue, número y texto apagados, sello "Hecho" o "Completo") y lo primero que falta va en **carmesí macizo** con el sello "Seguí acá"; sin nada hecho, "Empezá acá". En las cajas, un workshop está completo cuando hizo todos sus talleres; en la ruta, "el primero que falta" va por orden, no por prerequisitos (`routeStates` y `trackStates` en `src/lib/workshop-progress.ts`, compartidos con el perfil).
 * Cada caja del mosaico y la intro de la ruta muestran la cifra en Anton (`01/10`) y un casillero por taller (gris = hecho, carmesí = siguiente, contorno = pendiente); sin sesión, invitación a ingresar.
 * **Mientras carga** la sesión o el progreso, ni la ruta ni las cajas destacan nada (todas con contorno): antes se veía la 01 en carmesí, como sin sesión, y después saltaba al progreso real.

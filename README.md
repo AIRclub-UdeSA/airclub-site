@@ -7,7 +7,7 @@ Sitio institucional del AIR Club UdeSA: quienes somos, los proyectos del club, e
 
 ## Stack
 
-Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Prisma para el contenido dinámico. Hay login con Google (cuentas @udesa.edu.ar), perfil público, inscripción a charlas y un panel `/admin`.
+Next.js (App Router) + TypeScript + Tailwind v4, con Postgres (Supabase) vía Prisma para el contenido dinámico. Hay login con Google (cualquier cuenta con el mail verificado), perfil de cada persona (privado: solo lo ve ella y el equipo desde `/admin`), inscripción a charlas y talleres, y un panel `/admin` solo para cuentas @udesa.edu.ar cargadas por el equipo.
 
 ## Estructura
 

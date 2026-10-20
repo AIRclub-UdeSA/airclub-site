@@ -1,21 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getMyCommunityStatusAction } from "@/app/perfil/actions";
 
 /**
  * Dónde está la persona frente a "Sumarme a la comunidad": `guest` sin sesión, `incomplete` con sesión pero el perfil
  * sin completar (cuenta nueva o anterior a nombre y consentimiento) y `member` con el perfil completo. `loading` hasta
- * saberlo: /contacto y /equipo son estáticas (ISR), así que se resuelve acá, en el cliente, igual que RegisterButton.
+ * saberlo: las páginas públicas son estáticas (ISR), así que se resuelve en el cliente, igual que RegisterButton.
+ *
+ * La consulta al servidor la hace `CommunityStateProvider` (en el RootLayout, junto al Nav), no cada botón; el Nav, el
+ * botón de /contacto y el de /equipo leen el mismo resultado con `useCommunityState`.
  */
 export type CommunityState = "loading" | "guest" | "incomplete" | "member";
 
+const CommunityStateContext = createContext<CommunityState | null>(null);
+
+export function CommunityStateProvider({ children }: { children: React.ReactNode }) {
+  return <CommunityStateContext.Provider value={useResolveCommunityState()}>{children}</CommunityStateContext.Provider>;
+}
+
 export function useCommunityState(): CommunityState {
+  const state = useContext(CommunityStateContext);
+  if (state === null) throw new Error("useCommunityState necesita un CommunityStateProvider arriba (ver RootLayout).");
+  return state;
+}
+
+function useResolveCommunityState(): CommunityState {
   const { data: session, status } = useSession();
   // null = todavía no se sabe; guarda el email para no mostrar el resultado de otra cuenta.
   const [mine, setMine] = useState<{ email: string; complete: boolean } | null>(null);
   const sessionEmail = session?.user?.email?.toLowerCase() ?? null;
+  const pathname = usePathname();
+  // El provider vive en el RootLayout y no se vuelve a montar al navegar: con el perfil sin completar se consulta de
+  // nuevo en cada página, porque guardarlo (saveProfileAction) redirige a otra sin recargar. Completo, no cambia.
+  const recheckOn = mine?.email === sessionEmail && mine?.complete === false ? pathname : null;
 
   useEffect(() => {
     if (!sessionEmail) return;
@@ -32,7 +52,7 @@ export function useCommunityState(): CommunityState {
     return () => {
       cancelled = true;
     };
-  }, [sessionEmail]);
+  }, [sessionEmail, recheckOn]);
 
   if (status === "loading") return "loading";
   if (!sessionEmail) return "guest";
