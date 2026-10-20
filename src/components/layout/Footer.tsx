@@ -79,8 +79,8 @@ export async function Footer() {
                     rel={c.external ? "noopener noreferrer" : undefined}
                     className="font-body text-[.88rem] text-text2 hover:text-crimson-text transition-colors flex items-center gap-1"
                   >
-                    {c.value}
-                    <ArrowUpRight className="h-3 w-3" />
+                    {c.label}
+                    {c.external && <ArrowUpRight className="h-3 w-3" />}
                   </a>
                 </li>
               ))}
