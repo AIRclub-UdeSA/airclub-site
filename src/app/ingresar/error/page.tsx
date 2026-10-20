@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/shared/Button";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 import { signInAction } from "@/lib/admin/auth-actions";
 
 export const metadata: Metadata = {
@@ -21,7 +20,6 @@ export default async function IngresarErrorPage({ searchParams }: PageProps<"/in
 
   return (
     <section className="flex min-h-[60vh] flex-col items-center justify-center px-15 pt-28 pb-24 text-center max-md:px-5.5">
-      <SectionLabel>Ingresar</SectionLabel>
       <h1 className="mb-4 font-display text-[clamp(1.5rem,4.5vw,3.4rem)] font-extrabold tracking-tight text-text">
         {accessDenied ? "Google no verificó tu mail" : "No se pudo iniciar sesión"}
       </h1>

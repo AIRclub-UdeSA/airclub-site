@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/shared/Button";
-import { SectionLabel } from "@/components/shared/SectionLabel";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
@@ -11,7 +10,6 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
 
   return (
     <section className="flex min-h-[60vh] flex-col items-center justify-center px-15 py-24 text-center max-md:px-5.5">
-      <SectionLabel>Error</SectionLabel>
       <h1 className="mb-4 font-display text-[clamp(2rem,4.5vw,3.4rem)] font-extrabold tracking-tight text-text">
         Algo salió mal
       </h1>
