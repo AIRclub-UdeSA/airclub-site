@@ -245,7 +245,7 @@ La página es un enrutador: elegís el motivo y te lleva al canal. **El fondo no
 1. `src/app/contacto/page.tsx`: título "CONTACTO" (Anton, centrado, igual que `/talks` y `/equipo`) y cuatro secciones, todas con datos de `src/lib/contact.ts`.
 2. `src/components/contacto/IntentSection.tsx`: sección con su título y el tono (`crimson`, `rose`, `mauve`). El tono fija por variable CSS la "tinta" (`--ink`, texto sobre el panel) y el "papel" (`--paper`, relleno del panel). Son colores fijos en claro y oscuro: la tinta siempre contrasta con su papel.
 3. `src/components/contacto/ReasonPanels.tsx`: `ReasonPanel`, un panel recto de 1px que es un solo enlace. Variantes: `featured` (la acción principal, con botón píldora), `outline` (solo contorno, se rellena al acercarse) y `strip` (en una línea en desktop). Al acercarse sube 2px y toma el contorno del texto; con movimiento reducido no se mueve.
-4. `src/components/contacto/ChannelsBand.tsx`: los cuatro canales en una fila sobre `bg-bg2`; el handle es el diseño (Syne grande). Las líneas entre celdas son de 1px y sirven de grilla, no de adorno.
+4. `src/components/contacto/ChannelsBand.tsx`: los cinco canales (mail, Instagram, WhatsApp, LinkedIn y YouTube) sobre `bg-bg2`, en desktop dos arriba más anchos y tres abajo; el handle es el diseño (Syne grande). Las líneas entre celdas son de 1px y sirven de grilla, no de adorno.
 5. `src/lib/contact.ts`: `ContactReason` expone `kind` (`"form"`, `"mail"` o `"account"`) y `subject`, para armar el destino y la etiqueta sin hardcodear nada en los componentes.
 
 ### Lo que el dueño aprobó (conservar)

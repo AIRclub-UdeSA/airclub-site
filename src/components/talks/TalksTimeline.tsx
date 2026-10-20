@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff, Presentation } from "lucid
 import type { TalkMedia, TalkSlide, TalkSpeaker } from "@/lib/talks";
 import type { TalkSection } from "./TalkModal";
 import { RegisterButton, type RegistrationState } from "./RegisterButton";
+import { YOUTUBE_CHANNEL_URL } from "@/lib/contact";
 import { moreSpeakersLabel, talkCover, talkDateParts } from "@/lib/talk-format";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +125,16 @@ export function TalksTimeline({ talks, nextSlug, onOpenTalk, onRegister, registr
           </h2>
           <p className="mt-4 max-w-[52ch] text-[1rem] leading-[1.7] text-text2">
             Charlas abiertas de inteligencia artificial y robótica en el Campus Victoria. Tocá una para ver el
-            resumen, las diapositivas y las fotos.
+            resumen, las diapositivas y las fotos. Las grabaciones están en{" "}
+            <a
+              href={YOUTUBE_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text underline decoration-text/35 underline-offset-4 transition-colors hover:text-crimson-text hover:decoration-crimson-text"
+            >
+              nuestro canal de YouTube<span className="sr-only"> (se abre en una pestaña nueva)</span>
+            </a>
+            .
           </p>
         </div>
 

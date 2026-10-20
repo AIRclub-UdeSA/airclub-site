@@ -7,11 +7,11 @@ export const PROJECT_PROPOSAL_FORM_URL =
 /** Organización del club en GitHub. La usan el carrusel de la landing y los datos estructurados (`sameAs`). */
 export const GITHUB_ORG_URL = "https://github.com/airclub-udesa";
 
-/** Canal de YouTube del club (grabaciones de las charlas). Va en los datos estructurados (`sameAs`). */
+/** Canal de YouTube del club (charlas, workshops y lo que vamos haciendo). Es un canal de `/contacto` y lo enlaza el cronograma de `/talks`. */
 export const YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@AIRClubSanAndr%C3%A9s";
 
 export type SeedContactChannel = {
-  key: "email" | "instagram" | "whatsapp" | "linkedin";
+  key: "email" | "instagram" | "whatsapp" | "linkedin" | "youtube";
   label: string;
   /** Lo que se muestra como texto del enlace. */
   value: string;
@@ -67,6 +67,14 @@ export const channels: SeedContactChannel[] = [
     href: "https://www.linkedin.com/company/air-club-udesa/",
     external: true,
     note: "Actividad del club y contacto profesional.",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    value: "@AIRClubSanAndrés",
+    href: YOUTUBE_CHANNEL_URL,
+    external: true,
+    note: "Charlas, workshops y lo que vamos haciendo en video.",
   },
 ];
 
