@@ -50,7 +50,7 @@ function Step({ n, label, reason, primary = false }: { n: string; label: string;
         <p className="mt-3 max-w-[46ch] text-[.98rem] leading-[1.65] text-current/85">{reason.desc}</p>
         <div className="mt-7">
           {reason.kind === "account" ? (
-            <CommunityJoinAction label={reason.action} buttonClassName={buttonClassName} returnTo="/equipo#sumarte" />
+            <CommunityJoinAction label={reason.action} steps={reason.steps} buttonClassName={buttonClassName} returnTo="/equipo#sumarte" />
           ) : (
             <a
               href={reason.href}

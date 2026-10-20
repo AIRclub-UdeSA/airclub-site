@@ -25,6 +25,8 @@ export type SeedContactReason = {
   key: "comunidad" | "equipo" | "charla" | "workshop" | "sponsors" | "consultas";
   title: string;
   desc: string;
+  /** Solo "account": cómo se entra, que CommunityJoinAction muestra únicamente al visitante (con sesión ya no aplica). */
+  steps?: string;
   /** Texto del botón; el destino sale de `url` o, si no hay, del mail del club con `subject` y `body`. */
   action: string;
   /** "account": no va a un formulario ni a un mail, es entrar con Google y completar el perfil del sitio (CommunityJoinAction). */
@@ -72,7 +74,8 @@ export const reasons: SeedContactReason[] = [
   {
     key: "comunidad",
     title: "Sumarme a la comunidad",
-    desc: "Sin requisitos ni experiencia previa. Entrás con Google, completás tu perfil y ya sos parte.",
+    desc: "Sin requisitos ni experiencia previa.",
+    steps: "Entrás con Google, completás tu perfil y ya sos parte.",
     action: "Sumarme con Google",
     kind: "account",
   },
