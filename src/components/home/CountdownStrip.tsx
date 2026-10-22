@@ -70,7 +70,7 @@ export function CountdownStrip({ event }: { event: EventItem }) {
       {/* Banda plana: el tiempo que falta es el diseño (números en Anton, el de los segundos en carmesí macizo). */}
       <div className="relative mx-auto max-w-[1440px] px-4 sm:px-8 md:px-12">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12 xl:gap-16">
-          {/* Lado izquierdo: Título, descripción y botones oficiales */}
+          {/* Lado izquierdo: Título, descripción y enlace al sitio oficial */}
           <div className="lg:col-span-5">
             <h2 className="font-display text-[clamp(1.5rem,7.8vw,3.6rem)] sm:text-[clamp(2.4rem,4.2vw,3.6rem)] font-black tracking-tight text-[#f5e8ec] leading-[0.94] uppercase mb-5">
               Challenge JAR 2026,
@@ -94,14 +94,6 @@ export function CountdownStrip({ event }: { event: EventItem }) {
                   <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </a>
               )}
-              <a
-                href="https://forms.gle/2zkW6gwJQptUzbXn6"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-[.82rem] font-semibold uppercase tracking-[.12em] text-[#ddaabc]/80 hover:text-[#f0357f] transition-colors"
-              >
-                Postular equipo ↗
-              </a>
             </div>
           </div>
 
