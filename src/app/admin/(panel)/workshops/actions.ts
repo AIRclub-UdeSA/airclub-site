@@ -207,11 +207,14 @@ function validateSession(d: ReturnType<typeof sessionData>, media: ReturnType<ty
   return null;
 }
 
-/** El slug de una guía o un taller es con lo que se guarda quién lo hizo: no puede repetirse entre los dos. */
-async function slugTaken(slug: string, self: { entity: WorkshopEntity; id?: string }): Promise<boolean> {
+/**
+ * El slug de una guía o un taller es con lo que se guarda quién lo hizo: no puede repetirse entre los dos. Al guardar se
+ * le pasa la transacción (`db`), así la consulta va en la misma conexión que el alta.
+ */
+async function slugTaken(slug: string, self: { entity: WorkshopEntity; id?: string }, db: Prisma.TransactionClient = prisma): Promise<boolean> {
   const [guide, session] = await Promise.all([
-    prisma.workshopGuide.findFirst({ where: { slug, ...(self.entity === "guide" && self.id && { NOT: { id: self.id } }) } }),
-    prisma.workshopSession.findFirst({ where: { slug, ...(self.entity === "session" && self.id && { NOT: { id: self.id } }) } }),
+    db.workshopGuide.findFirst({ where: { slug, ...(self.entity === "guide" && self.id && { NOT: { id: self.id } }) } }),
+    db.workshopSession.findFirst({ where: { slug, ...(self.entity === "session" && self.id && { NOT: { id: self.id } }) } }),
   ]);
   return Boolean(guide || session);
 }
@@ -314,7 +317,7 @@ export async function saveGuide(_prev: ActionState, formData: FormData): Promise
         const kept = new Set(guideFileUrls(after));
         replacedFiles = guideFileUrls(before).filter((url) => !kept.has(url));
       } else {
-        if (await slugTaken(data.slug, { entity: "guide" })) throw new Error("Ya hay una guía o un taller con ese slug.");
+        if (await slugTaken(data.slug, { entity: "guide" }, tx)) throw new Error("Ya hay una guía o un taller con ese slug.");
         const last = await tx.workshopGuide.findFirst({ where: { trackId: data.trackId }, orderBy: { order: "desc" }, select: { order: true } });
         const created = await tx.workshopGuide.create({ data: { ...fields, order: (last?.order ?? -1) + 1 } });
         await audit(tx, actor, created.id, "create", null, created);
@@ -379,7 +382,7 @@ export async function saveSession(_prev: ActionState, formData: FormData): Promi
         const kept = new Set(sessionFileUrls(after));
         replacedFiles = sessionFileUrls(before).filter((url) => !kept.has(url));
       } else {
-        if (await slugTaken(data.slug, { entity: "session" })) throw new Error("Ya hay una guía o un taller con ese slug.");
+        if (await slugTaken(data.slug, { entity: "session" }, tx)) throw new Error("Ya hay una guía o un taller con ese slug.");
         const last = await tx.workshopSession.findFirst({ where: { trackId: data.trackId }, orderBy: { order: "desc" }, select: { order: true } });
         const created = await tx.workshopSession.create({
           data: {
