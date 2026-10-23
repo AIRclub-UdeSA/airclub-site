@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { CircleCheck, TriangleAlert, Info } from "lucide-react";
 import { CODE_LANGUAGE_LABELS, paragraphsOf, parseInline, type GuideBlock } from "@/lib/guide-blocks";
+import { isSiteImageUrl, storagePublicPrefix } from "@/lib/storage-url";
 
 const LABEL = "font-mono text-[.7rem] font-semibold uppercase tracking-[.16em]";
 const BODY = "text-[1.05rem] leading-[1.75] text-text2";
@@ -11,16 +12,17 @@ const BODY = "text-[1.05rem] leading-[1.75] text-text2";
  * cargado a mano: el texto solo admite `código`, **negrita** y enlaces (ver src/lib/guide-blocks.ts).
  */
 export function GuideContent({ blocks }: { blocks: GuideBlock[] }) {
+  const storagePrefix = storagePublicPrefix(process.env.SUPABASE_URL);
   return (
     <div className="flex min-w-0 flex-col gap-8">
       {blocks.map((block, i) => (
-        <Block key={i} block={block} />
+        <Block key={i} block={block} storagePrefix={storagePrefix} />
       ))}
     </div>
   );
 }
 
-function Block({ block: b }: { block: GuideBlock }) {
+function Block({ block: b, storagePrefix }: { block: GuideBlock; storagePrefix: string | null }) {
   switch (b.type) {
     case "heading":
       return (
@@ -69,10 +71,21 @@ function Block({ block: b }: { block: GuideBlock }) {
       return <CodeBlock language={b.language} code={b.code} caption={b.caption} />;
 
     case "image":
+      // El panel solo guarda imágenes del bucket o de public/ (validateGuide). Una de otro sitio que llegue a la base por
+      // fuera del panel no está en images.remotePatterns: el optimizador la rechaza (y en desarrollo tira error en toda la
+      // página), así que va sin optimizar en vez de verse rota.
       return (
         <figure className="min-w-0">
           <div className="overflow-hidden border border-text bg-bg2">
-            <Image src={b.src} alt={b.alt} width={1600} height={900} sizes="(min-width: 1024px) 58vw, 100vw" className="h-auto w-full" />
+            <Image
+              src={b.src}
+              alt={b.alt}
+              width={1600}
+              height={900}
+              sizes="(min-width: 1024px) 58vw, 100vw"
+              unoptimized={!isSiteImageUrl(b.src, storagePrefix)}
+              className="h-auto w-full"
+            />
           </div>
           {b.caption && <figcaption className="mt-3 text-[.92rem] leading-[1.6] text-text3">{b.caption}</figcaption>}
         </figure>

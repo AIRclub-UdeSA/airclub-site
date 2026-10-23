@@ -180,10 +180,11 @@ function validateGuide(d: ReturnType<typeof guideData>, blocks: GuideBlock[]): s
   }
   if (d.requires.some((w) => !/^\d{2}$/.test(w))) return "\"Requiere\" son semanas de dos cifras separadas por coma (01, 02).";
   if (!d.guideUrl && blocks.length === 0) return "La guía necesita contenido propio, un link a la guía en otro sitio, o las dos cosas.";
-  // next/image solo acepta nuestro bucket y public/ (next.config.ts): una imagen de otro sitio rompería la página de la guía.
+  // next/image solo optimiza nuestro bucket y public/ (next.config.ts). GuideContent muestra sin optimizar una imagen de
+  // otro sitio que llegue por fuera del panel, pero acá no se acepta: dependería de un host ajeno que puede borrarla.
   const prefix = storagePublicPrefix(process.env.SUPABASE_URL);
   if (guideBlockImageUrls(blocks).some((src) => !isPendingUpload(src) && !isSiteImageUrl(src, prefix))) {
-    return "Hay una imagen con un link de otro sitio: no se vería en la página. Descargala y elegila desde tu compu.";
+    return "Hay una imagen con un link de otro sitio. Descargala y elegila desde tu compu, así queda guardada en el sitio.";
   }
   return null;
 }
