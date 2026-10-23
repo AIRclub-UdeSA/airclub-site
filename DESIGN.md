@@ -460,7 +460,7 @@ Una guía puede vivir en otro sitio (las del JAR: link a `jar_site` y código en
 * **Aviso**: "Ojo" con contorno carmesí, o "Dato" sobre `bg2`. **Checkpoint**: contorno de 1px y "Si ves esto, vas bien".
 * **Texto**: solo `` `código` ``, `**negrita**` y `[enlace](url)` (`src/lib/guide-blocks.ts`); nunca HTML cargado a mano.
 * El panel de "Marcar como hecho" acompaña el scroll en escritorio (sticky, como en todas las páginas de detalle). El progreso sigue siendo por guía entera.
-* Las imágenes van al bucket (`workshops/`) o a `public/`: una de otro sitio no pasa la validación, porque `next/image` no la mostraría.
+* Las imágenes van al bucket (`workshops/`) o a `public/`: una de otro sitio no pasa la validación, porque `next/image` no la optimiza y dependería de un host ajeno. Si una llega a la base por fuera del panel, `GuideContent` la muestra sin optimizar (`unoptimized`) en vez de romper la página.
 
 ### Estructura y archivos
 1. `src/app/workshops/page.tsx`, de arriba hacia abajo: `WorkshopsHero.tsx` (hero de pantalla completa, distinto del título centrado de las otras páginas: "WORK" y "SHOPS" en Anton, uno encima del otro y escalonados, cada palabra con su línea de 1px y su nodo cuadrado como la ruta; una frase corta al lado de WORK y el botón "Empezar" al lado de SHOPS, que baja a las cajas con scroll suave por `StartButton.tsx` / `scrollToTarget`), `UpcomingWorkshops.tsx` sobre `bg-bg2` (eventos de categoría `workshop`; sin ninguno, panel con trama "Todavía no hay fecha", y va después del mosaico), `TrackBoxes.tsx` (el mosaico) y `ProposeWorkshop.tsx` (banda oscura con el motivo `workshop` de `src/lib/contact.ts`).

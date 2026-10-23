@@ -241,6 +241,24 @@ const ENTITY_NAME: Record<WorkshopEntity, { one: string; new: string }> = {
   session: { one: "taller", new: "Agregar taller presencial" },
 };
 
+/**
+ * Las inscripciones se borran en cascada con su taller, y con el workshop las de todos sus talleres: el aviso de borrar
+ * lo dice. Las guías no tienen inscripción.
+ */
+function registrationsNote(editing: Editing): string {
+  if (editing.entity === "track") {
+    const count = editing.item?.sessions.reduce((sum, s) => sum + s.registrations, 0) ?? 0;
+    if (count === 0) return "";
+    return count === 1 ? " También se borra la inscripción a uno de sus talleres." : ` También se borran las ${count} inscripciones a sus talleres.`;
+  }
+  if (editing.entity === "session") {
+    const count = editing.item?.registrations ?? 0;
+    if (count === 0) return "";
+    return count === 1 ? " También se borra su inscripción." : ` También se borran sus ${count} inscripciones.`;
+  }
+  return "";
+}
+
 /** Panel lateral con el formulario (como el de /admin/talks), más borrar e historial. */
 function EditDrawer({
   editing,
@@ -270,8 +288,8 @@ function EditDrawer({
     if (!item) return;
     const warning =
       editing.entity === "track"
-        ? `¿Borrar el workshop "${item.title}" con todas sus guías y talleres? Esta acción no se puede deshacer.`
-        : `¿Borrar "${item.title}"? Esta acción no se puede deshacer.`;
+        ? `¿Borrar el workshop "${item.title}" con todas sus guías y talleres?${registrationsNote(editing)} Esta acción no se puede deshacer.`
+        : `¿Borrar "${item.title}"?${registrationsNote(editing)} Esta acción no se puede deshacer.`;
     if (!confirm(warning)) return;
     setBusy(true);
     setError(null);
