@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // La sección del panel se llamaba "Usuarios"; quedan links y marcadores viejos.
+      {
+        source: "/admin/usuarios",
+        destination: "/admin/permisos",
+        permanent: true,
+      },
       {
         source: "/proyectos",
         destination: "/proximamente?de=proyectos",

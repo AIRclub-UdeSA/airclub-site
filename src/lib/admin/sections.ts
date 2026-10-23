@@ -1,4 +1,4 @@
-// Lista de secciones que se pueden asignar a un Editor en /admin/usuarios. Cada sección de
+// Lista de secciones que se pueden asignar a un Editor en /admin/permisos. Cada sección de
 // contenido que sume su propio panel agrega su entrada acá, y su tarjeta en /admin (page.tsx).
 //
 // `access` dice qué puede hacer un Editor que la tiene asignada:
@@ -26,7 +26,7 @@ export function sectionLabel(id: string): string {
   return findSection(id)?.label ?? id;
 }
 
-/** Etiqueta para asignar secciones en /admin/usuarios: aclara las que son de solo ver. */
+/** Etiqueta para asignar secciones en /admin/permisos: aclara las que son de solo ver. */
 export function sectionAssignLabel(id: string): string {
   const section = findSection(id);
   if (!section) return id;

@@ -70,7 +70,7 @@ export async function addOrUpdateAdminUser(_prevState: ActionState, formData: Fo
     return { error: err instanceof Error ? err.message : "No se pudo guardar." };
   }
 
-  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/permisos");
   return { error: null };
 }
 
@@ -105,6 +105,6 @@ export async function removeAdminUser(_prevState: ActionState, formData: FormDat
     return { error: err instanceof Error ? err.message : "No se pudo sacar el acceso." };
   }
 
-  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/permisos");
   return { error: null };
 }

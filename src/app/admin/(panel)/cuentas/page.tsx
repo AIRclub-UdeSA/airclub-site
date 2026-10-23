@@ -16,7 +16,7 @@ function firstParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }
 
-/** Cuentas del sitio (UserProfile). No confundir con /admin/usuarios, que es quién entra al panel (AdminUser). */
+/** Cuentas del sitio (UserProfile). No confundir con /admin/permisos, que es quién entra al panel (AdminUser). */
 export default async function AdminCuentasPage({ searchParams }: PageProps<"/admin/cuentas">) {
   const admin = await requireAdminSession();
   if (admin.role !== "ADMIN") redirect("/admin/sin-permiso");
@@ -42,8 +42,8 @@ export default async function AdminCuentasPage({ searchParams }: PageProps<"/adm
         <h2 className="font-display text-xl font-bold text-text">Cuentas del sitio</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
           Personas que crearon su perfil en el sitio. Quién entra a este panel se gestiona en{" "}
-          <Link href="/admin/usuarios" className="font-medium text-crimson-text hover:underline">
-            Usuarios
+          <Link href="/admin/permisos" className="font-medium text-crimson-text hover:underline">
+            Permisos
           </Link>
           .
         </p>
