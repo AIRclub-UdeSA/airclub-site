@@ -23,8 +23,8 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     section: "workshops",
   },
   {
-    href: "/admin/usuarios",
-    title: "Usuarios",
+    href: "/admin/permisos",
+    title: "Permisos",
     description: "Quién puede entrar al panel y qué secciones puede editar cada persona.",
     section: null,
   },
@@ -70,7 +70,7 @@ export default async function AdminHomePage() {
         </ul>
       ) : (
         <p className="max-w-prose text-sm text-text3">
-          Todavía no tenés ninguna sección asignada. Pedile a alguien con rol Admin que te sume desde Usuarios.
+          Todavía no tenés ninguna sección asignada. Pedile a alguien con rol Admin que te sume desde Permisos.
         </p>
       )}
     </div>

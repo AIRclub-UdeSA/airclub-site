@@ -28,8 +28,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           ))}
           {admin.role === "ADMIN" && (
             <>
-              <Link href="/admin/usuarios" className="text-sm font-medium text-text2 hover:text-crimson">
-                Usuarios
+              <Link href="/admin/permisos" className="text-sm font-medium text-text2 hover:text-crimson">
+                Permisos
               </Link>
               <Link href="/admin/logs" className="text-sm font-medium text-text2 hover:text-crimson">
                 Logs

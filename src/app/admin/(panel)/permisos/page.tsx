@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/admin/permissions";
 import { UsersManager } from "./UsersManager";
 
-export default async function AdminUsuariosPage() {
+export default async function AdminPermisosPage() {
   const admin = await requireAdminSession();
   if (admin.role !== "ADMIN") redirect("/admin/sin-permiso");
 

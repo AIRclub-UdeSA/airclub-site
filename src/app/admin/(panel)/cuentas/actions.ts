@@ -10,7 +10,7 @@ export type DeleteAccountState = { error: string | null };
 /**
  * Borra una cuenta del sitio: el perfil (UserProfile), todas sus inscripciones a charlas y a talleres presenciales, y
  * los talleres que marcó como hechos (WorkshopCompletion, que se guarda por email).
- * Solo ADMIN. No toca a AdminUser (quién entra al panel; eso es /admin/usuarios) ni la cuenta
+ * Solo ADMIN. No toca a AdminUser (quién entra al panel; eso es /admin/permisos) ni la cuenta
  * de Google: si la persona vuelve a entrar, puede crear el perfil de nuevo. Deja en AuditLog
  * (section "cuentas") solo el rol, la fecha de alta, las inscripciones y los talleres hechos que tenía: ni el email ni
  * los datos del perfil, para que borrar una cuenta no deje a la persona identificable (el entityId es el id del perfil).

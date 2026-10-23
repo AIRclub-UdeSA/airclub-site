@@ -6,7 +6,7 @@ const admin = { role: "ADMIN" as const, sections: [] };
 const editor = (...sections: string[]) => ({ role: "EDITOR" as const, sections });
 
 test("ADMIN ve y edita todas las secciones, incluidas las que no son asignables", () => {
-  for (const section of ["talks", "equipo", "comunidad", "usuarios"]) {
+  for (const section of ["talks", "equipo", "comunidad", "permisos"]) {
     assert.equal(canViewSection(admin, section), true, section);
     assert.equal(canEditSection(admin, section), true, section);
   }
@@ -34,7 +34,7 @@ test("un Editor sin la sección asignada no la ve ni la edita", () => {
 });
 
 test("una sección desconocida asignada a mano no da permiso de edición", () => {
-  assert.equal(canEditSection(editor("usuarios"), "usuarios"), false);
+  assert.equal(canEditSection(editor("permisos"), "permisos"), false);
 });
 
 test("las etiquetas aclaran las secciones de solo ver", () => {
