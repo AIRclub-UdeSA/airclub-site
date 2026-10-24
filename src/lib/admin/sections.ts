@@ -12,6 +12,8 @@ export const ADMIN_SECTIONS = [
   { id: "equipo", label: "Equipo", access: "edit" },
   { id: "workshops", label: "Workshops", access: "edit" },
   { id: "comunidad", label: "Comunidad", access: "view" },
+  // Ver: lista y detalle. Editar: cambiar el estado (#123).
+  { id: "feedback", label: "Feedback", access: "edit" },
 ] as const;
 
 export type AdminSectionId = (typeof ADMIN_SECTIONS)[number]["id"];

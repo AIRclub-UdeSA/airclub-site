@@ -538,3 +538,20 @@ html.dark .page-hero {
 ::view-transition-old(root) {
   z-index: 1;
 }
+
+/* Panel del botón de feedback (FeedbackPanel): entra con un fundido y un desplazamiento corto. Como el panel queda
+   montado y se oculta con `hidden`, la animación se repite cada vez que se abre. */
+@keyframes feedback-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.feedback-panel:not([hidden]) {
+  animation: feedback-panel-in 200ms var(--ease-club) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback-panel:not([hidden]) {
+    animation: none;
+  }
+}

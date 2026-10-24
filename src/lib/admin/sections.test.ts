@@ -22,6 +22,11 @@ test("un Editor con workshops la ve y la edita", () => {
   assert.equal(canEditSection(editor("workshops"), "workshops"), true);
 });
 
+test("un Editor con feedback lo ve y le cambia el estado", () => {
+  assert.equal(canViewSection(editor("feedback"), "feedback"), true);
+  assert.equal(canEditSection(editor("feedback"), "feedback"), true);
+});
+
 test("un Editor con comunidad la ve pero no la edita", () => {
   assert.equal(canViewSection(editor("comunidad"), "comunidad"), true);
   assert.equal(canEditSection(editor("comunidad"), "comunidad"), false);

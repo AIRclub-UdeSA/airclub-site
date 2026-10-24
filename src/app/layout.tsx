@@ -7,7 +7,7 @@ import { CommunityStateProvider } from "@/components/community/use-community-sta
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
-import { ScrollTopButton } from "@/components/layout/ScrollTopButton";
+import { FeedbackButton } from "@/components/feedback/FeedbackButton";
 import { ParticlesBackground } from "@/components/shared/ParticlesBackground";
 import { SmoothScrollProvider } from "@/components/shared/SmoothScrollProvider";
 import { buildMetadata, HOME_DESCRIPTION, HOME_TITLE, SITE_URL } from "@/lib/seo";
@@ -56,7 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Nav />
               <main id="main-content">{children}</main>
               <Footer />
-              <ScrollTopButton />
+              <FeedbackButton />
             </SmoothScrollProvider>
           </CommunityStateProvider>
         </SessionProvider>
