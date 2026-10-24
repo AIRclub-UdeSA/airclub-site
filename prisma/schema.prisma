@@ -192,17 +192,17 @@ enum Audience {
 }
 
 model Talk {
-  id                 String      @id @default(cuid())
-  slug               String      @unique
+  id                 String             @id @default(cuid())
+  slug               String             @unique
   title              String
   subtitle           String
-  abstract           String      @db.Text
+  abstract           String             @db.Text
   speakerName        String?
   speakerRole        String?
   speakerAffiliation String?
   speakerAvatar      String?
   speakerLinkedin    String?
-  speakerBio         String?     @db.Text
+  speakerBio         String?            @db.Text
   startsAt           DateTime?
   endsAt             DateTime?
   dateLabel          String? // reemplaza a la fecha exacta cuando aun no hay dia confirmado
@@ -211,14 +211,14 @@ model Talk {
   recordingUrl       String? // grabacion completa de la charla, opcional: siempre link externo (YouTube), nunca Storage
   ctaLabel           String?
   ctaUrl             String?
-  registrationOpen   Boolean     @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
+  registrationOpen   Boolean            @default(false) // true = inscripcion propia del sitio en vez de ctaUrl (ver #50); excluyentes
   capacity           Int? // cupo de la inscripcion propia; null = sin limite
   audience           Audience // quien puede inscribirse (ver src/lib/udesa.ts); se ve para todos
-  status             TalkStatus  @default(PUBLISHED) // borrador no aparece en /talks
-  confirmed          Boolean     @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
-  order              Int         @default(0)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  status             TalkStatus         @default(PUBLISHED) // borrador no aparece en /talks
+  confirmed          Boolean            @default(false) // false = todavia "a confirmar" (titulo/orador/resumen placeholder)
+  order              Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   media              TalkMedia[]
   slides             TalkSlide[]
   links              TalkLink[]
@@ -475,4 +475,43 @@ model TeamMember {
   active        Boolean   @default(true) // soft-remove without losing history
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+enum FeedbackType {
+  BUG
+  CONTENIDO // contenido incorrecto
+  IDEA
+  OTRO
+}
+
+enum FeedbackStatus {
+  NUEVO
+  EN_CURSO
+  RESUELTO
+  DESCARTADO
+}
+
+// Feedback que deja cualquier persona desde el botón flotante del sitio (#120, v1). El formulario es abierto
+// (no pide cuenta), así que el envío pasa por un campo trampa y un límite por ipHash (ver src/lib/feedback/).
+// Lo técnico (página, pantalla, navegador, tema) va separado de lo personal (email, ipHash) para que en la v2
+// se pueda pasar a un issue del repo público sin copiar datos personales.
+model Feedback {
+  id           String         @id @default(cuid())
+  type         FeedbackType
+  message      String // hasta FEEDBACK_MAX_LENGTH caracteres, validado en el servidor
+  path         String // ruta interna donde se tocó el botón, sin query string ni hash
+  viewport     String? // "ancho×alto" de la ventana, ej: "1280x800"
+  userAgent    String?
+  theme        String? // "light" | "dark"
+  // Datos personales. La sesión es por email (no hay tabla de usuarios), así que la cuenta se guarda por email.
+  accountEmail String? // email de la cuenta, si había sesión
+  email        String? // email de contacto que dejó, solo si no había sesión (opcional)
+  ipHash       String // HMAC de la IP con AUTH_SECRET; la IP en limpio nunca se guarda
+  status       FeedbackStatus @default(NUEVO)
+  digestedAt   DateTime? // cuándo salió en el mail diario al club (src/app/api/cron/feedback-digest); NULL = todavía no
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([ipHash, createdAt])
+  @@index([status, createdAt])
 }

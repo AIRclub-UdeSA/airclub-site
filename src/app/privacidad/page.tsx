@@ -39,6 +39,18 @@ export default function PrivacidadPage() {
               o la supresión de tus datos escribiendo a <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. El sitio está
               dirigido a personas mayores de 18 años.
             </p>
+            {/* Feedback (#124). Cuando entre la v2 (#125: el feedback se puede pasar a un issue del repo público),
+                sumar al final de este párrafo: "El contenido de un comentario (el texto, la página y los datos de
+                tu navegador y pantalla, nunca tu correo, tu cuenta ni tu IP) puede publicarse como issue en el
+                repositorio público del sitio en GitHub, para hacerle seguimiento." */}
+            <p>
+              Si dejás un comentario con el botón de feedback, guardamos el tipo que elegiste, el texto, la página desde
+              la que lo mandaste, tu navegador, el tamaño de tu pantalla y si usabas el tema claro u oscuro. Si tenías la
+              sesión abierta, también tu cuenta; si no, el correo que dejes, que es opcional y solo sirve para
+              responderte. Para frenar envíos automáticos guardamos tu dirección IP cifrada de forma que no se puede
+              recuperar, nunca en limpio. Estos comentarios solo los ve el equipo del club desde su panel de
+              administración.
+            </p>
           </div>
         </div>
       </section>

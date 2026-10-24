@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
+import { countNewFeedback } from "@/lib/admin/feedback";
 
 // Una tarjeta por lugar al que la persona puede entrar, para que quien no conoce el panel sepa
 // adónde ir. `section: null` = herramienta solo para ADMIN (no es una sección asignable).
@@ -40,6 +41,12 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     description: "Quién se inscribió a cada charla, con gráficos y exportación a CSV.",
     section: "comunidad",
   },
+  {
+    href: "/admin/feedback",
+    title: "Feedback",
+    description: "Lo que manda la gente desde el botón de feedback del sitio, para revisarlo y marcar qué se resolvió.",
+    section: "feedback",
+  },
 ];
 
 const ROLE_LABELS = { ADMIN: "Admin (acceso a todo)", EDITOR: "Editor" } as const;
@@ -47,6 +54,7 @@ const ROLE_LABELS = { ADMIN: "Admin (acceso a todo)", EDITOR: "Editor" } as cons
 export default async function AdminHomePage() {
   const admin = await requireAdminSession();
   const visible = DESTINATIONS.filter((d) => (d.section ? canViewSection(admin, d.section) : admin.role === "ADMIN"));
+  const newFeedback = canViewSection(admin, "feedback") ? await countNewFeedback() : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,6 +72,11 @@ export default async function AdminHomePage() {
               >
                 <span className="font-display text-lg font-bold text-text">{d.title}</span>
                 <span className="text-sm text-text2">{d.description}</span>
+                {d.section === "feedback" && newFeedback > 0 && (
+                  <span className="mt-auto pt-2 font-mono text-xs font-semibold text-crimson-text">
+                    {newFeedback === 1 ? "1 nuevo sin revisar" : `${newFeedback} nuevos sin revisar`}
+                  </span>
+                )}
               </Link>
             </li>
           ))}
