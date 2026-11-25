@@ -172,6 +172,12 @@ Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para 
 * Título a todo el ancho de la página, y título alineado a la izquierda.
 * Cajón lateral para el detalle; pestaña de Fotos; paréntesis en los conteos.
 
+### Inscripción de los eventos de `/eventos` (tipos de inscripción)
+
+* Los eventos genéricos (competencias, encuentros) viven en la base y se cargan en `/admin/eventos`. Cada uno elige un **tipo de inscripción** (`src/lib/event-registration.ts`): sin inscripción, link externo, individual o equipo. El botón y el diálogo de una inscripción propia son los mismos que los de las charlas (`RegisterButton`, `TalkRegisterDialog`, `registration-flow.tsx`): no hay un lenguaje visual aparte para los eventos.
+* En `EventsHub` hay un recorrido por cada fuente (charlas y eventos individuales), cada uno con sus acciones (`src/app/eventos/register-actions.ts`); el modal y la lista piden por `slug`, así que un evento y una charla no deben compartir slug. En `/eventos/<slug>` el botón es `EventRegistration.tsx` (botón carmesí redondeado de `Button`, no el blanco del modal).
+* La cuenta regresiva de la landing sigue siendo la del Challenge JAR 2026 (texto en `CountdownStrip.tsx`): marcar otro evento con "Cuenta regresiva de la landing" mostraría el texto del JAR.
+
 ### Referencias externas
 * El dueño compartió el design.md de **Slush** como referencia. Se adoptaron sus *reglas de construcción* (contorno negro de 1px, colores planos sin sombras, sellos/stickers inclinados, bandas de color a todo el ancho, botones píldora). **No** se adoptó su paleta pastel/arcoíris ni las cintas 3D: chocan con carmesí/lienzo, que el dueño no quiere cambiar.
 * Borde almenado: adaptado de **cult-ui "SVG Bands"** (MIT), https://github.com/nolly-studio/cult-ui. Hay crédito en el comentario de `TalksBattlement.tsx`.
