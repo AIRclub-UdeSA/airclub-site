@@ -11,6 +11,12 @@ const DESTINATIONS: { href: string; title: string; description: string; section:
     section: "talks",
   },
   {
+    href: "/admin/eventos",
+    title: "Eventos",
+    description: "Crear y editar los eventos de /eventos y elegir cómo se inscribe la gente: sin inscripción, link externo, individual o por equipo.",
+    section: "eventos",
+  },
+  {
     href: "/admin/equipo",
     title: "Equipo",
     description: "Sumar gente a /equipo, cambiar fotos y links, y ocultar a quien ya no esté.",

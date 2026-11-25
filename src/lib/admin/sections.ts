@@ -9,6 +9,7 @@
 // solo si de verdad un Editor tiene que poder escribir en ella.
 export const ADMIN_SECTIONS = [
   { id: "talks", label: "Charlas", access: "edit" },
+  { id: "eventos", label: "Eventos", access: "edit" },
   { id: "equipo", label: "Equipo", access: "edit" },
   { id: "workshops", label: "Workshops", access: "edit" },
   { id: "comunidad", label: "Comunidad", access: "view" },

@@ -5,6 +5,7 @@ import { canViewSection, requireAdminSession } from "@/lib/admin/permissions";
 const NAV_ITEMS: { href: string; label: string; section: string | null }[] = [
   { href: "/admin", label: "Inicio", section: null },
   { href: "/admin/talks", label: "Charlas", section: "talks" },
+  { href: "/admin/eventos", label: "Eventos", section: "eventos" },
   { href: "/admin/equipo", label: "Equipo", section: "equipo" },
   { href: "/admin/workshops", label: "Workshops", section: "workshops" },
 ];
