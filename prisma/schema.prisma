@@ -104,19 +104,50 @@ enum TalkMediaType {
   VIDEO
 }
 
+// Categoría de un evento (ver EventCategory en prisma/seed-data/events.ts): sale en el calendario de /eventos.
+enum EventCategory {
+  WORKSHOP
+  COMPETITION
+  MEETUP
+  TALK
+}
+
+// Cómo se inscribe la gente a un evento (ver src/lib/event-registration.ts). Los campos de cada tipo viven en el código:
+// un evento que necesite otra forma suma un tipo acá una vez y después se elige desde /admin/eventos.
+enum RegistrationType {
+  NONE // sin inscripción
+  EXTERNAL_LINK // botón a un link de afuera (Event.externalUrl)
+  INDIVIDUAL // un clic, con los datos del perfil, como las charlas (EventRegistration)
+  TEAM // equipo: nombre y emails de los integrantes (ver el PR de equipos)
+}
+
+// Los eventos genéricos del club (competencias, encuentros). Se editan desde /admin/eventos; el array de
+// prisma/seed-data/events.ts solo es el respaldo de src/lib/events.ts cuando no hay conexión a la base.
 model Event {
   id                   String              @id @default(cuid())
   slug                 String              @unique
   title                String
   tagline              String?
   description          String              @db.Text
+  category             EventCategory       @default(MEETUP)
   location             String?
   startsAt             DateTime
   endsAt               DateTime?
+  dateLabel            String? // reemplaza a la fecha exacta en el sitio, ej.: "3 al 6 de Noviembre de 2026"
   status               EventStatus         @default(PUBLISHED)
-  externalUrl          String? // e.g. JAR site link, or a Google Form until RSVP ships
-  rsvpEnabled          Boolean             @default(false) // stays false until the RSVP feature (deferred) ships
-  capacity             Int?
+  instructor           String?
+  prerequisites        String?
+  track                String? // solo category WORKSHOP: la key del workshop de /workshops en el que va cuando ya pasó
+  externalUrl          String? // solo registrationType EXTERNAL_LINK
+  ctaLabel             String? // texto del botón de inscripción; si falta, el sitio pone uno según el tipo
+  rsvpEnabled          Boolean             @default(false) // en desuso: lo reemplaza registrationType (se retira en un PR aparte)
+  registrationType     RegistrationType    @default(NONE)
+  registrationOpen     Boolean             @default(false) // INDIVIDUAL y TEAM: si se está inscribiendo ahora
+  registrationDeadline DateTime? // INDIVIDUAL y TEAM: pasada esta fecha ya no se inscribe ni se edita; null = hasta que empiece
+  audience             Audience            @default(ALL) // quién puede inscribirse (ver src/lib/udesa.ts)
+  capacity             Int? // cupo: personas (INDIVIDUAL) o equipos (TEAM); null = sin límite
+  teamMinSize          Int? // TEAM: integrantes mínimos, capitán incluido
+  teamMaxSize          Int? // TEAM: integrantes máximos, capitán incluido
   featuredForCountdown Boolean             @default(false)
   imageUrl             String?
   createdAt            DateTime            @default(now())
@@ -126,16 +157,17 @@ model Event {
   @@index([startsAt])
 }
 
-// Schema is ready for RSVP now (deferred feature — no form/UI ships yet, see AGENTS/plan notes).
+// Inscripción individual a un evento (registrationType INDIVIDUAL), gemela de TalkRegistration: no guarda nombre,
+// sale del perfil por el email de la sesión.
 model EventRegistration {
   id        String   @id @default(cuid())
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  name      String
+  name      String? // ya no se pide: queda solo en filas anteriores
   email     String
   createdAt DateTime @default(now())
 
-  @@unique([eventId, email]) // one RSVP per person per event; also the future account-linking key
+  @@unique([eventId, email]) // una inscripción por persona por evento
   @@index([eventId])
 }
 

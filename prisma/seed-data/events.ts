@@ -1,7 +1,13 @@
-import type { TalkSpeaker } from "./talks";
-
 export type EventCategory = "workshop" | "competition" | "meetup" | "talk";
 
+// Igual que RegistrationType de src/lib/event-registration.ts (se repite para que el seed no importe de src/).
+type SeedRegistrationType = "NONE" | "EXTERNAL_LINK" | "INDIVIDUAL" | "TEAM";
+
+/**
+ * Eventos de respaldo. La verdad vive en la base y se edita desde /admin/eventos: este array solo lo usa
+ * src/lib/events.ts cuando no hay conexión a la base (ej.: el build del CI con credenciales falsas) y `db:seed`
+ * lo carga si el evento no existe todavía, sin pisar nada ya editado.
+ */
 export type SeedEvent = {
   slug: string;
   title: string;
@@ -14,12 +20,11 @@ export type SeedEvent = {
   dateLabel?: string;
   externalUrl?: string;
   ctaLabel?: string;
-  rsvpEnabled: boolean;
+  registrationType: SeedRegistrationType;
   capacity?: number;
   featuredForCountdown: boolean;
   imageUrl?: string;
   instructor?: string;
-  speakers?: TalkSpeaker[];
   prerequisites?: string;
   /** Solo para `category: "workshop"`: la `key` del workshop de /workshops en el que va cuando ya pasó. */
   track?: string;
@@ -39,7 +44,7 @@ export const events: SeedEvent[] = [
     dateLabel: "3 al 6 de Noviembre de 2026",
     externalUrl: "https://airclub-udesa.github.io/jar_site/",
     ctaLabel: "Web Oficial Challenge JAR 2026",
-    rsvpEnabled: false,
+    registrationType: "EXTERNAL_LINK",
     featuredForCountdown: true,
   },
 ];

@@ -45,6 +45,9 @@ export interface CalendarActivity {
   registrationOpen?: boolean;
   registrationLabel?: string;
   talkSlug?: string;
+  /** Solo eventos del panel (/admin/eventos): su inscripción propia es de este tipo (ver src/lib/event-registration.ts). */
+  eventSlug?: string;
+  registrationType?: "INDIVIDUAL" | "TEAM";
   instructorOrSpeaker?: string;
   speaker?: CalendarSpeaker;
   speakers?: CalendarSpeaker[];
