@@ -45,7 +45,7 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
   const params = await searchParams;
   const charlaSlug = firstParam(params.charla);
 
-  const [profiles, talksWithRegistrations, registrableTalks, workshopsWithRegistrations] = await Promise.all([
+  const [profiles, talksWithRegistrations, registrableTalks, workshopsWithRegistrations, eventsWithRegistrations] = await Promise.all([
     prisma.userProfile.findMany({ orderBy: { createdAt: "desc" } }),
     prisma.talk.findMany({
       where: { registrations: { some: {} }, ...(charlaSlug && { slug: charlaSlug }) },
@@ -64,6 +64,12 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
       include: { registrations: { orderBy: { createdAt: "desc" } }, track: { select: { title: true } } },
       orderBy: { startsAt: "desc" },
     }),
+    // Eventos con inscripción individual (/admin/eventos), el más reciente primero.
+    prisma.event.findMany({
+      where: { registrations: { some: {} } },
+      include: { registrations: { orderBy: { createdAt: "desc" } } },
+      orderBy: { startsAt: "desc" },
+    }),
   ]);
 
   // Inscripción y perfil se unen por email (no hay relación en el schema). Los perfiles ya están cargados arriba.
@@ -80,8 +86,8 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
         <h2 className="font-display text-xl font-bold text-text">Comunidad</h2>
         <p className="mt-1 max-w-prose text-sm text-text2">
           {canRemove
-            ? "Quién se inscribió a cada AIR Talk y a cada taller presencial. Las cuentas con perfil están en Cuentas. Las inscripciones a charlas se pueden dar de baja desde acá; cada baja y cada exportación quedan en los logs."
-            : "Quién se inscribió a cada AIR Talk y a cada taller presencial. Tenés acceso de solo lectura: podés ver los inscriptos y exportar los de las charlas, pero no darlos de baja. Cada exportación queda registrada con tu email."}
+            ? "Quién se inscribió a cada AIR Talk, a cada taller presencial y a cada evento. Las cuentas con perfil están en Cuentas. Las inscripciones a charlas se pueden dar de baja desde acá; cada baja y cada exportación quedan en los logs."
+            : "Quién se inscribió a cada AIR Talk, a cada taller presencial y a cada evento. Tenés acceso de solo lectura: podés ver los inscriptos y exportar los de las charlas, pero no darlos de baja. Cada exportación queda registrada con tu email."}
         </p>
       </div>
 
@@ -236,6 +242,51 @@ export default async function AdminComunidadPage({ searchParams }: PageProps<"/a
                             {r.email}
                             {profile && <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span>}
                             {r.markedAbsent && <span className="text-text3"> · dijo que no fue</span>}
+                          </p>
+                          {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
+                        </div>
+                        <span className="shrink-0 font-mono text-xs text-text3">{formatDate(r.createdAt)}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h3 className="font-display text-lg font-bold text-text">Inscriptos por evento</h3>
+        {eventsWithRegistrations.length === 0 ? (
+          <p className="text-sm text-text3">Todavía no hay inscriptos en ningún evento.</p>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {eventsWithRegistrations.map((e) => (
+              <div key={e.id} className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p className="text-sm font-medium text-text">
+                    {e.title}{" "}
+                    <span className="font-mono text-xs font-normal text-text3">
+                      — {e.registrations.length}
+                      {e.capacity === null ? "" : ` de ${e.capacity}`} inscripto
+                      {e.registrations.length === 1 && e.capacity === null ? "" : "s"}
+                    </span>
+                  </p>
+                  <a href={`/admin/comunidad/inscriptos.csv?evento=${encodeURIComponent(e.slug)}`} className="text-sm font-medium text-crimson-text hover:underline">
+                    Exportar CSV
+                  </a>
+                </div>
+                <ul className="flex flex-col divide-y divide-border/60 border-y border-border/60">
+                  {e.registrations.map((r) => {
+                    const profile = profileByEmail.get(r.email);
+                    return (
+                      <li key={r.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                        <div className="min-w-0 break-words">
+                          <p className="text-sm text-text2">
+                            {profile?.fullName ? `${profile.fullName} · ` : ""}
+                            {r.email}
+                            {profile ? <span className="text-text3"> · {ROLE_LABELS[profile.role]}</span> : <span className="text-text3"> · sin perfil</span>}
                           </p>
                           {profile && <p className="font-mono text-xs text-text3">{profileDetail(profile)}</p>}
                         </div>
