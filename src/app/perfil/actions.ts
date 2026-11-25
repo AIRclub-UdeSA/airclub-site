@@ -150,7 +150,7 @@ export async function getMyCommunityStatusAction(): Promise<CommunityStatusResul
 }
 
 /**
- * La persona borra su propia cuenta del sitio: el perfil, todas sus inscripciones a charlas y a talleres presenciales,
+ * La persona borra su propia cuenta del sitio: el perfil, todas sus inscripciones a charlas, a talleres presenciales y a eventos (también sus equipos),
  * y los talleres que marcó como hechos.
  * No hay AuditLog (el registro apunta a un AdminUser). Después cierra la sesión: la cuenta de
  * Google no se toca, así que si vuelve a entrar puede crear el perfil de nuevo.
@@ -161,6 +161,10 @@ export async function deleteMyAccountAction(): Promise<void> {
 
   await prisma.$transaction([
     prisma.talkRegistration.deleteMany({ where: { email } }),
+    // Eventos de /eventos: la inscripción individual y los equipos. Si era capitán, se va su equipo entero (los
+    // integrantes se borran en cascada); si era integrante, solo ella, y el equipo sigue con los demás.
+    prisma.eventTeam.deleteMany({ where: { captainEmail: email } }),
+    prisma.eventTeamMember.deleteMany({ where: { email } }),
     prisma.workshopCompletion.deleteMany({ where: { email } }),
     prisma.workshopRegistration.deleteMany({ where: { email } }),
     prisma.userProfile.deleteMany({ where: { email } }),
