@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { createEvent, updateEvent, type ActionState } from "./actions";
 import { AUDIENCE_OPTIONS, type Audience } from "@/lib/udesa";
@@ -76,7 +76,16 @@ export function EventForm({ event }: { event?: EditingEvent }) {
   const typeHint = REGISTRATION_TYPE_OPTIONS.find((o) => o.value === type)?.hint;
 
   return (
-    <form action={formAction} className="flex flex-col gap-8">
+    // Se manda con onSubmit y no con action={formAction}: React vacía el formulario después de una acción, y un error de
+    // validación no puede hacerle perder al admin lo que cargó.
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+      className="flex flex-col gap-8"
+    >
       {event && <input type="hidden" name="id" value={event.id} />}
 
       <fieldset className="flex flex-col gap-3">
