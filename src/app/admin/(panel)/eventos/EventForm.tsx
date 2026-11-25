@@ -193,10 +193,8 @@ export function EventForm({ event }: { event?: EditingEvent }) {
           Cómo se inscribe la gente
           <select name="registrationType" value={type} onChange={(e) => setType(e.target.value as RegistrationType)} className={inputClass}>
             {REGISTRATION_TYPE_OPTIONS.map((o) => (
-              // Equipo llega en el PR que sigue (inscripcion-equipos): hasta entonces no se puede elegir.
-              <option key={o.value} value={o.value} disabled={o.value === "TEAM"}>
+              <option key={o.value} value={o.value}>
                 {o.label}
-                {o.value === "TEAM" ? " (todavía no disponible)" : ""}
               </option>
             ))}
           </select>

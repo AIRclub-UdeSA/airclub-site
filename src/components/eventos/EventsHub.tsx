@@ -10,6 +10,7 @@ import { CalendarMonthGrid } from "./CalendarMonthGrid";
 import { CalendarTimelineList } from "./CalendarTimelineList";
 import { EventDetailModal } from "./EventDetailModal";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
+import { TeamRegisterDialog } from "./TeamRegisterDialog";
 import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
 import { getMyTalkRegistrationsAction } from "@/app/talks/register-actions";
 import { cancelEventRegistrationAction, getMyEventRegistrationsAction, registerForEventAction } from "@/app/eventos/register-actions";
@@ -53,26 +54,27 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
     fetchMine: getMyTalkRegistrationsAction,
     returnTo: (slug) => `/eventos?evento=${encodeURIComponent(slug)}&inscribir=${encodeURIComponent(slug)}`,
   });
-  // Eventos del panel con inscripción individual: el mismo recorrido, con sus propias acciones.
+  // Eventos del panel con inscripción propia (individual o de equipo): el mismo recorrido, con sus propias acciones. El
+  // diálogo es el de un clic o el del equipo, según el tipo del evento que se abre.
   const eventFlow = useRegistrationFlow({
-    items: initialActivities.filter((a) => a.registrationType === "INDIVIDUAL"),
+    items: initialActivities.filter((a) => a.registrationType),
     canRegister: (a) => Boolean(a.registrationOpen) && a.isUpcoming,
     fetchMine: getMyEventRegistrationsAction,
     returnTo: (slug) => `/eventos?evento=${encodeURIComponent(slug)}&inscribir=${encodeURIComponent(slug)}`,
   });
   // El modal y las tarjetas piden por slug: se reparte entre charlas y eventos según la actividad que lo tiene.
-  const individualEventSlugs = useMemo(
-    () => new Set(initialActivities.filter((a) => a.registrationType === "INDIVIDUAL").map((a) => a.slug)),
+  const ownEventSlugs = useMemo(
+    () => new Set(initialActivities.filter((a) => a.registrationType).map((a) => a.slug)),
     [initialActivities],
   );
   const requestTalk = talkFlow.request;
   const requestEvent = eventFlow.request;
   // Estable (lo usa un efecto de RegisterDeepLink): talkFlow.request y eventFlow.request son setState.
   const request = useCallback(
-    (slug: string) => (individualEventSlugs.has(slug) ? requestEvent(slug) : requestTalk(slug)),
-    [individualEventSlugs, requestEvent, requestTalk],
+    (slug: string) => (ownEventSlugs.has(slug) ? requestEvent(slug) : requestTalk(slug)),
+    [ownEventSlugs, requestEvent, requestTalk],
   );
-  const registrationOf = (slug: string) => (individualEventSlugs.has(slug) ? eventFlow : talkFlow).registrationOf(slug);
+  const registrationOf = (slug: string) => (ownEventSlugs.has(slug) ? eventFlow : talkFlow).registrationOf(slug);
 
   const activeSlug = isModalOpen ? selectedSlug : null;
   const activeActivity = initialActivities.find((a) => a.slug === activeSlug) ?? null;
@@ -197,12 +199,21 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
       />
 
       <TalkRegisterDialog {...talkFlow.dialog} />
-      <TalkRegisterDialog
-        {...eventFlow.dialog}
-        kind="evento"
-        register={registerForEventAction}
-        cancel={cancelEventRegistrationAction}
-      />
+      {eventFlow.dialog.talk?.registrationType === "TEAM" ? (
+        <TeamRegisterDialog
+          event={eventFlow.dialog.talk}
+          isOpen={eventFlow.dialog.isOpen}
+          onClose={eventFlow.dialog.onClose}
+          onResult={eventFlow.dialog.onResult}
+        />
+      ) : (
+        <TalkRegisterDialog
+          {...eventFlow.dialog}
+          kind="evento"
+          register={registerForEventAction}
+          cancel={cancelEventRegistrationAction}
+        />
+      )}
     </>
   );
 }

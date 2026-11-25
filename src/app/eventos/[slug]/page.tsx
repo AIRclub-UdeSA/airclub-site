@@ -32,8 +32,9 @@ export default async function EventoDetailPage({ params }: PageProps<"/eventos/[
   if (!event) notFound();
 
   const upcoming = isUpcoming(event.startsAt, event.endsAt);
-  // Individual: el botón abre el diálogo de inscripción en la página. Con link externo es un enlace; sin inscripción, un aviso.
-  const registrable = upcoming && event.registrationType === "INDIVIDUAL" && isRegistrationOpen(event);
+  // Individual o de equipo: el botón abre el diálogo de inscripción en la página. Con link externo es un enlace; sin inscripción, un aviso.
+  const ownType = event.registrationType === "INDIVIDUAL" || event.registrationType === "TEAM" ? event.registrationType : undefined;
+  const registrable = upcoming && ownType !== undefined && isRegistrationOpen(event);
   const externalUrl = event.registrationType === "EXTERNAL_LINK" ? event.externalUrl : undefined;
 
   return (
@@ -72,7 +73,8 @@ export default async function EventoDetailPage({ params }: PageProps<"/eventos/[
               endsAt: event.endsAt?.toISOString(),
               location: event.location,
               description: event.description,
-              label: event.ctaLabel || defaultCtaLabel(event.registrationType),
+              registrationType: ownType!,
+              label: event.ctaLabel || defaultCtaLabel(ownType),
             }}
           />
         ) : externalUrl ? (
