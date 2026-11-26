@@ -54,3 +54,8 @@ ON CONFLICT ("slug") DO UPDATE SET
     "dateLabel" = '3 al 6 de Noviembre de 2026',
     "ctaLabel" = 'Web Oficial Challenge JAR 2026',
     "registrationType" = 'EXTERNAL_LINK';
+
+-- "1er encuentro del club" quedó en la base de producción cuando salió del array de seed-data (PR #39 lo pasó a la charla
+-- `primer-encuentro-air-club`). Hasta ahora no se veía porque el sitio leía el array; al leer de la base aparecería
+-- duplicado con la charla en /eventos y con su propia página. Se pasa a Borrador (no se borra). Si no existe, no hace nada.
+UPDATE "Event" SET "status" = 'DRAFT', "updatedAt" = CURRENT_TIMESTAMP WHERE "slug" = 'primer-encuentro';
