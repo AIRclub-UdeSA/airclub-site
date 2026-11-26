@@ -236,19 +236,29 @@ export function EventForm({ event }: { event?: EditingEvent }) {
               <input type="checkbox" name="registrationOpen" defaultChecked={event?.registrationOpen ?? false} />
               Inscripción abierta ahora
             </label>
-            <label className={`${labelClass} max-w-[24rem]`}>
-              Quién puede inscribirse
-              <select name="audience" required defaultValue={event?.registrationType && isOwnRegistration(event.registrationType) ? event.audience : ""} className={inputClass}>
-                <option value="" disabled>
-                  Elegí una opción
-                </option>
-                {AUDIENCE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+            {type === "TEAM" ? (
+              // Por equipos todos los integrantes tienen que ser @udesa.edu.ar (validateTeam): la audiencia no se elige.
+              <div className={`${labelClass} max-w-[24rem]`}>
+                Quién puede inscribirse
+                <input type="hidden" name="audience" value="UDESA" />
+                <p className="py-2 text-sm text-text">{AUDIENCE_OPTIONS.find((o) => o.value === "UDESA")?.label}</p>
+                <span className={hintClass}>Por equipos, todos los integrantes tienen que tener email @udesa.edu.ar.</span>
+              </div>
+            ) : (
+              <label className={`${labelClass} max-w-[24rem]`}>
+                Quién puede inscribirse
+                <select name="audience" required defaultValue={event?.registrationType && isOwnRegistration(event.registrationType) ? event.audience : ""} className={inputClass}>
+                  <option value="" disabled>
+                    Elegí una opción
                   </option>
-                ))}
-              </select>
-            </label>
+                  {AUDIENCE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div className="flex flex-wrap gap-3">
               <label className={`${labelClass} max-w-[16rem]`}>
                 {type === "TEAM" ? "Cupo de equipos" : "Cupo de personas"}
