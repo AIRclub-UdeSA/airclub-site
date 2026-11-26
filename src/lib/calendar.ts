@@ -14,7 +14,7 @@ function formatTime(d: Date): string {
     timeZone: TIME_ZONE,
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
   }).format(d);
 }
 
@@ -116,8 +116,9 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
   const status = calculateStatus(startsAt, endsAt, now);
   const isUp = isUpcoming(startsAt, endsAt);
 
+  // Un evento de todo el día no tiene horario.
   let timeLabel: string | undefined;
-  if (startsAt) {
+  if (!event.allDay) {
     const startStr = formatTime(startsAt);
     timeLabel = endsAt ? `${startStr} - ${formatTime(endsAt)} hs` : `${startStr} hs`;
   }
@@ -155,6 +156,7 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
     status,
     startsAt: startsAt.toISOString(),
     endsAt: endsAt?.toISOString(),
+    allDay: event.allDay,
     dateLabel: event.dateLabel || formatDateLabel(startsAt, endsAt),
     timeLabel,
     location: event.location || "Campus Victoria, UdeSA",
@@ -167,6 +169,8 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
     registrationLabel: ownType ? ctaLabel : undefined,
     eventSlug: ownType ? event.slug : undefined,
     registrationType: ownType,
+    teamMinSize: ownType === "TEAM" ? event.teamMinSize : undefined,
+    teamMaxSize: ownType === "TEAM" ? event.teamMaxSize : undefined,
     instructorOrSpeaker: event.instructor,
     speaker,
     speakers: speaker ? [speaker] : undefined,

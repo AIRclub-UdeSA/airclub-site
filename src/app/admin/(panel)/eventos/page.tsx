@@ -21,7 +21,8 @@ export default async function AdminEventosPage() {
           <h2 className="font-display text-xl font-bold text-text">Eventos</h2>
           <p className="mt-1 max-w-prose text-sm text-text2">
             Los eventos de /eventos (competencias y encuentros; las charlas y los talleres tienen su propio panel). Cada uno elige cómo se inscribe la
-            gente. Los cambios se ven en el sitio sin redeploy. Para ocultar un evento, pasalo a Borrador.
+            gente. Los cambios se ven en el sitio sin redeploy. Para ocultar un evento, pasalo a Borrador; con &ldquo;Vista previa&rdquo; lo ves como
+            se verá, borrador incluido.
           </p>
         </div>
         <Link
@@ -48,9 +49,14 @@ export default async function AdminEventosPage() {
                     {STATUS_LABEL[e.status]}
                   </p>
                 </div>
-                <Link href={`/admin/eventos/${e.id}`} className="shrink-0 text-sm font-medium text-crimson-text hover:underline">
-                  Editar
-                </Link>
+                <div className="flex shrink-0 items-center gap-5">
+                  <Link href={`/admin/vista-previa/eventos/${e.slug}`} className="text-sm font-medium text-text2 hover:text-crimson-text hover:underline">
+                    Vista previa
+                  </Link>
+                  <Link href={`/admin/eventos/${e.id}`} className="text-sm font-medium text-crimson-text hover:underline">
+                    Editar
+                  </Link>
+                </div>
               </li>
             );
           })}

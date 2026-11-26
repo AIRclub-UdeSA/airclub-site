@@ -25,8 +25,9 @@ export type TeamView = {
 
 /** Lo que necesita el diálogo al abrirse: el equipo de la cuenta (si lo tiene) y las reglas del evento. */
 export type TeamInfo = {
-  minSize: number;
-  maxSize: number;
+  /** Integrantes mínimo y máximo, capitán incluido; null = sin límite de ese lado. */
+  minSize: number | null;
+  maxSize: number | null;
   team: TeamView | null;
   /** El capitán puede editarlo o darlo de baja (la inscripción sigue abierta). */
   canEdit: boolean;
@@ -74,7 +75,7 @@ export async function getMyTeamAction(slug: string): Promise<TeamInfo | null> {
   const email = await getSessionEmail();
   if (!email) return null;
   const event = await findTeamEvent(slug);
-  if (!event || event.teamMinSize === null || event.teamMaxSize === null) return null;
+  if (!event) return null;
 
   const membership = await prisma.eventTeamMember.findUnique({
     where: { eventId_email: { eventId: event.id, email } },
@@ -108,7 +109,7 @@ export async function saveTeamAction(slug: string, input: { name: string; member
   const email = await requireEventRegistrantEmail(slug);
 
   const event = await findTeamEvent(slug);
-  if (!event || !isRegistrationOpen(event) || event.teamMinSize === null || event.teamMaxSize === null) return { status: "closed" };
+  if (!event || !isRegistrationOpen(event)) return { status: "closed" };
   if (!canRegisterTo(event.audience, email)) return { status: "restricted" };
 
   const memberEmails = Array.isArray(input.memberEmails) ? input.memberEmails.map((e) => String(e)) : [];

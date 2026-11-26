@@ -9,6 +9,8 @@ export type EventCategory = SeedEvent["category"];
 export type EventItem = Omit<SeedEvent, "registrationType"> & {
   /** Cómo se inscribe la gente (ver src/lib/event-registration.ts). Sin definir = sin inscripción. */
   registrationType?: RegistrationType;
+  /** Dura todo el día: no se muestra horario (ver Event.allDay en schema.prisma). */
+  allDay?: boolean;
   /** INDIVIDUAL y TEAM: si se está inscribiendo ahora, desde el panel. */
   registrationOpen?: boolean;
   /** INDIVIDUAL y TEAM: pasada esta fecha ya no se inscribe ni se edita. Sin definir = hasta que el evento termina. */
@@ -42,6 +44,7 @@ export function toEventItem(row: EventRow): EventItem {
     location: row.location ?? undefined,
     startsAt: row.startsAt,
     endsAt: row.endsAt ?? undefined,
+    allDay: row.allDay,
     dateLabel: row.dateLabel ?? undefined,
     externalUrl: row.externalUrl ?? undefined,
     ctaLabel: row.ctaLabel ?? undefined,
@@ -94,6 +97,12 @@ export async function getFeaturedCountdownEvent(): Promise<EventItem | undefined
 export async function getEventBySlug(slug: string): Promise<EventItem | undefined> {
   const all = await getAllEvents();
   return all.find((e) => e.slug === slug);
+}
+
+/** Un evento por slug sea cual sea su estado (borrador incluido), para la vista previa del panel. No usa el respaldo del seed. */
+export async function getEventPreviewBySlug(slug: string): Promise<{ event: EventItem; status: EventRow["status"] } | undefined> {
+  const row = await prisma.event.findUnique({ where: { slug } });
+  return row ? { event: toEventItem(row), status: row.status } : undefined;
 }
 
 export async function getAllEventSlugs(): Promise<string[]> {

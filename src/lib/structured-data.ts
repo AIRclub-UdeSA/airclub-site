@@ -93,11 +93,15 @@ function placeOf(location: string | undefined, fallback?: string): JsonLd | unde
   return { "@type": "Place", name, address };
 }
 
+const AR_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+const arDate = (d: Date) => AR_DATE.format(d);
+
 function eventBase({
   name,
   description,
   startsAt,
   endsAt,
+  allDay,
   url,
   location,
   registrationUrl,
@@ -106,6 +110,8 @@ function eventBase({
   description: string;
   startsAt: Date;
   endsAt?: Date;
+  /** Sin horario: schema.org acepta la fecha sola (en hora de Buenos Aires) en vez de un instante. */
+  allDay?: boolean;
   url: string;
   location?: JsonLd;
   registrationUrl?: string;
@@ -114,8 +120,8 @@ function eventBase({
     "@type": "Event",
     name,
     description,
-    startDate: startsAt.toISOString(),
-    ...(endsAt ? { endDate: endsAt.toISOString() } : {}),
+    startDate: allDay ? arDate(startsAt) : startsAt.toISOString(),
+    ...(endsAt ? { endDate: allDay ? arDate(endsAt) : endsAt.toISOString() } : {}),
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     ...(location ? { location } : {}),
@@ -146,6 +152,7 @@ export function eventJsonLd(event: EventItem): JsonLd {
       description: event.description,
       startsAt: event.startsAt,
       endsAt: event.endsAt,
+      allDay: event.allDay,
       url: new URL(`/eventos/${event.slug}`, SITE_URL).toString(),
       location: placeOf(event.location),
       registrationUrl: event.externalUrl,

@@ -33,6 +33,10 @@ export type TimelineTalk = {
   registrationLabel?: string;
   category?: "talk" | "workshop" | "competition" | "meetup";
   capacity?: number;
+  /** Solo eventos con inscripción propia (vienen de CalendarActivity): por equipos, el cupo es de equipos, no de personas. */
+  registrationType?: "INDIVIDUAL" | "TEAM";
+  teamMinSize?: number;
+  teamMaxSize?: number;
   prerequisites?: string;
   /** Borrador: solo llega a /admin/talks, que lo muestra apagado. */
   draft?: boolean;

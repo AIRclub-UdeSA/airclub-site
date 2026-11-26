@@ -1,12 +1,42 @@
 import { AUDIENCE_REQUIRED_ERROR, type Audience } from "@/lib/udesa";
 import { isOwnRegistration, type RegistrationType } from "@/lib/event-registration";
 
+// Argentina no tiene horario de verano: offset fijo, a diferencia de zonas con DST.
+const AR_OFFSET = "-03:00";
+
+export function combineDateTime(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr) return null;
+  return new Date(`${dateStr}T${timeStr || "00:00"}:00${AR_OFFSET}`);
+}
+
+/**
+ * Las fechas de un evento a partir de lo que carga el panel (hora de Argentina). Un solo "día" + horas opcionales para el
+ * caso común, y un "día de fin" aparte cuando dura más de un día. De todo el día: de 00:00 a 23:59 (del día de fin, si lo
+ * hay), así el calendario y "próximo/pasado" siguen funcionando; que no tenga horario lo dice `allDay`.
+ */
+export function buildEventDates(input: { date: string; startTime: string; endTime: string; endDate: string; allDay: boolean }): {
+  startsAt: Date | null;
+  endsAt: Date | null;
+} {
+  const { date, startTime, endTime, endDate, allDay } = input;
+  if (allDay) return { startsAt: combineDateTime(date, "00:00"), endsAt: combineDateTime(endDate || date, "23:59") };
+
+  const startsAt = combineDateTime(date, startTime);
+  if (endDate) return { startsAt, endsAt: combineDateTime(endDate, endTime || "23:59") };
+  if (date && endTime) return { startsAt, endsAt: combineDateTime(date, endTime) };
+  return { startsAt, endsAt: null };
+}
+
 export type EventFormData = {
   slug: string;
   title: string;
   description: string;
   startsAt: Date | null;
   endsAt: Date | null;
+  /** Dura todo el día: no tiene horario (ver buildEventDates). */
+  allDay: boolean;
+  /** Se cargó la hora de inicio; si no es de todo el día, hace falta. */
+  hasStartTime: boolean;
   registrationType: RegistrationType | null;
   externalUrl: string | null;
   registrationDeadline: Date | null;
@@ -37,6 +67,7 @@ export function validateEventData(data: EventFormData): string | null {
   if (!data.title) return "El título es obligatorio.";
   if (!data.description) return "La descripción es obligatoria.";
   if (!data.startsAt || Number.isNaN(data.startsAt.getTime())) return "El evento necesita fecha de inicio.";
+  if (!data.allDay && !data.hasStartTime) return "Poné la hora de inicio, o marcá que el evento dura todo el día.";
   if (data.endsAt && data.endsAt < data.startsAt) return "La fecha de fin no puede ser anterior a la de inicio.";
   if (!data.registrationType) return "Elegí cómo se inscribe la gente.";
 
@@ -60,10 +91,15 @@ export function validateEventData(data: EventFormData): string | null {
     // validateTeam exige @udesa.edu.ar a todos los integrantes, capitán incluido: con "cualquier persona" una cuenta de
     // Gmail vería el botón habilitado y recién fallaría al guardar el equipo.
     if (data.audience !== "UDESA") return "Un evento por equipos es solo para la comunidad UdeSA: todos los integrantes tienen que tener email @udesa.edu.ar.";
-    if (!isPositiveInt(data.teamMinSize) || !isPositiveInt(data.teamMaxSize)) {
-      return "Poné el mínimo y el máximo de integrantes (números enteros desde 1, capitán incluido).";
+    // Mínimo y máximo son opcionales: vacío = sin límite de ese lado.
+    for (const size of [data.teamMinSize, data.teamMaxSize]) {
+      if (size !== null && !isPositiveInt(size)) {
+        return "El mínimo y el máximo de integrantes tienen que ser números enteros desde 1 (capitán incluido), o quedar vacíos (sin límite).";
+      }
     }
-    if (data.teamMaxSize < data.teamMinSize) return "El máximo de integrantes no puede ser menor que el mínimo.";
+    if (data.teamMinSize !== null && data.teamMaxSize !== null && data.teamMaxSize < data.teamMinSize) {
+      return "El máximo de integrantes no puede ser menor que el mínimo.";
+    }
   }
   return null;
 }

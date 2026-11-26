@@ -11,6 +11,8 @@ import { TalkLinks, TalkRecording, TalkSlides, TalkTabs, TEXT_LINK } from "./Tal
 import { talkDateParts, talkDateText, textParagraphs } from "@/lib/talk-format";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
 import { buildGoogleCalendarUrl, buildIcsDataUri } from "@/lib/calendar-types";
+import { teamSizeText } from "@/lib/team-validation";
+import { UDESA_EMAIL_DOMAIN } from "@/lib/udesa";
 import { cn } from "@/lib/utils";
 
 export type TalkSection = "overview" | "slides" | "recording";
@@ -315,7 +317,9 @@ export function TalkModal({
                         {talk.capacity && (
                           <>
                             <dt className={cn(LABEL, "pt-0.5")}>Cupos</dt>
-                            <dd className="font-medium">{talk.capacity} personas</dd>
+                            <dd className="font-medium">
+                              {talk.capacity} {talk.registrationType === "TEAM" ? "equipos" : "personas"}
+                            </dd>
                           </>
                         )}
                         {talk.prerequisites && (
@@ -362,17 +366,31 @@ export function TalkModal({
                   {upcoming && (talk.cta || talk.registrationOpen) && (
                     <div className="bg-crimson p-6 text-white">
                       <p className="font-display text-[1.15rem] font-bold">
-                        {talk.category === "workshop"
+                        {talk.registrationType === "TEAM"
+                          ? "Inscripción de equipos"
+                          : talk.category === "workshop"
                           ? "Inscripción al Taller"
                           : talk.category === "competition"
                           ? "Registro de Equipos"
                           : "Confirmación de asistencia"}
                       </p>
-                      <p className="mt-1.5 text-[.95rem] leading-relaxed text-white/85">
-                        {talk.capacity
-                          ? `Capacidad limitada a ${talk.capacity} lugares. Confirmá tu asistencia con anticipación.`
-                          : "Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación."}
-                      </p>
+                      {talk.registrationType === "TEAM" ? (
+                        <div className="mt-1.5 space-y-2 text-[.95rem] leading-relaxed text-white/85">
+                          <p>
+                            {talk.capacity ? `Hay lugar para ${talk.capacity} equipos. ` : ""}
+                            {talk.teamMinSize === undefined && talk.teamMaxSize === undefined
+                              ? "Los equipos no tienen límite de integrantes."
+                              : `Cada equipo tiene ${teamSizeText(talk.teamMinSize ?? null, talk.teamMaxSize ?? null)}, capitán incluido.`}
+                          </p>
+                          <p>Inscribe una sola persona, el capitán: con el nombre del equipo y los emails {UDESA_EMAIL_DOMAIN} de los demás integrantes.</p>
+                        </div>
+                      ) : (
+                        <p className="mt-1.5 text-[.95rem] leading-relaxed text-white/85">
+                          {talk.capacity
+                            ? `Capacidad limitada a ${talk.capacity} lugares. Confirmá tu asistencia con anticipación.`
+                            : "Capacidad limitada por cupo en aula. Confirmá tu asistencia con anticipación."}
+                        </p>
+                      )}
                       {talk.registrationOpen ? (
                         <RegisterButton talk={talk} state={registrationOf(talk.slug)} variant="modal" onRegister={onRegister} />
                       ) : (

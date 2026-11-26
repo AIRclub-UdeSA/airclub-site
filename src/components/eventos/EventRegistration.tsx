@@ -13,6 +13,8 @@ export type RegistrableEvent = {
   title: string;
   startsAt: string; // ISO
   endsAt?: string;
+  /** Dura todo el día: va a la agenda como evento de día entero. */
+  allDay?: boolean;
   location?: string;
   description?: string;
   registrationType: "INDIVIDUAL" | "TEAM";
