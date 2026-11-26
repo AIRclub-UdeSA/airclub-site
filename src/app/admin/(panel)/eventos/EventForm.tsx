@@ -16,6 +16,7 @@ export type EditingEvent = {
   location: string | null;
   startsAt: Date;
   endsAt: Date | null;
+  allDay: boolean;
   dateLabel: string | null;
   status: "DRAFT" | "PUBLISHED" | "CANCELLED";
   instructor: string | null;
@@ -69,6 +70,7 @@ export function EventForm({ event }: { event?: EditingEvent }) {
   const [state, formAction, pending] = useActionState(isEditing ? updateEvent : createEvent, initialState);
   const [type, setType] = useState<RegistrationType>(event?.registrationType ?? "NONE");
   const [category, setCategory] = useState(event?.category ?? "MEETUP");
+  const [allDay, setAllDay] = useState(event?.allDay ?? false);
   const slugRef = useRef<HTMLInputElement>(null);
   // Mientras no se toque el slug a mano, sigue al título.
   const slugTouched = useRef(false);
@@ -168,14 +170,18 @@ export function EventForm({ event }: { event?: EditingEvent }) {
             Día
             <input type="date" name="date" required defaultValue={toDatePart(event?.startsAt ?? null)} className={inputClass} />
           </label>
-          <label className={labelClass}>
-            Hora de inicio (opcional)
-            <input type="time" name="startTime" defaultValue={toTimePart(event?.startsAt ?? null)} className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            Hora de fin (opcional)
-            <input type="time" name="endTime" defaultValue={event?.endsAt ? toTimePart(event.endsAt) : ""} className={inputClass} />
-          </label>
+          {!allDay && (
+            <>
+              <label className={labelClass}>
+                Hora de inicio
+                <input type="time" name="startTime" required defaultValue={event?.allDay ? "" : toTimePart(event?.startsAt ?? null)} className={inputClass} />
+              </label>
+              <label className={labelClass}>
+                Hora de fin (opcional)
+                <input type="time" name="endTime" defaultValue={event?.endsAt && !event.allDay ? toTimePart(event.endsAt) : ""} className={inputClass} />
+              </label>
+            </>
+          )}
           <label className={labelClass}>
             Día de fin, si dura más de un día
             <input
@@ -186,12 +192,16 @@ export function EventForm({ event }: { event?: EditingEvent }) {
             />
           </label>
         </div>
+        <label className="flex items-center gap-2 text-sm text-text2">
+          <input type="checkbox" name="allDay" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
+          Dura todo el día (sin horario)
+        </label>
         <label className={labelClass}>
           Cómo se muestra la fecha (opcional)
           <input type="text" name="dateLabel" placeholder="3 al 6 de Noviembre de 2026" defaultValue={event?.dateLabel ?? ""} className={inputClass} />
         </label>
         <p className={hintClass}>
-          Sin horas, el evento ocupa todo el día. Si completás &ldquo;Cómo se muestra la fecha&rdquo;, ese texto reemplaza a la fecha exacta
+          Con &ldquo;Dura todo el día&rdquo; el sitio muestra solo la fecha, sin horario. Si completás &ldquo;Cómo se muestra la fecha&rdquo;, ese texto reemplaza a la fecha exacta
           en el sitio (el calendario sigue usando la real). Horario de Argentina.
         </p>
       </fieldset>
@@ -280,12 +290,13 @@ export function EventForm({ event }: { event?: EditingEvent }) {
           <div className="flex flex-wrap gap-3">
             <label className={`${labelClass} max-w-[16rem]`}>
               Integrantes mínimo (capitán incluido)
-              <input type="number" name="teamMinSize" required min={1} step={1} defaultValue={event?.teamMinSize ?? ""} className={inputClass} />
+              <input type="number" name="teamMinSize" min={1} step={1} placeholder="Sin límite" defaultValue={event?.teamMinSize ?? ""} className={inputClass} />
             </label>
             <label className={`${labelClass} max-w-[16rem]`}>
               Integrantes máximo (capitán incluido)
-              <input type="number" name="teamMaxSize" required min={1} step={1} defaultValue={event?.teamMaxSize ?? ""} className={inputClass} />
+              <input type="number" name="teamMaxSize" min={1} step={1} placeholder="Sin límite" defaultValue={event?.teamMaxSize ?? ""} className={inputClass} />
             </label>
+            <p className={`${hintClass} w-full`}>Dejá vacío el que no quieras limitar: sin mínimo alcanza con el capitán, sin máximo no hay tope.</p>
           </div>
         )}
 

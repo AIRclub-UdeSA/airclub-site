@@ -6,7 +6,7 @@ import { Check, Plus, X } from "lucide-react";
 import { buildGoogleCalendarUrl, type SchedulableActivity } from "@/lib/calendar-types";
 import { RESTRICTED_BUTTON, RESTRICTED_NOTE } from "@/components/talks/RegisterButton";
 import { UDESA_EMAIL_DOMAIN } from "@/lib/udesa";
-import { TEAM_NAME_MAX_LENGTH } from "@/lib/team-validation";
+import { TEAM_NAME_MAX_LENGTH, initialMemberRows, teamSizeText } from "@/lib/team-validation";
 import { cancelTeamAction, getMyTeamAction, saveTeamAction, type TeamInfo, type TeamView } from "@/app/eventos/team-actions";
 import type { CancelResult, RegisterResult } from "@/app/talks/register-actions";
 
@@ -25,6 +25,8 @@ const inputClass = "w-full border border-border-strong/30 bg-bg px-3 py-2 font-b
 const primaryButton =
   "rounded-[var(--r-pill)] border-[1.5px] border-crimson bg-crimson px-6 py-3 font-mono text-[.78rem] font-semibold uppercase tracking-[.1em] text-white transition-colors hover:bg-crimson-hover disabled:opacity-60";
 const textButton = "w-fit font-mono text-[.76rem] uppercase tracking-[.1em] text-text2 transition-colors hover:text-crimson-text disabled:opacity-60";
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 type Screen = "loading" | "form" | "view" | "gone" | "error";
 
@@ -77,7 +79,7 @@ export function TeamRegisterDialog({ event, isOpen, onClose, onResult }: TeamReg
         if (res.team) setScreen("view");
         else {
           setName("");
-          setEmails(Array(Math.min(Math.max(res.minSize - 1, 1), res.maxSize - 1)).fill(""));
+          setEmails(Array(initialMemberRows(res.minSize, res.maxSize)).fill(""));
           setScreen("form");
         }
       })
@@ -151,7 +153,7 @@ export function TeamRegisterDialog({ event, isOpen, onClose, onResult }: TeamReg
       if (result.status === "cancelled") {
         setTeam(null);
         setName("");
-        setEmails(Array(Math.min(Math.max((info?.minSize ?? 2) - 1, 1), (info?.maxSize ?? 2) - 1)).fill(""));
+        setEmails(Array(info ? initialMemberRows(info.minSize, info.maxSize) : 1).fill(""));
         setConfirmingCancel(false);
         setScreen("form");
       } else {
@@ -167,7 +169,7 @@ export function TeamRegisterDialog({ event, isOpen, onClose, onResult }: TeamReg
   }
 
   const calendarUrl = buildGoogleCalendarUrl(event);
-  const maxOthers = info ? info.maxSize - 1 : 1;
+  const maxOthers = info ? (info.maxSize ?? Infinity) - 1 : 1;
 
   return (
     <dialog
@@ -231,8 +233,7 @@ export function TeamRegisterDialog({ event, isOpen, onClose, onResult }: TeamReg
               {team ? "Editar tu equipo" : "Inscribir a tu equipo"} en &ldquo;{event.title}&rdquo;
             </h2>
             <p className="font-body text-[.88rem] leading-relaxed text-text2">
-              {info.minSize === info.maxSize ? `${info.minSize} integrantes` : `Entre ${info.minSize} y ${info.maxSize} integrantes`}, contándote a
-              vos. Todos con un email {UDESA_EMAIL_DOMAIN}.
+              {capitalize(teamSizeText(info.minSize, info.maxSize))}, contándote a vos. Todos con un email {UDESA_EMAIL_DOMAIN}.
             </p>
 
             <label className="flex flex-col gap-1 font-mono text-[.72rem] uppercase tracking-[.1em] text-text3">

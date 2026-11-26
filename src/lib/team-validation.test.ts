@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateTeam, TEAM_NAME_MAX_LENGTH, type TeamInput } from "./team-validation";
+import { validateTeam, initialMemberRows, teamSizeText, TEAM_NAME_MAX_LENGTH, type TeamInput } from "./team-validation";
 
 const base: TeamInput = {
   name: "Los Robots",
@@ -60,4 +60,31 @@ test("la cantidad cuenta al capitán y respeta el mínimo y el máximo", () => {
 
 test("los errores vienen todos juntos", () => {
   assert.equal(errorsOf(with_({ name: "", memberEmails: ["x@gmail.com", "x@gmail.com"] })).length, 4);
+});
+
+test("sin mínimo o sin máximo, el equipo no tiene límite de ese lado (pero al menos el capitán)", () => {
+  const many = Array.from({ length: 25 }, (_, i) => `m${i}@udesa.edu.ar`);
+  assert.equal(validateTeam(with_({ minSize: null, maxSize: null, memberEmails: many })).ok, true);
+  assert.equal(validateTeam(with_({ minSize: null, maxSize: null, memberEmails: [] })).ok, true);
+  assert.equal(validateTeam(with_({ minSize: 2, maxSize: null, memberEmails: many })).ok, true);
+  assert.match(errorsOf(with_({ minSize: 2, maxSize: null, memberEmails: [] }))[0], /al menos 2 integrantes.*ahora son 1/);
+  assert.equal(validateTeam(with_({ minSize: null, maxSize: 3 })).ok, true);
+  assert.match(errorsOf(with_({ minSize: null, maxSize: 3, memberEmails: ["a@udesa.edu.ar", "b@udesa.edu.ar", "c@udesa.edu.ar"] }))[0], /hasta 3 integrantes.*ahora son 4/);
+});
+
+test("el tamaño del equipo se dice según lo que fije el evento", () => {
+  assert.equal(teamSizeText(null, null), "sin límite de integrantes");
+  assert.equal(teamSizeText(1, 20), "entre 1 y 20 integrantes");
+  assert.equal(teamSizeText(3, 3), "3 integrantes");
+  assert.equal(teamSizeText(null, 5), "hasta 5 integrantes");
+  assert.equal(teamSizeText(2, null), "al menos 2 integrantes");
+  assert.equal(teamSizeText(1, null), "al menos 1 integrante");
+});
+
+test("el formulario empieza con las filas del mínimo, y al menos una", () => {
+  assert.equal(initialMemberRows(null, null), 1);
+  assert.equal(initialMemberRows(1, 20), 1);
+  assert.equal(initialMemberRows(4, 6), 3);
+  assert.equal(initialMemberRows(4, 3), 2);
+  assert.equal(initialMemberRows(null, 2), 1);
 });

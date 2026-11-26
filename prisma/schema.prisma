@@ -133,6 +133,7 @@ model Event {
   location             String?
   startsAt             DateTime
   endsAt               DateTime?
+  allDay               Boolean             @default(false) // dura el día entero: el sitio no muestra horario (startsAt 00:00 y endsAt 23:59 de Buenos Aires, para el calendario y "próximo/pasado")
   dateLabel            String? // reemplaza a la fecha exacta en el sitio, ej.: "3 al 6 de Noviembre de 2026"
   status               EventStatus         @default(PUBLISHED)
   instructor           String?

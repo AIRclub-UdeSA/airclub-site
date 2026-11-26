@@ -6,11 +6,9 @@ import { prisma, Prisma } from "@/lib/prisma";
 import { requireSectionEdit } from "@/lib/admin/permissions";
 import { parseAudience } from "@/lib/udesa";
 import { parseRegistrationType } from "@/lib/event-registration";
-import { normalizeRegistration, validateEventData, type EventFormData } from "@/lib/event-validation";
+import { buildEventDates, combineDateTime, normalizeRegistration, validateEventData, type EventFormData } from "@/lib/event-validation";
 
 const SECTION = "eventos";
-// Argentina no tiene horario de verano: offset fijo, a diferencia de zonas con DST.
-const AR_OFFSET = "-03:00";
 const CATEGORIES = ["WORKSHOP", "COMPETITION", "MEETUP", "TALK"] as const;
 
 export type ActionState = { error: string | null };
@@ -29,28 +27,15 @@ function optNumber(formData: FormData, name: string): number | null {
   return raw === null ? null : Number(raw);
 }
 
-function combineDateTime(dateStr: string, timeStr: string): Date | null {
-  if (!dateStr) return null;
-  return new Date(`${dateStr}T${timeStr || "00:00"}:00${AR_OFFSET}`);
-}
-
-// Un solo "día" (+ horas opcionales) para el caso común, y un "día de fin" aparte cuando dura más de un día (como las charlas).
-function parseEventDates(formData: FormData): { startsAt: Date | null; endsAt: Date | null } {
-  const dateStr = str(formData, "date");
-  const startTime = str(formData, "startTime");
-  const endTime = str(formData, "endTime");
-  const endDateStr = str(formData, "endDate");
-
-  const startsAt = combineDateTime(dateStr, startTime);
-
-  if (endDateStr) return { startsAt, endsAt: combineDateTime(endDateStr, endTime || "23:59") };
-  if (dateStr && !startTime && !endTime) return { startsAt, endsAt: combineDateTime(dateStr, "23:59") };
-  if (dateStr && endTime) return { startsAt, endsAt: combineDateTime(dateStr, endTime) };
-  return { startsAt, endsAt: null };
-}
-
 function parseForm(formData: FormData) {
-  const { startsAt, endsAt } = parseEventDates(formData);
+  const allDay = formData.get("allDay") === "on";
+  const { startsAt, endsAt } = buildEventDates({
+    date: str(formData, "date"),
+    startTime: str(formData, "startTime"),
+    endTime: str(formData, "endTime"),
+    endDate: str(formData, "endDate"),
+    allDay,
+  });
   const registrationType = parseRegistrationType(formData.get("registrationType"));
   const category = CATEGORIES.find((c) => c === formData.get("category")) ?? "MEETUP";
 
@@ -60,6 +45,8 @@ function parseForm(formData: FormData) {
     description: str(formData, "description"),
     startsAt,
     endsAt,
+    allDay,
+    hasStartTime: Boolean(str(formData, "startTime")),
     registrationType,
     externalUrl: optStr(formData, "externalUrl"),
     registrationDeadline: combineDateTime(str(formData, "deadlineDate"), str(formData, "deadlineTime") || "23:59"),
@@ -84,6 +71,7 @@ function parseForm(formData: FormData) {
         location: optStr(formData, "location"),
         startsAt: startsAt!,
         endsAt,
+        allDay,
         dateLabel: optStr(formData, "dateLabel"),
         status: (formData.get("status") === "DRAFT" ? "DRAFT" : "PUBLISHED") as "DRAFT" | "PUBLISHED",
         instructor: optStr(formData, "instructor"),

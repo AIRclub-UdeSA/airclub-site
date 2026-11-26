@@ -1,6 +1,13 @@
 const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
-export function formatEventDate(startsAt: Date, endsAt?: Date | null) {
+const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE });
+
+/**
+ * "Sábado 12 de diciembre · 09:00hs", o sin horario si el evento dura todo el día (`allDay`). Con fin en otro día,
+ * "Sábado 12 – Domingo 13". Los días se comparan en hora de Buenos Aires, no en la del servidor (en Vercel es UTC: un
+ * evento de 00:00 a 23:59 de acá termina "al día siguiente" allá).
+ */
+export function formatEventDate(startsAt: Date, endsAt?: Date | null, allDay = false) {
   const dateFmt = new Intl.DateTimeFormat("es-AR", {
     weekday: "long",
     day: "numeric",
@@ -17,12 +24,12 @@ export function formatEventDate(startsAt: Date, endsAt?: Date | null) {
   const date = capitalize(dateFmt.format(startsAt));
   const time = timeFmt.format(startsAt);
 
-  if (endsAt && endsAt.toDateString() !== startsAt.toDateString()) {
+  if (endsAt && dayKey.format(endsAt) !== dayKey.format(startsAt)) {
     const endDate = capitalize(dateFmt.format(endsAt));
     return `${date} – ${endDate}`;
   }
 
-  return `${date} · ${time}hs`;
+  return allDay ? date : `${date} · ${time}hs`;
 }
 
 export function isUpcoming(startsAt: Date, endsAt?: Date | null) {
