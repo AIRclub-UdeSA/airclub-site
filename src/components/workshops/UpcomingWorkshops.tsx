@@ -11,7 +11,7 @@ const TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 function timeRange(startsAt: Date, endsAt?: Date) {
   const fmt = (d: Date) =>
-    new Intl.DateTimeFormat("es-AR", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
+    new Intl.DateTimeFormat("es-AR", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
   // Un taller del panel cargado solo con el día se guarda de 00:00 a 23:59: todavía no tiene horario.
   if (fmt(startsAt) === "00:00" && (!endsAt || fmt(endsAt) === "23:59")) return "A confirmar";
   return endsAt ? `${fmt(startsAt)} a ${fmt(endsAt)} hs` : `${fmt(startsAt)} hs`;

@@ -17,7 +17,7 @@ export function formatEventDate(startsAt: Date, endsAt?: Date | null, allDay = f
   const timeFmt = new Intl.DateTimeFormat("es-AR", {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hourCycle: "h23",
     timeZone: TIME_ZONE,
   });
 
