@@ -3,16 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { deleteAccountData } from "@/lib/delete-account-data";
 import { requireAdminSession } from "@/lib/admin/permissions";
 
 export type DeleteAccountState = { error: string | null };
 
 /**
- * Borra una cuenta del sitio: el perfil (UserProfile), todas sus inscripciones a charlas y a talleres presenciales, y
- * los talleres que marcó como hechos (WorkshopCompletion, que se guarda por email).
+ * Borra una cuenta del sitio: el perfil (UserProfile), todas sus inscripciones a charlas, a talleres presenciales y a
+ * eventos, sus equipos de eventos y los talleres que marcó como hechos (WorkshopCompletion, que se guarda por email).
+ * Borra lo mismo que cuando la persona lo hace desde /perfil (ver deleteAccountData).
  * Solo ADMIN. No toca a AdminUser (quién entra al panel; eso es /admin/usuarios) ni la cuenta
  * de Google: si la persona vuelve a entrar, puede crear el perfil de nuevo. Deja en AuditLog
- * (section "cuentas") solo el rol, la fecha de alta, las inscripciones y los talleres hechos que tenía: ni el email ni
+ * (section "cuentas") solo el rol, la fecha de alta y los slugs de las inscripciones, los eventos (individuales y por
+ * equipo) y los talleres hechos que tenía: ni el email, ni los nombres de equipo ni
  * los datos del perfil, para que borrar una cuenta no deje a la persona identificable (el entityId es el id del perfil).
  */
 export async function deleteAccountAction(_prev: DeleteAccountState, formData: FormData): Promise<DeleteAccountState> {
@@ -27,22 +30,7 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
       const profile = await tx.userProfile.findUnique({ where: { id } });
       if (!profile) return;
 
-      const registrations = await tx.talkRegistration.findMany({
-        where: { email: profile.email },
-        include: { talk: { select: { slug: true } } },
-      });
-      const completions = await tx.workshopCompletion.findMany({
-        where: { email: profile.email },
-        select: { workshopSlug: true },
-      });
-      await tx.talkRegistration.deleteMany({ where: { email: profile.email } });
-      const workshopRegistrations = await tx.workshopRegistration.findMany({
-        where: { email: profile.email },
-        include: { session: { select: { slug: true } } },
-      });
-      await tx.workshopCompletion.deleteMany({ where: { email: profile.email } });
-      await tx.workshopRegistration.deleteMany({ where: { email: profile.email } });
-      await tx.userProfile.delete({ where: { id } });
+      const deleted = await deleteAccountData(tx, profile.email);
       await tx.auditLog.create({
         data: {
           adminUserId: admin.adminId,
@@ -52,9 +40,11 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
           before: {
             role: profile.role,
             createdAt: profile.createdAt.toISOString(),
-            inscripciones: registrations.map((r) => r.talk.slug),
-            talleresHechos: completions.map((c) => c.workshopSlug),
-            inscripcionesTalleres: workshopRegistrations.map((r) => r.session.slug),
+            inscripciones: deleted.charlas,
+            talleresHechos: deleted.talleresHechos,
+            inscripcionesTalleres: deleted.talleresPresenciales,
+            eventosIndividuales: deleted.eventosIndividuales,
+            eventosPorEquipo: deleted.eventosPorEquipo,
           },
         },
       });
@@ -64,6 +54,7 @@ export async function deleteAccountAction(_prev: DeleteAccountState, formData: F
   }
 
   revalidatePath("/talks");
+  revalidatePath("/eventos");
   revalidatePath("/admin/comunidad");
   revalidatePath("/admin/workshops");
   revalidatePath("/admin/cuentas");
