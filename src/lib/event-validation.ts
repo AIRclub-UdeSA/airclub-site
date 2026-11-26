@@ -57,6 +57,9 @@ export function validateEventData(data: EventFormData): string | null {
   }
 
   if (data.registrationType === "TEAM") {
+    // validateTeam exige @udesa.edu.ar a todos los integrantes, capitán incluido: con "cualquier persona" una cuenta de
+    // Gmail vería el botón habilitado y recién fallaría al guardar el equipo.
+    if (data.audience !== "UDESA") return "Un evento por equipos es solo para la comunidad UdeSA: todos los integrantes tienen que tener email @udesa.edu.ar.";
     if (!isPositiveInt(data.teamMinSize) || !isPositiveInt(data.teamMaxSize)) {
       return "Poné el mínimo y el máximo de integrantes (números enteros desde 1, capitán incluido).";
     }

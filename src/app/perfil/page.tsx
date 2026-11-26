@@ -6,6 +6,7 @@ import { PerfilHeader } from "@/components/perfil/PerfilHeader";
 import { missingProfileFields } from "@/lib/perfil/completeness";
 import { PerfilTabs } from "@/components/perfil/PerfilTabs";
 import { DeleteMyAccount } from "@/components/perfil/DeleteMyAccount";
+import { MyTeams } from "@/components/perfil/MyTeams";
 
 export const metadata: Metadata = {
   title: "Mi perfil, AIR Club UdeSA",
@@ -36,6 +37,7 @@ export default async function PerfilPage({ searchParams }: PageProps<"/perfil">)
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" /> Para inscribirte a una charla te falta: {missing.join(", ")}.
         </p>
       )}
+      <MyTeams email={profile.email} />
       <PerfilForm existing={profile} defaultName={await getSessionName()} submitLabel="Guardar cambios" next="/perfil?guardado=1" />
       <DeleteMyAccount />
     </div>

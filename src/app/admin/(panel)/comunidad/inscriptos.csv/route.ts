@@ -20,7 +20,7 @@ const registeredAt = new Intl.DateTimeFormat("sv-SE", {
  * Inscriptos en CSV (lo que antes daba el Google Form). Lo baja quien puede ver "comunidad":
  * ADMIN o un Editor con esa sección (#97). El layout del panel no envuelve a los route handlers,
  * así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla; `?evento=<slug>` baja los inscriptos de un
- * evento (inscripción individual de /admin/eventos), con el mismo formato.
+ * evento (individuales y, en los de equipos, cada integrante con su equipo), con el mismo formato.
  *
  * Cada descarga queda en AuditLog (action "export"): el archivo se puede reenviar, así que se
  * registra quién sacó qué datos personales. Si no se puede registrar, no se entrega el archivo.
@@ -32,30 +32,49 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const eventSlug = params.get("evento") ?? "";
   const slug = eventSlug || (params.get("charla") ?? "");
-  // Charlas (por defecto) o los inscriptos a un evento: se arman con la misma forma para compartir el resto.
-  const registrations: { title: string; email: string; createdAt: Date }[] = eventSlug
-    ? (
-        await prisma.eventRegistration.findMany({
-          where: { event: { slug: eventSlug } },
-          include: { event: { select: { title: true } } },
-          orderBy: { createdAt: "asc" },
-        })
-      ).map((r) => ({ title: r.event.title, email: r.email, createdAt: r.createdAt }))
-    : (
-        await prisma.talkRegistration.findMany({
-          where: slug ? { talk: { slug } } : undefined,
-          include: { talk: { select: { slug: true, title: true } } },
-          orderBy: [{ talk: { startsAt: "desc" } }, { createdAt: "asc" }],
-        })
-      ).map((r) => ({ title: r.talk.title, email: r.email, createdAt: r.createdAt }));
+  // Charlas (por defecto), inscriptos individuales de un evento o integrantes de sus equipos: se arman con la misma forma
+  // para compartir el resto. En un evento por equipos hay una fila por integrante, con el nombre del equipo.
+  type Row = { title: string; team?: string; role?: string; email: string; createdAt: Date };
+  let registrations: Row[];
+  if (eventSlug) {
+    const event = await prisma.event.findUnique({ where: { slug: eventSlug }, select: { title: true } });
+    const [individual, members] = await Promise.all([
+      prisma.eventRegistration.findMany({ where: { event: { slug: eventSlug } }, orderBy: { createdAt: "asc" } }),
+      prisma.eventTeamMember.findMany({
+        where: { team: { event: { slug: eventSlug } } },
+        include: { team: { select: { name: true, createdAt: true } } },
+        orderBy: [{ team: { createdAt: "asc" } }, { isCaptain: "desc" }, { createdAt: "asc" }],
+      }),
+    ]);
+    registrations = [
+      ...individual.map((r) => ({ title: event?.title ?? eventSlug, email: r.email, createdAt: r.createdAt })),
+      ...members.map((m) => ({
+        title: event?.title ?? eventSlug,
+        team: m.team.name,
+        role: m.isCaptain ? "Capitán" : "Integrante",
+        email: m.email,
+        createdAt: m.createdAt,
+      })),
+    ];
+  } else {
+    registrations = (
+      await prisma.talkRegistration.findMany({
+        where: slug ? { talk: { slug } } : undefined,
+        include: { talk: { select: { slug: true, title: true } } },
+        orderBy: [{ talk: { startsAt: "desc" } }, { createdAt: "asc" }],
+      })
+    ).map((r) => ({ title: r.talk.title, email: r.email, createdAt: r.createdAt }));
+  }
+  const withTeams = registrations.some((r) => r.team);
   const profiles = await prisma.userProfile.findMany({ where: { email: { in: registrations.map((r) => r.email) } } });
   const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
 
-  const header = [eventSlug ? "Evento" : "Charla", "Nombre", "Email", "Inscripto el (hora de Argentina)", "Afiliación", "Institución", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
+  const header = [eventSlug ? "Evento" : "Charla", ...(withTeams ? ["Equipo", "Rol en el equipo"] : []), "Nombre", "Email", "Inscripto el (hora de Argentina)", "Afiliación", "Institución", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
   const rows = registrations.map((r) => {
     const p = profileByEmail.get(r.email);
     return [
       r.title,
+      ...(withTeams ? [r.team, r.role] : []),
       p?.fullName,
       r.email,
       registeredAt.format(r.createdAt),

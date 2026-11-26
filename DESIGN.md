@@ -176,6 +176,7 @@ Esta sección es el registro de la sesión de rediseño de `/talks`. Sirve para 
 
 * Los eventos genéricos (competencias, encuentros) viven en la base y se cargan en `/admin/eventos`. Cada uno elige un **tipo de inscripción** (`src/lib/event-registration.ts`): sin inscripción, link externo, individual o equipo. El botón y el diálogo de una inscripción propia son los mismos que los de las charlas (`RegisterButton`, `TalkRegisterDialog`, `registration-flow.tsx`): no hay un lenguaje visual aparte para los eventos.
 * En `EventsHub` hay un recorrido por cada fuente (charlas y eventos individuales), cada uno con sus acciones (`src/app/eventos/register-actions.ts`); el modal y la lista piden por `slug`, así que un evento y una charla no deben compartir slug. En `/eventos/<slug>` el botón es `EventRegistration.tsx` (botón carmesí redondeado de `Button`, no el blanco del modal).
+* El tipo **equipo** abre `TeamRegisterDialog.tsx` en lugar del diálogo de un clic: mismo panel y mismos botones, con un formulario recto (campos de borde fino, sin tarjeta redondeada) para el nombre del equipo y los emails de los integrantes. Los errores del servidor salen todos juntos en una lista con `role="alert"`. El equipo se ve en `/perfil` en una lista de cajas rectas (`MyTeams.tsx`).
 * La cuenta regresiva de la landing sigue siendo la del Challenge JAR 2026 (texto en `CountdownStrip.tsx`): marcar otro evento con "Cuenta regresiva de la landing" mostraría el texto del JAR.
 
 ### Referencias externas

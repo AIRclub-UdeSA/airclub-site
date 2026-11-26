@@ -153,6 +153,7 @@ model Event {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   registrations        EventRegistration[]
+  teams                EventTeam[]
 
   @@index([startsAt])
 }
@@ -169,6 +170,36 @@ model EventRegistration {
 
   @@unique([eventId, email]) // una inscripción por persona por evento
   @@index([eventId])
+}
+
+// Equipo inscripto a un evento (registrationType TEAM). El capitán lo crea, lo edita y lo da de baja hasta el cierre.
+// Los emails de los integrantes son datos personales: se ven con el mismo acceso que los inscriptos a charlas (comunidad).
+model EventTeam {
+  id           String            @id @default(cuid())
+  eventId      String
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name         String
+  captainEmail String // en minúsculas; también está entre los integrantes
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  members      EventTeamMember[]
+
+  @@index([eventId])
+}
+
+// Integrantes de un equipo, capitán incluido. `eventId` se repite acá para que la base garantice que nadie esté en
+// dos equipos del mismo evento (@@unique).
+model EventTeamMember {
+  id        String    @id @default(cuid())
+  teamId    String
+  team      EventTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  eventId   String
+  email     String // en minúsculas
+  isCaptain Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@unique([eventId, email])
+  @@index([teamId])
 }
 
 model Robot {

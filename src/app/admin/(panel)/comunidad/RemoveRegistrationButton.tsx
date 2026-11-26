@@ -1,13 +1,16 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { removeRegistrationAction, type RemoveRegistrationState } from "./actions";
+import { removeRegistrationAction, removeTeamAction, type RemoveRegistrationState } from "./actions";
 
 const initialState: RemoveRegistrationState = { error: null };
 
-/** Baja en dos pasos: el primer clic pide confirmación en el lugar, el segundo da de baja. */
-export function RemoveRegistrationButton({ id, email }: { id: string; email: string }) {
-  const [state, formAction, pending] = useActionState(removeRegistrationAction, initialState);
+/**
+ * Baja en dos pasos: el primer clic pide confirmación en el lugar, el segundo da de baja. Con `team`, `id` es el de un equipo
+ * y se baja entero; `email` es lo que se nombra en la confirmación (el del capitán).
+ */
+export function RemoveRegistrationButton({ id, email, team = false }: { id: string; email: string; team?: boolean }) {
+  const [state, formAction, pending] = useActionState(team ? removeTeamAction : removeRegistrationAction, initialState);
   const [confirming, setConfirming] = useState(false);
 
   return (
@@ -15,7 +18,7 @@ export function RemoveRegistrationButton({ id, email }: { id: string; email: str
       <input type="hidden" name="id" value={id} />
       {confirming ? (
         <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-          <span className="text-text2">¿Dar de baja a {email}?</span>
+          <span className="text-text2">{team ? `¿Dar de baja al equipo de ${email}?` : `¿Dar de baja a ${email}?`}</span>
           <button type="submit" disabled={pending} className="font-semibold text-crimson-text hover:underline disabled:opacity-60">
             {pending ? "Dando de baja…" : "Sí, dar de baja"}
           </button>

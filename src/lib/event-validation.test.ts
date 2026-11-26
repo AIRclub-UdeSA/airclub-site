@@ -59,6 +59,12 @@ test("el equipo pide mínimo y máximo de integrantes coherentes", () => {
   assert.equal(validateEventData({ ...team, teamMinSize: 2, teamMaxSize: 4 }), null);
 });
 
+test("el equipo es solo para la comunidad UdeSA", () => {
+  const team = with_({ registrationType: "TEAM", teamMinSize: 2, teamMaxSize: 4 });
+  assert.match(validateEventData({ ...team, audience: "ALL" })!, /solo para la comunidad UdeSA/);
+  assert.equal(validateEventData({ ...team, audience: "UDESA" }), null);
+});
+
 test("al guardar solo queda lo que usa el tipo elegido", () => {
   const dirty = with_({
     registrationType: "NONE",

@@ -2,6 +2,7 @@
 
 import { Suspense, useId } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import { TeamRegisterDialog } from "./TeamRegisterDialog";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
 import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
 import { RESTRICTED_BUTTON, RESTRICTED_NOTE } from "@/components/talks/RegisterButton";
@@ -14,6 +15,7 @@ export type RegistrableEvent = {
   endsAt?: string;
   location?: string;
   description?: string;
+  registrationType: "INDIVIDUAL" | "TEAM";
   /** Texto del botón (ver defaultCtaLabel). */
   label: string;
 };
@@ -22,7 +24,7 @@ const BASE =
   "inline-flex items-center gap-2 whitespace-nowrap rounded-full border-[1.5px] px-6.5 py-3.5 font-body text-[.88rem] font-medium transition-colors";
 
 /**
- * El botón de inscripción de `/eventos/<slug>` para un evento con inscripción propia (individual). Es el mismo recorrido
+ * El botón de inscripción de `/eventos/<slug>` para un evento con inscripción propia (individual o de equipo). Es el mismo recorrido
  * que en el calendario (registration-flow.tsx): sesión, perfil, diálogo y vuelta con "?inscribir=<slug>". La página es
  * estática (ISR): lo que depende de quién mira se pide desde el cliente.
  */
@@ -78,12 +80,16 @@ export function EventRegistration({ event }: { event: RegistrableEvent }) {
         </button>
       )}
 
-      <TalkRegisterDialog
-        {...dialog}
-        kind="evento"
-        register={registerForEventAction}
-        cancel={cancelEventRegistrationAction}
-      />
+      {event.registrationType === "TEAM" ? (
+        <TeamRegisterDialog event={dialog.talk} isOpen={dialog.isOpen} onClose={dialog.onClose} onResult={dialog.onResult} />
+      ) : (
+        <TalkRegisterDialog
+          {...dialog}
+          kind="evento"
+          register={registerForEventAction}
+          cancel={cancelEventRegistrationAction}
+        />
+      )}
     </>
   );
 }
