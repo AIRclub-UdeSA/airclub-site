@@ -1,6 +1,7 @@
 import { getAllTalks, type TalkItem } from "./talks";
 import { getUpcomingEvents, getPastEvents, type EventItem } from "./events";
 import { isUpcoming } from "./dates";
+import { defaultCtaLabel, isOwnRegistration, isRegistrationOpen } from "./event-registration";
 import { getWorkshopTracks, workshopHref, type InPersonWorkshop, type PastWorkshop } from "./workshops";
 import type { CalendarActivity, CalendarActivityStatus } from "./calendar-types";
 
@@ -138,6 +139,13 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
     ? [{ type: "image" as const, src: event.imageUrl }]
     : [];
 
+  // Con inscripción propia (individual o de equipo) el botón abre el diálogo en la página, como una charla; con link
+  // externo, es un enlace; sin inscripción, no hay botón. Se excluyen: la inscripción propia nunca lleva `cta`.
+  const ownType = isOwnRegistration(event.registrationType) ? event.registrationType : undefined;
+  const registrationOpen = ownType !== undefined && isUp && isRegistrationOpen(event, now);
+  const externalUrl = event.registrationType === "EXTERNAL_LINK" ? event.externalUrl : undefined;
+  const ctaLabel = event.ctaLabel || (ownType ? defaultCtaLabel(ownType) : isUp ? "Inscribirme" : "Ver detalles");
+
   return {
     id: `event-${event.slug}`,
     slug: event.slug,
@@ -152,12 +160,16 @@ function fromEvent(event: EventItem, now: Date): CalendarActivity {
     location: event.location || "Campus Victoria, UdeSA",
     description: event.description,
     abstract: event.description,
-    externalUrl: event.externalUrl,
-    ctaLabel: event.ctaLabel || (isUp ? "Inscribirme" : "Ver detalles"),
-    cta: event.externalUrl ? { label: event.ctaLabel || (isUp ? "Inscribirme" : "Ver detalles"), url: event.externalUrl } : undefined,
+    externalUrl,
+    ctaLabel,
+    cta: externalUrl ? { label: ctaLabel, url: externalUrl } : undefined,
+    registrationOpen,
+    registrationLabel: ownType ? ctaLabel : undefined,
+    eventSlug: ownType ? event.slug : undefined,
+    registrationType: ownType,
     instructorOrSpeaker: event.instructor,
     speaker,
-    speakers: event.speakers || (speaker ? [speaker] : undefined),
+    speakers: speaker ? [speaker] : undefined,
     topic: event.tagline,
     confirmed: true,
     media,

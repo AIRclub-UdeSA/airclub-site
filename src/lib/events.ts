@@ -1,13 +1,74 @@
+import { prisma } from "./prisma";
 import { events as seedEvents, type SeedEvent } from "../../prisma/seed-data/events";
 import { isUpcoming } from "@/lib/dates";
+import type { Audience } from "@/lib/udesa";
+import type { RegistrationType } from "@/lib/event-registration";
 
-export type EventItem = SeedEvent;
+export type EventCategory = SeedEvent["category"];
 
-// Fase 1: lee del array tipado en prisma/seed-data. En la Fase 2 esta funcion pasa a
-// consultar Prisma, pero la firma no cambia — las paginas nunca llaman a la fuente
-// de datos directamente.
+export type EventItem = Omit<SeedEvent, "registrationType"> & {
+  /** Cómo se inscribe la gente (ver src/lib/event-registration.ts). Sin definir = sin inscripción. */
+  registrationType?: RegistrationType;
+  /** INDIVIDUAL y TEAM: si se está inscribiendo ahora, desde el panel. */
+  registrationOpen?: boolean;
+  /** INDIVIDUAL y TEAM: pasada esta fecha ya no se inscribe ni se edita. Sin definir = hasta que el evento termina. */
+  registrationDeadline?: Date;
+  /** Quién puede inscribirse (INDIVIDUAL y TEAM). Sin definir = cualquiera. */
+  audience?: Audience;
+  /** TEAM: integrantes mínimos y máximos, capitán incluido. */
+  teamMinSize?: number;
+  teamMaxSize?: number;
+  /** En desuso: lo reemplaza `registrationType`. Solo lo arma `toUpcoming` de src/lib/workshops.ts. */
+  rsvpEnabled?: boolean;
+};
+
+type EventRow = Awaited<ReturnType<typeof fetchEventRows>>[number];
+
+/** Los eventos publicados (o todos, para el panel). El borrador y el cancelado no se ven en el sitio. */
+export function fetchEventRows({ includeDrafts = false } = {}) {
+  return prisma.event.findMany({
+    where: includeDrafts ? undefined : { status: "PUBLISHED" },
+    orderBy: { startsAt: "asc" },
+  });
+}
+
+export function toEventItem(row: EventRow): EventItem {
+  return {
+    slug: row.slug,
+    title: row.title,
+    tagline: row.tagline ?? undefined,
+    description: row.description,
+    category: row.category.toLowerCase() as EventCategory,
+    location: row.location ?? undefined,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt ?? undefined,
+    dateLabel: row.dateLabel ?? undefined,
+    externalUrl: row.externalUrl ?? undefined,
+    ctaLabel: row.ctaLabel ?? undefined,
+    registrationType: row.registrationType,
+    registrationOpen: row.registrationOpen,
+    registrationDeadline: row.registrationDeadline ?? undefined,
+    audience: row.audience,
+    capacity: row.capacity ?? undefined,
+    teamMinSize: row.teamMinSize ?? undefined,
+    teamMaxSize: row.teamMaxSize ?? undefined,
+    featuredForCountdown: row.featuredForCountdown,
+    imageUrl: row.imageUrl ?? undefined,
+    instructor: row.instructor ?? undefined,
+    prerequisites: row.prerequisites ?? undefined,
+    track: row.track ?? undefined,
+  };
+}
+
+// Lee de Prisma con fallback al array de seed-data si no hay conexión a la base (ej.: build en CI con credenciales
+// falsas), igual que las charlas (src/lib/talks.ts).
 async function getAllEvents(): Promise<EventItem[]> {
-  return [...seedEvents];
+  try {
+    return (await fetchEventRows()).map(toEventItem);
+  } catch (err) {
+    console.error("[events] Falló la consulta a base de datos, usando fallback al seed:", err);
+    return [...seedEvents];
+  }
 }
 
 export async function getUpcomingEvents(opts?: { take?: number }): Promise<EventItem[]> {

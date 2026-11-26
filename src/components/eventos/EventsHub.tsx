@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
@@ -12,6 +12,7 @@ import { EventDetailModal } from "./EventDetailModal";
 import { TalkRegisterDialog } from "@/components/talks/TalkRegisterDialog";
 import { RegisterDeepLink, useRegistrationFlow } from "@/components/talks/registration-flow";
 import { getMyTalkRegistrationsAction } from "@/app/talks/register-actions";
+import { cancelEventRegistrationAction, getMyEventRegistrationsAction, registerForEventAction } from "@/app/eventos/register-actions";
 
 interface EventsHubProps {
   initialActivities: CalendarActivity[];
@@ -45,13 +46,33 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
   }, []);
   // Charlas con inscripción propia (#50): mismo botón, diálogo y recorrido que /talks, sin salir de acá. Al volver del
   // login se reabre el modal de la charla ("?evento=") con el diálogo encima ("?inscribir=").
-  const { registrationOf, request, dialog } = useRegistrationFlow({
+  const talkFlow = useRegistrationFlow({
     // Solo charlas: un evento o un taller podría tener el mismo slug.
     items: initialActivities.filter((a) => a.category === "talk"),
     canRegister: (a) => Boolean(a.registrationOpen) && a.isUpcoming,
     fetchMine: getMyTalkRegistrationsAction,
     returnTo: (slug) => `/eventos?evento=${encodeURIComponent(slug)}&inscribir=${encodeURIComponent(slug)}`,
   });
+  // Eventos del panel con inscripción individual: el mismo recorrido, con sus propias acciones.
+  const eventFlow = useRegistrationFlow({
+    items: initialActivities.filter((a) => a.registrationType === "INDIVIDUAL"),
+    canRegister: (a) => Boolean(a.registrationOpen) && a.isUpcoming,
+    fetchMine: getMyEventRegistrationsAction,
+    returnTo: (slug) => `/eventos?evento=${encodeURIComponent(slug)}&inscribir=${encodeURIComponent(slug)}`,
+  });
+  // El modal y las tarjetas piden por slug: se reparte entre charlas y eventos según la actividad que lo tiene.
+  const individualEventSlugs = useMemo(
+    () => new Set(initialActivities.filter((a) => a.registrationType === "INDIVIDUAL").map((a) => a.slug)),
+    [initialActivities],
+  );
+  const requestTalk = talkFlow.request;
+  const requestEvent = eventFlow.request;
+  // Estable (lo usa un efecto de RegisterDeepLink): talkFlow.request y eventFlow.request son setState.
+  const request = useCallback(
+    (slug: string) => (individualEventSlugs.has(slug) ? requestEvent(slug) : requestTalk(slug)),
+    [individualEventSlugs, requestEvent, requestTalk],
+  );
+  const registrationOf = (slug: string) => (individualEventSlugs.has(slug) ? eventFlow : talkFlow).registrationOf(slug);
 
   const activeSlug = isModalOpen ? selectedSlug : null;
   const activeActivity = initialActivities.find((a) => a.slug === activeSlug) ?? null;
@@ -175,7 +196,13 @@ export function EventsHub({ initialActivities, nextActivity }: EventsHubProps) {
         registrationOf={registrationOf}
       />
 
-      <TalkRegisterDialog {...dialog} />
+      <TalkRegisterDialog {...talkFlow.dialog} />
+      <TalkRegisterDialog
+        {...eventFlow.dialog}
+        kind="evento"
+        register={registerForEventAction}
+        cancel={cancelEventRegistrationAction}
+      />
     </>
   );
 }

@@ -19,7 +19,8 @@ const registeredAt = new Intl.DateTimeFormat("sv-SE", {
 /**
  * Inscriptos en CSV (lo que antes daba el Google Form). Lo baja quien puede ver "comunidad":
  * ADMIN o un Editor con esa sección (#97). El layout del panel no envuelve a los route handlers,
- * así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla.
+ * así que el permiso se chequea acá. `?charla=<slug>` filtra por una charla; `?evento=<slug>` baja los inscriptos de un
+ * evento (inscripción individual de /admin/eventos), con el mismo formato.
  *
  * Cada descarga queda en AuditLog (action "export"): el archivo se puede reenviar, así que se
  * registra quién sacó qué datos personales. Si no se puede registrar, no se entrega el archivo.
@@ -28,20 +29,33 @@ export async function GET(request: Request) {
   const admin = await requireAdminSession();
   if (!canViewSection(admin, "comunidad")) return new Response("Sin permiso", { status: 403 });
 
-  const slug = new URL(request.url).searchParams.get("charla") ?? "";
-  const registrations = await prisma.talkRegistration.findMany({
-    where: slug ? { talk: { slug } } : undefined,
-    include: { talk: { select: { slug: true, title: true } } },
-    orderBy: [{ talk: { startsAt: "desc" } }, { createdAt: "asc" }],
-  });
+  const params = new URL(request.url).searchParams;
+  const eventSlug = params.get("evento") ?? "";
+  const slug = eventSlug || (params.get("charla") ?? "");
+  // Charlas (por defecto) o los inscriptos a un evento: se arman con la misma forma para compartir el resto.
+  const registrations: { title: string; email: string; createdAt: Date }[] = eventSlug
+    ? (
+        await prisma.eventRegistration.findMany({
+          where: { event: { slug: eventSlug } },
+          include: { event: { select: { title: true } } },
+          orderBy: { createdAt: "asc" },
+        })
+      ).map((r) => ({ title: r.event.title, email: r.email, createdAt: r.createdAt }))
+    : (
+        await prisma.talkRegistration.findMany({
+          where: slug ? { talk: { slug } } : undefined,
+          include: { talk: { select: { slug: true, title: true } } },
+          orderBy: [{ talk: { startsAt: "desc" } }, { createdAt: "asc" }],
+        })
+      ).map((r) => ({ title: r.talk.title, email: r.email, createdAt: r.createdAt }));
   const profiles = await prisma.userProfile.findMany({ where: { email: { in: registrations.map((r) => r.email) } } });
   const profileByEmail = new Map(profiles.map((p) => [p.email, p]));
 
-  const header = ["Charla", "Nombre", "Email", "Inscripto el (hora de Argentina)", "Afiliación", "Institución", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
+  const header = [eventSlug ? "Evento" : "Charla", "Nombre", "Email", "Inscripto el (hora de Argentina)", "Afiliación", "Institución", "Rol", "Detalle del rol", "Carreras", "Año de inicio", "Estado"];
   const rows = registrations.map((r) => {
     const p = profileByEmail.get(r.email);
     return [
-      r.talk.title,
+      r.title,
       p?.fullName,
       r.email,
       registeredAt.format(r.createdAt),
@@ -61,7 +75,7 @@ export async function GET(request: Request) {
       section: "comunidad",
       entityId: slug || "todas",
       action: "export",
-      after: { charla: slug || "todas", filas: rows.length },
+      after: eventSlug ? { evento: eventSlug, filas: rows.length } : { charla: slug || "todas", filas: rows.length },
     },
   });
 

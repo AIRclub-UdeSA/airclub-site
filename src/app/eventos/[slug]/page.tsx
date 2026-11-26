@@ -8,6 +8,11 @@ import { RevealOnScroll } from "@/components/shared/RevealOnScroll";
 import { buildMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/shared/JsonLd";
 import { eventJsonLd } from "@/lib/structured-data";
+import { defaultCtaLabel, isRegistrationOpen } from "@/lib/event-registration";
+import { EventRegistration } from "@/components/eventos/EventRegistration";
+
+// ISR: se revalida cada 60s y al guardar el evento en /admin/eventos (ver revalidateEventPages).
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: PageProps<"/eventos/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -27,6 +32,9 @@ export default async function EventoDetailPage({ params }: PageProps<"/eventos/[
   if (!event) notFound();
 
   const upcoming = isUpcoming(event.startsAt, event.endsAt);
+  // Individual: el botón abre el diálogo de inscripción en la página. Con link externo es un enlace; sin inscripción, un aviso.
+  const registrable = upcoming && event.registrationType === "INDIVIDUAL" && isRegistrationOpen(event);
+  const externalUrl = event.registrationType === "EXTERNAL_LINK" ? event.externalUrl : undefined;
 
   return (
     <section className="px-15 py-32 max-md:px-5.5 max-md:py-24">
@@ -55,8 +63,20 @@ export default async function EventoDetailPage({ params }: PageProps<"/eventos/[
         </p>
         <p className="mb-9 max-w-[620px] text-[.95rem] leading-[1.75] text-text2">{event.description}</p>
 
-        {event.externalUrl ? (
-          <Button href={event.externalUrl} external variant="primary">
+        {registrable ? (
+          <EventRegistration
+            event={{
+              slug: event.slug,
+              title: event.title,
+              startsAt: event.startsAt.toISOString(),
+              endsAt: event.endsAt?.toISOString(),
+              location: event.location,
+              description: event.description,
+              label: event.ctaLabel || defaultCtaLabel(event.registrationType),
+            }}
+          />
+        ) : externalUrl ? (
+          <Button href={externalUrl} external variant="primary">
             {upcoming ? "Inscribirme" : "Ver más"}
           </Button>
         ) : (

@@ -22,25 +22,14 @@ function toTalkMediaRow(m: (typeof talks)[number]["media"][number], order: numbe
 }
 
 async function main() {
+  // Los eventos se editan desde /admin/eventos: la verdad está en la base, no en seed-data. El seed solo crea el que
+  // falta (update vacío) y nunca pisa uno ya editado, igual que las charlas y el equipo.
   for (const event of events) {
-    const eventData = {
-      slug: event.slug,
-      title: event.title,
-      tagline: event.tagline,
-      description: event.description,
-      location: event.location,
-      startsAt: event.startsAt,
-      endsAt: event.endsAt,
-      externalUrl: event.externalUrl,
-      rsvpEnabled: event.rsvpEnabled,
-      capacity: event.capacity,
-      featuredForCountdown: event.featuredForCountdown,
-      imageUrl: event.imageUrl,
-    };
+    const { category, ...rest } = event;
     await prisma.event.upsert({
       where: { slug: event.slug },
-      create: eventData,
-      update: eventData,
+      create: { ...rest, category: category.toUpperCase() as "WORKSHOP" | "COMPETITION" | "MEETUP" | "TALK" },
+      update: {},
     });
   }
 

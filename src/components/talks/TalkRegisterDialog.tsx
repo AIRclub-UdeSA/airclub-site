@@ -11,12 +11,13 @@ import {
   type RegisterResult,
 } from "@/app/talks/register-actions";
 
-/** Lo que se inscribe: una charla de /talks o un taller presencial de /workshops (#70), con el mismo diálogo. */
-type Kind = "charla" | "taller";
+/** Lo que se inscribe: una charla de /talks, un taller presencial de /workshops (#70) o un evento de /eventos, con el mismo diálogo. */
+type Kind = "charla" | "taller" | "evento";
 
 const COPY: Record<Kind, { to: string; this: string }> = {
   charla: { to: "a la charla", this: "a esta charla" },
   taller: { to: "al taller", this: "a este taller" },
+  evento: { to: "al evento", this: "a este evento" },
 };
 
 interface TalkRegisterDialogProps {
